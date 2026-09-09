@@ -1,0 +1,20 @@
+[package]
+name = "atiga-amp"
+version = "0.1.0"
+description = "Atiga Amp desktop music player"
+authors = ["Atiga"]
+edition = "2021"
+
+[lib]
+name = "atiga_amp_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+default = ["custom-protocol"]
