@@ -166,6 +166,7 @@ dialog{background:#1b2430;border-color:#63718a}.eq-bands,.text-input,.settings-g
 :root[data-theme="ember"]{--bg:#161718;--panel:#1b1c1e;--panel-raised:#222325;--border:#303133;--muted:#929295;--text:#eeedeb;--amber:#e9ad67;--amber-dim:#a87943}
 :root[data-theme="ember"] body{background:#111213}
 :root[data-theme="ember"] .titlebar,:root[data-theme="ember"] .sidebar,:root[data-theme="ember"] .now-panel,:root[data-theme="ember"] .statusbar{background:#1a1b1c}
+#track-options button[data-danger]{color:#e58f82;border-color:#633f3b}
 :root[data-theme="ember"] .titlebar{border-bottom-color:#303133}:root[data-theme="ember"] .sidebar{border-right-color:#303133}:root[data-theme="ember"] .now-panel{border-left-color:#303133}
 :root[data-theme="ember"] .player{background:#212223;border-top-color:#3b3a38;box-shadow:0 -6px 20px #0001}:root[data-theme="ember"] .statusbar{border-top-color:#303231}
 :root[data-theme="ember"] .version,:root[data-theme="ember"] .search,:root[data-theme="ember"] .format-tag{border-color:#3a3b3d}:root[data-theme="ember"] .icon-button:hover{background:#ffffff0a}
@@ -182,3 +183,4 @@ dialog{background:#1b2430;border-color:#63718a}.eq-bands,.text-input,.settings-g
 :root[data-theme="ember"] .spectrum-box{background:#141616;border-color:#353737;box-shadow:inset 0 2px 6px #0002}:root[data-theme="ember"] .play-button{background:linear-gradient(#f2bc7c,#dea05a);color:#292018;border-color:#ebbd85;box-shadow:0 3px 8px #0003,inset 0 1px #ffe0b6}:root[data-theme="ember"] .play-button:hover{color:#17100a;background:#f6c17e}
 :root[data-theme="ember"] input[type=range]{background:linear-gradient(to right,var(--amber) var(--fill,0%),#414342 var(--fill,0%))}:root[data-theme="ember"] dialog{background:#202223;border-color:#484640}:root[data-theme="ember"] .eq-bands,:root[data-theme="ember"] .text-input,:root[data-theme="ember"] .settings-grid select,:root[data-theme="ember"] .settings-grid input{background:#181b1a;border-color:#464743}
 .titlebar{background:#1b2230;border-bottom-color:#465268}.brand{color:#eef3f7}.brand b{color:#b9ff3e}.title-motto{color:#a8a3ff}.local-indicator{color:#aeb8c5}.title-actions .icon-button{color:#9ba8b8}.title-actions .icon-button:hover{background:#a8a3ff12;color:#b9ff3e}
+.art-title{max-width:calc(100% - 34px);overflow-wrap:anywhere}

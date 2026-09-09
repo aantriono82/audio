@@ -207,6 +207,7 @@ function renderCurrent() {
     $('#now-title').textContent = $('#player-title').textContent = 'Belum ada lagu';
     $('#now-artist').textContent = $('#player-artist').textContent = 'Tambahkan musik untuk mulai mendengarkan';
     $('#now-quality').textContent = 'BELUM ADA AUDIO';
+    $('#now-art .art-title').innerHTML = 'BELUM ADA LAGU<span>Tambahkan musik</span>';
     $('#duration').textContent = '00:00';
     $('#next-track').innerHTML = '<p class="dialog-note">Tambahkan lagu untuk mengisi antrean.</p>';
     return;
@@ -217,7 +218,7 @@ function renderCurrent() {
   $('#now-format').textContent = track.format; $('#now-quality').textContent = track.demo ? 'AUDIO DEMO' : 'FILE LOKAL';
   $('#now-art').dataset.art = $('#player-art').dataset.art = track.art;
   applyArt($('#now-art'), track); applyArt($('#player-art'), track);
-  $('#now-art .art-title').innerHTML = `${esc(track.album.toUpperCase()).replace(' ', '<br>')}<span>${track.demo ? 'ATIGA ORIGINAL / VOL. 01' : 'YOUR PERSONAL COLLECTION'}</span>`;
+  $('#now-art .art-title').innerHTML = `${esc(track.title)}<span>${esc(track.artist)}</span>`;
   $$('#now-favorite, #player-favorite').forEach(el => { el.classList.toggle('active',state.favorites.has(track.id)); el.setAttribute('aria-pressed', state.favorites.has(track.id)); el.setAttribute('aria-label', state.favorites.has(track.id) ? 'Hapus dari favorit' : 'Tambahkan ke favorit'); });
   $('#duration').textContent = formatTime(track.duration);
   const upcoming = nextTrack();
@@ -318,15 +319,38 @@ $('#tracks').addEventListener('keydown', event => { if (event.target.matches('tr
 function showTrackOptions(id, index) {
   const track = findTrack(id); $('#track-dialog-title').textContent = track.title;
   const target = $('#track-options'); target.replaceChildren();
-  const addOption = (label, action) => { const button = document.createElement('button'); button.textContent = label; button.onclick = () => { action(); $('#track-dialog').close(); render(); persist(); }; target.append(button); };
+  const addOption = (label, action, danger = false) => { const button = document.createElement('button'); button.textContent = label; if (danger) button.dataset.danger = 'true'; button.onclick = async () => { await action(); $('#track-dialog').close(); render(); persist(); }; target.append(button); };
   addOption('Putar berikutnya', () => { state.queue.unshift(id); toast('Ditambahkan sebagai lagu berikutnya.'); });
   addOption('Tambahkan ke antrean', () => { state.queue.push(id); toast('Lagu ditambahkan ke antrean.'); });
   if (state.queueView) addOption('Hapus dari antrean', () => state.queue.splice(index,1));
   const playlist = state.playlists.find(p => p.id === state.view);
   if (playlist && !state.queueView) addOption('Hapus dari playlist ini', () => playlist.ids = playlist.ids.filter(item => item !== id));
+  addOption('Hapus lagu dari koleksi', () => removeTrack(id), true);
   const label = document.createElement('span'); label.className = 'option-label'; label.textContent = 'TAMBAHKAN KE PLAYLIST'; target.append(label);
   state.playlists.forEach(p => addOption(p.name, () => { if (!p.ids.includes(id)) { p.ids.push(id); toast(`Ditambahkan ke ${p.name}.`); } else toast('Lagu sudah ada di playlist ini.'); }));
   $('#track-dialog').showModal();
+}
+async function removeTrack(id) {
+  const track = findTrack(id);
+  if (!track || !window.confirm(`Hapus “${track.title}” dari koleksi?`)) return;
+  if (state.currentId === id) {
+    playbackToken++;
+    audio.pause(); audio.removeAttribute('src'); audio.load();
+    loadedId = null; state.currentId = null;
+  }
+  const url = urls.get(id); if (url) { URL.revokeObjectURL(url); urls.delete(id); }
+  const artUrl = artUrls.get(id); if (artUrl) { URL.revokeObjectURL(artUrl); artUrls.delete(id); }
+  state.tracks = state.tracks.filter(item => item.id !== id);
+  state.playlists.forEach(playlist => { playlist.ids = playlist.ids.filter(item => item !== id); });
+  state.queue = state.queue.filter(item => item !== id);
+  state.favorites.delete(id);
+  state.recent = state.recent.filter(item => item !== id);
+  delete state.playCounts[id];
+  if (db && !track.demo) {
+    try { await dbAction('readwrite', store => store.delete(id)); }
+    catch { toast('Lagu dihapus dari tampilan, tetapi file tersimpan gagal dihapus.'); return; }
+  }
+  toast(`“${track.title}” dihapus dari koleksi.`);
 }
 let draggedId, draggedIndex;
 $('#tracks').addEventListener('dragstart', event => { const tr = event.target.closest('[data-id]'); if (!tr) return; draggedId = tr.dataset.id; draggedIndex = Number(tr.dataset.index); event.dataTransfer.setData('text/plain', draggedId); event.dataTransfer.effectAllowed = 'move'; tr.classList.add('dragging'); });
