@@ -78,17 +78,12 @@ function renderGrouping() { const select = $('#group-by'); if (!select) return; 
 async function refreshOutputDevices() { const select = $('#output-device'); if (!select || !navigator.mediaDevices?.enumerateDevices) return; const devices = await navigator.mediaDevices.enumerateDevices(); const outputs = devices.filter(device => device.kind === 'audiooutput'); select.innerHTML = '<option value="default">Keluaran bawaan peramban</option>' + outputs.map(device => `<option value="${esc(device.deviceId)}">${esc(device.label || `Keluaran ${device.deviceId.slice(0, 5)}`)}</option>`).join(''); select.value = state.outputDevice; select.onchange = async event => { state.outputDevice = event.target.value; if (typeof audio.setSinkId === 'function') { try { await audio.setSinkId(state.outputDevice); } catch { toast('Perangkat keluaran tidak dapat dipilih oleh peramban.'); } } persist(); }; }
 async function filesFromDirectory(handle) { const files = []; async function walk(directory) { for await (const entry of directory.values()) { if (entry.kind === 'file') files.push(await entry.getFile()); else if (entry.kind === 'directory') await walk(entry); } } await walk(handle); return files; }
 async function chooseFolder() { if (!('showDirectoryPicker' in window)) { $('#folder-input').click(); return; } try { const handle = await window.showDirectoryPicker({ mode: 'read' }); if (db) await directoryAction('readwrite', store => store.put({ id: 'music-root', handle })); const files = await filesFromDirectory(handle); await importFiles(files); toast(`${files.length} file dipindai dari folder.`); } catch (error) { if (error.name !== 'AbortError') toast('Folder tidak dapat dipindai.'); } }
-const demos = [
-  ['Amber Skies', 'After Hours', 0, 130.81], ['Slow Sunday', 'Soft Focus', 1, 146.83],
-  ['Midnight Transit', 'Night Signals', 2, 110], ['A Little Further', 'Daydreams', 3, 164.81],
-  ['Tape Memories', 'Analog Diaries', 4, 123.47], ['Home Again', 'Quiet Places', 5, 174.61]
-].map(([title, album, art, frequency], i) => ({ id: `demo-${i}`, title, album, artist: 'Atiga Sessions', genre: ['Ambient','Lo-fi','Electronic'][i % 3], art, frequency, duration: 32, format: 'WAV', replayGain: 0, demo: true }));
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('atiga-state') || '{}') || {}; } catch { /* Start fresh if browser data is invalid. */ }
 const state = {
-  tracks: [...demos], favorites: new Set(Array.isArray(saved.favorites) ? saved.favorites : []),
-  playlists: Array.isArray(saved.playlists) ? saved.playlists.filter(p => p && typeof p.name === 'string' && Array.isArray(p.ids)) : [{ id: 'after-hours', name: 'Jam setelah senja', ids: ['demo-0', 'demo-2', 'demo-4'] }, { id: 'slow-living', name: 'Hidup santai', ids: ['demo-1', 'demo-3', 'demo-5'] }],
-  recent: Array.isArray(saved.recent) ? saved.recent : [], currentId: saved.currentId || demos[0].id, queue: Array.isArray(saved.queue) ? saved.queue : [],
+  tracks: [], favorites: new Set(Array.isArray(saved.favorites) ? saved.favorites : []),
+  playlists: Array.isArray(saved.playlists) ? saved.playlists.filter(p => p && typeof p.name === 'string' && Array.isArray(p.ids)) : [],
+  recent: Array.isArray(saved.recent) ? saved.recent : [], currentId: saved.currentId || null, queue: Array.isArray(saved.queue) ? saved.queue : [],
   view: 'all', queueView: false, search: '', sortAsc: false, shuffle: Boolean(saved.shuffle), repeat: [0,1,2].includes(saved.repeat) ? saved.repeat : 0,
   volume: Number.isFinite(saved.volume) ? Math.min(1, Math.max(0, saved.volume)) : .7,
   eq: Array.isArray(saved.eq) && saved.eq.length === 10 ? saved.eq.map(n => Number.isFinite(n) ? Math.max(-12,Math.min(12,n)) : 0) : Array(10).fill(0),
@@ -102,11 +97,8 @@ const state = {
   groupBy: saved.groupBy || '', panelOrder: Array.isArray(saved.panelOrder) ? saved.panelOrder : ['sidebar','library','now'],
   playCounts: saved.playCounts && typeof saved.playCounts === 'object' ? saved.playCounts : {}
 };
-state.playlists.forEach(playlist => {
-  if (playlist.id === 'after-hours' && playlist.name === 'After hours') playlist.name = 'Jam setelah senja';
-  if (playlist.id === 'slow-living' && playlist.name === 'Slow living') playlist.name = 'Hidup santai';
-});
 const audio = $('#audio');
+state.playlists = state.playlists.filter(playlist => !['after-hours', 'slow-living'].includes(playlist.id));
 let context, analyser, filters = [], compressor, masterGain, panner, db, loadedId, playbackToken = 0, lastSavedSecond = -1;
 let crossfadeTimer, crossfadeStarted = false;
 const urls = new Map();
@@ -210,7 +202,15 @@ function nextTrack() {
   return list[(index + 1) % list.length];
 }
 function renderCurrent() {
-  const track = current(); if (!track) return;
+  const track = current();
+  if (!track) {
+    $('#now-title').textContent = $('#player-title').textContent = 'Belum ada lagu';
+    $('#now-artist').textContent = $('#player-artist').textContent = 'Tambahkan musik untuk mulai mendengarkan';
+    $('#now-quality').textContent = 'BELUM ADA AUDIO';
+    $('#duration').textContent = '00:00';
+    $('#next-track').innerHTML = '<p class="dialog-note">Tambahkan lagu untuk mengisi antrean.</p>';
+    return;
+  }
   $('#now-title').textContent = $('#player-title').textContent = track.title;
   $('#now-artist').textContent = track.artist;
   $('#player-artist').textContent = `${track.artist}${track.demo ? ' · Demo' : ''}`;
@@ -299,7 +299,8 @@ audio.addEventListener('pause', () => { $('#app').classList.remove('is-playing')
 audio.addEventListener('ended', () => advance(1,true));
 audio.addEventListener('error', () => { if (audio.src) toast('Format audio tidak didukung atau file rusak. Silakan coba file lain.'); });
 $('#play').onclick = togglePlay; $('#previous').onclick = () => advance(-1); $('#next').onclick = () => advance();
-$('#play-session').onclick = () => { state.view = 'all'; state.queue = demos.slice(1).map(t => t.id); render(); selectTrack(demos[0].id); };
+$('#play-session').textContent = 'Tambah musik';
+$('#play-session').onclick = () => $('#file-input').click();
 $('#seek').oninput = event => { if (loadedId && Number.isFinite(audio.duration)) { audio.currentTime = Number(event.target.value) / 100 * audio.duration; updateProgress(); } };
 $('#volume').oninput = event => { state.volume = Number(event.target.value); audio.muted = false; renderModes(); persist(); };
 $('#mute').onclick = () => { audio.muted = !audio.muted; $('#mute').setAttribute('aria-label',audio.muted ? 'Aktifkan suara' : 'Bisukan'); renderModes(); };
@@ -460,10 +461,11 @@ async function init() {
   render();
   try { db = await openDB(); const stored = await dbAction('readonly', store => store.getAll()); state.tracks.push(...stored.filter(t => t?.id && t.file instanceof Blob)); const directory = await directoryAction('readonly', store => store.get('music-root')); if (directory?.handle && (await directory.handle.queryPermission({ mode: 'read' })) === 'granted') { const files = await filesFromDirectory(directory.handle); await importFiles(files); } }
   catch { toast('Penyimpanan lokal tidak tersedia. Musik impor hanya tersimpan untuk sesi ini.'); }
-  if (!findTrack(state.currentId)) state.currentId = demos[0].id;
+  state.playlists.forEach(playlist => { playlist.ids = playlist.ids.filter(findTrack); });
+  if (!findTrack(state.currentId)) state.currentId = null;
   state.queue = state.queue.filter(findTrack); state.recent = state.recent.filter(findTrack);
   const position = Number.isFinite(saved.position) ? saved.position : 0;
   render(); $('#eq-preset').value = state.preset; $('#preset-label').textContent = presetLabels[state.preset] || state.preset;
-  await selectTrack(state.currentId,false,position);
+  if (state.currentId) await selectTrack(state.currentId,false,position);
 }
 init();
