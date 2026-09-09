@@ -87,7 +87,7 @@ let saved = {};
 try { saved = JSON.parse(localStorage.getItem('atiga-state') || '{}') || {}; } catch { /* Start fresh if browser data is invalid. */ }
 const state = {
   tracks: [...demos], favorites: new Set(Array.isArray(saved.favorites) ? saved.favorites : []),
-  playlists: Array.isArray(saved.playlists) ? saved.playlists.filter(p => p && typeof p.name === 'string' && Array.isArray(p.ids)) : [{ id: 'after-hours', name: 'After hours', ids: ['demo-0', 'demo-2', 'demo-4'] }, { id: 'slow-living', name: 'Slow living', ids: ['demo-1', 'demo-3', 'demo-5'] }],
+  playlists: Array.isArray(saved.playlists) ? saved.playlists.filter(p => p && typeof p.name === 'string' && Array.isArray(p.ids)) : [{ id: 'after-hours', name: 'Jam setelah senja', ids: ['demo-0', 'demo-2', 'demo-4'] }, { id: 'slow-living', name: 'Hidup santai', ids: ['demo-1', 'demo-3', 'demo-5'] }],
   recent: Array.isArray(saved.recent) ? saved.recent : [], currentId: saved.currentId || demos[0].id, queue: Array.isArray(saved.queue) ? saved.queue : [],
   view: 'all', queueView: false, search: '', sortAsc: false, shuffle: Boolean(saved.shuffle), repeat: [0,1,2].includes(saved.repeat) ? saved.repeat : 0,
   volume: Number.isFinite(saved.volume) ? Math.min(1, Math.max(0, saved.volume)) : .7,
@@ -102,6 +102,10 @@ const state = {
   groupBy: saved.groupBy || '', panelOrder: Array.isArray(saved.panelOrder) ? saved.panelOrder : ['sidebar','library','now'],
   playCounts: saved.playCounts && typeof saved.playCounts === 'object' ? saved.playCounts : {}
 };
+state.playlists.forEach(playlist => {
+  if (playlist.id === 'after-hours' && playlist.name === 'After hours') playlist.name = 'Jam setelah senja';
+  if (playlist.id === 'slow-living' && playlist.name === 'Slow living') playlist.name = 'Hidup santai';
+});
 const audio = $('#audio');
 let context, analyser, filters = [], compressor, masterGain, panner, db, loadedId, playbackToken = 0, lastSavedSecond = -1;
 let crossfadeTimer, crossfadeStarted = false;
