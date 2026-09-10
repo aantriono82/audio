@@ -1064,6 +1064,280 @@ Error generating stack: `+e.message+`
   <p>Semua file audio yang diimpor diproses lokal di peramban Anda.</p>
 </dialog>
 
+<!-- AIMP Sound Effects / DSP Manager Dialog -->
+<dialog id="dsp-dialog" class="aimp-dsp-dialog" aria-labelledby="aimp-dialog-title">
+  <!-- Window Titlebar -->
+  <div class="aimp-titlebar" id="aimp-titlebar">
+    <div class="aimp-titlebar-text" id="aimp-dialog-title">Sound Effects</div>
+    <button type="button" class="aimp-titlebar-close" id="aimp-close-x" aria-label="Close Sound Effects">
+      <svg viewBox="0 0 10 10" width="10" height="10">
+        <path d="M1.5 1.5L8.5 8.5M8.5 1.5L1.5 8.5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- AIMP Header -->
+  <div class="aimp-header">
+    <div class="aimp-logo">
+      <svg class="aimp-logo-icon" viewBox="0 0 40 40" width="32" height="32" aria-hidden="true">
+        <polygon points="5,35 20,5 35,35" fill="#0078d7" />
+        <polygon points="20,15 12,32 28,32" fill="#ffffff" />
+        <polygon points="20,23 16,30 24,30" fill="#0078d7" />
+      </svg>
+      <span class="aimp-logo-text">ATIGA AMP</span>
+    </div>
+    <div class="aimp-subtitle">DSP Manager</div>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <nav class="aimp-tabs" role="tablist" aria-label="DSP Manager Tabs">
+    <button type="button" class="aimp-tab active" data-tab="general" role="tab" aria-selected="true" id="aimp-tab-general">General</button>
+    <button type="button" class="aimp-tab" data-tab="equalizer" role="tab" aria-selected="false" id="aimp-tab-equalizer">Equalizer</button>
+    <button type="button" class="aimp-tab" data-tab="volume" role="tab" aria-selected="false" id="aimp-tab-volume">Volume</button>
+    <button type="button" class="aimp-tab" data-tab="mixing" role="tab" aria-selected="false" id="aimp-tab-mixing">Mixing</button>
+    <button type="button" class="aimp-tab" data-tab="remove-silence" role="tab" aria-selected="false" id="aimp-tab-remove-silence">Remove Silence</button>
+  </nav>
+
+  <!-- Frame Content -->
+  <div class="aimp-tab-content-frame">
+    <!-- Tab 1: General (Active) -->
+    <div class="aimp-panel active" id="aimp-panel-general" role="tabpanel" aria-labelledby="aimp-tab-general">
+      <!-- 3 Columns Sliders Grid -->
+      <div class="aimp-sliders-grid">
+        <!-- Column 1 -->
+        <div class="aimp-slider-col">
+          <!-- Echo -->
+          <div class="aimp-slider-group" data-slider="echo">
+            <div class="aimp-slider-label">Echo</div>
+            <div class="aimp-slider-track-wrap">
+              <div class="aimp-ticks aimp-ticks-top">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <input type="range" class="aimp-slider" id="aimp-slider-echo" min="0" max="100" value="0" step="1" title="Echo (Right click to reset)" />
+              <div class="aimp-ticks aimp-ticks-bottom">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <!-- Reverb -->
+          <div class="aimp-slider-group" data-slider="reverb">
+            <div class="aimp-slider-label">Reverb</div>
+            <div class="aimp-slider-track-wrap">
+              <div class="aimp-ticks aimp-ticks-top">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <input type="range" class="aimp-slider" id="aimp-slider-reverb" min="0" max="100" value="0" step="1" title="Reverb (Right click to reset)" />
+              <div class="aimp-ticks aimp-ticks-bottom">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <!-- Flanger -->
+          <div class="aimp-slider-group" data-slider="flanger">
+            <div class="aimp-slider-label">Flanger</div>
+            <div class="aimp-slider-track-wrap">
+              <div class="aimp-ticks aimp-ticks-top">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <input type="range" class="aimp-slider" id="aimp-slider-flanger" min="0" max="100" value="0" step="1" title="Flanger (Right click to reset)" />
+              <div class="aimp-ticks aimp-ticks-bottom">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2 -->
+        <div class="aimp-slider-col">
+          <!-- Chorus -->
+          <div class="aimp-slider-group" data-slider="chorus">
+            <div class="aimp-slider-label">Chorus</div>
+            <div class="aimp-slider-track-wrap">
+              <div class="aimp-ticks aimp-ticks-top">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <input type="range" class="aimp-slider" id="aimp-slider-chorus" min="0" max="100" value="0" step="1" title="Chorus (Right click to reset)" />
+              <div class="aimp-ticks aimp-ticks-bottom">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <!-- Bass -->
+          <div class="aimp-slider-group" data-slider="bass">
+            <div class="aimp-slider-label">Bass</div>
+            <div class="aimp-slider-track-wrap">
+              <div class="aimp-ticks aimp-ticks-top">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <input type="range" class="aimp-slider" id="aimp-slider-bass" min="-12" max="12" value="0" step="1" title="Bass (Right click to reset)" />
+              <div class="aimp-ticks aimp-ticks-bottom">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <!-- Stereo enhancer -->
+          <div class="aimp-slider-group" data-slider="stereo-enhancer">
+            <div class="aimp-slider-label">Stereo enhancer</div>
+            <div class="aimp-slider-track-wrap">
+              <div class="aimp-ticks aimp-ticks-top">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <input type="range" class="aimp-slider" id="aimp-slider-stereo" min="0" max="100" value="0" step="1" title="Stereo enhancer (Right click to reset)" />
+              <div class="aimp-ticks aimp-ticks-bottom">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 3 -->
+        <div class="aimp-slider-col">
+          <!-- Speed -->
+          <div class="aimp-slider-group" data-slider="speed">
+            <div class="aimp-slider-label">Speed</div>
+            <div class="aimp-slider-track-wrap">
+              <div class="aimp-ticks aimp-ticks-top">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <input type="range" class="aimp-slider" id="aimp-slider-speed" min="50" max="150" value="100" step="1" title="Speed (Right click to reset)" />
+              <div class="aimp-ticks aimp-ticks-bottom">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <!-- Tempo -->
+          <div class="aimp-slider-group" data-slider="tempo">
+            <div class="aimp-slider-label">Tempo</div>
+            <div class="aimp-slider-track-wrap">
+              <div class="aimp-ticks aimp-ticks-top">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <input type="range" class="aimp-slider" id="aimp-slider-tempo" min="50" max="150" value="100" step="1" title="Tempo (Right click to reset)" />
+              <div class="aimp-ticks aimp-ticks-bottom">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <!-- Pitch -->
+          <div class="aimp-slider-group" data-slider="pitch">
+            <div class="aimp-slider-label">Pitch</div>
+            <div class="aimp-slider-track-wrap">
+              <div class="aimp-ticks aimp-ticks-top">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <input type="range" class="aimp-slider" id="aimp-slider-pitch" min="-12" max="12" value="0" step="1" title="Pitch (Right click to reset)" />
+              <div class="aimp-ticks aimp-ticks-bottom">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Click Reset Hint -->
+      <div class="aimp-reset-hint">* You can reset values by right mouse click</div>
+
+      <!-- Checkboxes -->
+      <div class="aimp-checkbox-list">
+        <label class="aimp-checkbox-item">
+          <input type="checkbox" id="aimp-check-voice-remover" />
+          <span class="aimp-checkbox-text">Voice Remover (for Stereo Only)</span>
+        </label>
+        <label class="aimp-checkbox-item">
+          <input type="checkbox" id="aimp-check-fade-pause" checked />
+          <span class="aimp-checkbox-text">Use sound fading (Pause / Resume)</span>
+        </label>
+        <label class="aimp-checkbox-item">
+          <input type="checkbox" id="aimp-check-fade-nav" checked />
+          <span class="aimp-checkbox-text">Use sound fading on navigation within track</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Tab 2: Equalizer -->
+    <div class="aimp-panel" id="aimp-panel-equalizer" role="tabpanel" aria-labelledby="aimp-tab-equalizer" hidden>
+      <div class="aimp-subpanel-row">
+        <label for="aimp-eq-preset">Preset:
+          <select id="aimp-eq-preset" class="aimp-sub-select">
+            <option value="Flat">Flat</option>
+            <option value="Warm">Warm</option>
+            <option value="Bass Boost">Bass Boost</option>
+            <option value="Vocal">Vocal</option>
+            <option value="Bright">Bright</option>
+            <option value="Custom">Custom</option>
+          </select>
+        </label>
+        <button type="button" class="aimp-btn-mini" id="aimp-eq-reset-btn">Reset</button>
+      </div>
+      <div class="aimp-eq-grid" id="aimp-eq-grid"></div>
+    </div>
+
+    <!-- Tab 3: Volume -->
+    <div class="aimp-panel" id="aimp-panel-volume" role="tabpanel" aria-labelledby="aimp-tab-volume" hidden>
+      <div class="aimp-subpanel-stack">
+        <div class="aimp-sub-slider-item">
+          <div class="aimp-sub-slider-header">
+            <span>Preamp</span>
+            <span id="aimp-preamp-val">0 dB</span>
+          </div>
+          <input type="range" class="aimp-slider" id="aimp-slider-preamp" min="-12" max="12" value="0" step="1" />
+        </div>
+        <div class="aimp-sub-slider-item">
+          <div class="aimp-sub-slider-header">
+            <span>Balance</span>
+            <span id="aimp-balance-val">0 (Center)</span>
+          </div>
+          <input type="range" class="aimp-slider" id="aimp-slider-balance" min="-1" max="1" value="0" step="0.05" />
+        </div>
+        <label class="aimp-checkbox-item">
+          <input type="checkbox" id="aimp-check-replaygain" checked />
+          <span class="aimp-checkbox-text">Apply ReplayGain if available</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Tab 4: Mixing -->
+    <div class="aimp-panel" id="aimp-panel-mixing" role="tabpanel" aria-labelledby="aimp-tab-mixing" hidden>
+      <div class="aimp-subpanel-stack">
+        <div class="aimp-sub-slider-item">
+          <div class="aimp-sub-slider-header">
+            <span>Crossfade</span>
+            <span id="aimp-crossfade-val">0 s</span>
+          </div>
+          <input type="range" class="aimp-slider" id="aimp-slider-crossfade" min="0" max="12" value="0" step="1" />
+        </div>
+        <label class="aimp-checkbox-item">
+          <input type="checkbox" id="aimp-check-gapless" checked />
+          <span class="aimp-checkbox-text">Gapless playback / preload next track</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Tab 5: Remove Silence -->
+    <div class="aimp-panel" id="aimp-panel-remove-silence" role="tabpanel" aria-labelledby="aimp-tab-remove-silence" hidden>
+      <div class="aimp-subpanel-stack">
+        <label class="aimp-checkbox-item">
+          <input type="checkbox" id="aimp-check-skip-silence" />
+          <span class="aimp-checkbox-text">Remove silence at head and tail of tracks</span>
+        </label>
+        <div class="aimp-sub-slider-item">
+          <div class="aimp-sub-slider-header">
+            <span>Silence Threshold</span>
+            <span id="aimp-silence-thresh-val">-45 dB</span>
+          </div>
+          <input type="range" class="aimp-slider" id="aimp-slider-silence" min="-60" max="-30" value="-45" step="1" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Footer Bar -->
+  <div class="aimp-footer">
+    <button type="button" class="aimp-btn" id="aimp-reset-all">Reset to Defaults</button>
+    <button type="button" class="aimp-btn" id="aimp-close-btn">Close</button>
+  </div>
+</dialog>
+
 <div role="status" id="toast" class="toast" hidden></div>
 <audio id="audio" preload="auto"></audio>
-`,f=e((e=>{var t=Symbol.for(`react.transitional.element`);function n(e,n,r){var i=null;if(r!==void 0&&(i=``+r),n.key!==void 0&&(i=``+n.key),`key`in n)for(var a in r={},n)a!==`key`&&(r[a]=n[a]);else r=n;return n=r.ref,{$$typeof:t,type:e,key:i,ref:n===void 0?null:n,props:r}}e.jsx=n})),p=e(((e,t)=>{t.exports=f()}))(),m=`modulepreload`,h=function(e){return`/`+e},g={},_=function(e,t,n){let r=Promise.resolve();if(t&&t.length>0){let e=document.getElementsByTagName(`link`),i=document.querySelector(`meta[property=csp-nonce]`),a=i?.nonce||i?.getAttribute(`nonce`);function o(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}function s(e){return import.meta.resolve?import.meta.resolve(e):new URL(e,import.meta.url).href}r=o(t.map(t=>{if(t=h(t,n),t=s(t),t in g)return;g[t]=!0;let r=t.endsWith(`.css`);for(let n=e.length-1;n>=0;n--){let i=e[n];if(i.href===t&&(!r||i.rel===`stylesheet`))return}let i=document.createElement(`link`);if(i.rel=r?`stylesheet`:m,r||(i.as=`script`),i.crossOrigin=``,i.href=t,a&&i.setAttribute(`nonce`,a),document.head.appendChild(i),r)return new Promise((e,n)=>{i.addEventListener(`load`,e),i.addEventListener(`error`,()=>n(Error(`Unable to preload CSS for ${t}`)))})}))}function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})};function v(){return(0,l.useEffect)(()=>{_(()=>import(`./app-CykGcjJ0.js`),[])},[]),(0,p.jsx)(`div`,{dangerouslySetInnerHTML:{__html:d}})}var y=document.getElementById(`root`);if(!y)throw Error(`Elemen root React tidak ditemukan.`);(0,u.createRoot)(y).render((0,p.jsx)(v,{}));export{_ as t};
+`,f=e((e=>{var t=Symbol.for(`react.transitional.element`);function n(e,n,r){var i=null;if(r!==void 0&&(i=``+r),n.key!==void 0&&(i=``+n.key),`key`in n)for(var a in r={},n)a!==`key`&&(r[a]=n[a]);else r=n;return n=r.ref,{$$typeof:t,type:e,key:i,ref:n===void 0?null:n,props:r}}e.jsx=n})),p=e(((e,t)=>{t.exports=f()}))(),m=`modulepreload`,h=function(e){return`/`+e},g={},_=function(e,t,n){let r=Promise.resolve();if(t&&t.length>0){let e=document.getElementsByTagName(`link`),i=document.querySelector(`meta[property=csp-nonce]`),a=i?.nonce||i?.getAttribute(`nonce`);function o(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}function s(e){return import.meta.resolve?import.meta.resolve(e):new URL(e,import.meta.url).href}r=o(t.map(t=>{if(t=h(t,n),t=s(t),t in g)return;g[t]=!0;let r=t.endsWith(`.css`);for(let n=e.length-1;n>=0;n--){let i=e[n];if(i.href===t&&(!r||i.rel===`stylesheet`))return}let i=document.createElement(`link`);if(i.rel=r?`stylesheet`:m,r||(i.as=`script`),i.crossOrigin=``,i.href=t,a&&i.setAttribute(`nonce`,a),document.head.appendChild(i),r)return new Promise((e,n)=>{i.addEventListener(`load`,e),i.addEventListener(`error`,()=>n(Error(`Unable to preload CSS for ${t}`)))})}))}function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})};function v(){return(0,l.useEffect)(()=>{_(()=>import(`./app-BaWpJ1-Z.js`),[])},[]),(0,p.jsx)(`div`,{dangerouslySetInnerHTML:{__html:d}})}var y=document.getElementById(`root`);if(!y)throw Error(`Elemen root React tidak ditemukan.`);(0,u.createRoot)(y).render((0,p.jsx)(v,{}));export{_ as t};

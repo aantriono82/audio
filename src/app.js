@@ -111,11 +111,27 @@ const state = {
   replayGain: saved.replayGain !== false, notifications: saved.notifications === true,
   outputDevice: saved.outputDevice || 'default',
   groupBy: saved.groupBy || '', panelOrder: Array.isArray(saved.panelOrder) ? saved.panelOrder : ['sidebar','library','now'],
-  playCounts: saved.playCounts && typeof saved.playCounts === 'object' ? saved.playCounts : {}
+  playCounts: saved.playCounts && typeof saved.playCounts === 'object' ? saved.playCounts : {},
+  ampHidden: Boolean(saved.ampHidden),
+  dsp: {
+    echo: Number.isFinite(saved.dsp?.echo) ? Math.max(0, Math.min(100, saved.dsp.echo)) : 0,
+    reverb: Number.isFinite(saved.dsp?.reverb) ? Math.max(0, Math.min(100, saved.dsp.reverb)) : 0,
+    flanger: Number.isFinite(saved.dsp?.flanger) ? Math.max(0, Math.min(100, saved.dsp.flanger)) : 0,
+    chorus: Number.isFinite(saved.dsp?.chorus) ? Math.max(0, Math.min(100, saved.dsp.chorus)) : 0,
+    bass: Number.isFinite(saved.dsp?.bass) ? Math.max(-12, Math.min(12, saved.dsp.bass)) : 0,
+    stereo: Number.isFinite(saved.dsp?.stereo) ? Math.max(0, Math.min(100, saved.dsp.stereo)) : 0,
+    speed: Number.isFinite(saved.dsp?.speed) ? Math.max(50, Math.min(150, saved.dsp.speed)) : 100,
+    tempo: Number.isFinite(saved.dsp?.tempo) ? Math.max(50, Math.min(150, saved.dsp.tempo)) : 100,
+    pitch: Number.isFinite(saved.dsp?.pitch) ? Math.max(-12, Math.min(12, saved.dsp.pitch)) : 0,
+    voiceRemover: Boolean(saved.dsp?.voiceRemover),
+    fadePause: saved.dsp?.fadePause !== false,
+    fadeNav: saved.dsp?.fadeNav !== false
+  }
 };
 const audio = $('#audio');
 state.playlists = state.playlists.filter(playlist => !['after-hours', 'slow-living'].includes(playlist.id));
 let context, analyser, analyserL, analyserR, filters = [], compressor, masterGain, panner, db, loadedId, playbackToken = 0, lastSavedSecond = -1, directAudio = false;
+let dspBassFilter, dspEchoDelay, dspEchoFeedback, dspEchoGain, dspReverbConvolver, dspReverbGain, dspChorusDelay, dspChorusGain, dspChorusLfo, dspVoiceDryGain, dspVoiceWetGain, dspVoiceSplitter, dspVoiceMerger, dspVoiceInvGain, dspSumGain;
 let giantVolKnob, deckVolKnob, balKnob, preampKnob, bassKnob, trebleKnob;
 let crossfadeTimer, crossfadeStarted = false;
 const urls = new Map();
@@ -151,6 +167,51 @@ function dbAction(mode, action) {
   });
 }
 const frequencies = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+
+function createReverbImpulse(ctx, duration = 1.2, decay = 2.0) {
+  const sampleRate = ctx.sampleRate;
+  const length = Math.floor(sampleRate * duration);
+  const impulse = ctx.createBuffer(2, length, sampleRate);
+  const left = impulse.getChannelData(0);
+  const right = impulse.getChannelData(1);
+  for (let i = 0; i < length; i++) {
+    const n = length - i;
+    const env = Math.pow(n / length, decay);
+    left[i] = (Math.random() * 2 - 1) * env;
+    right[i] = (Math.random() * 2 - 1) * env;
+  }
+  return impulse;
+}
+
+function applyPlaybackRates() {
+  if (!audio) return;
+  const speed = (state.dsp?.speed || 100) / 100;
+  const tempo = (state.dsp?.tempo || 100) / 100;
+  const pitchSemitones = state.dsp?.pitch || 0;
+  const pitchFactor = 2 ** (pitchSemitones / 12);
+
+  const effectiveRate = Math.max(0.25, Math.min(4.0, speed * tempo * pitchFactor));
+  audio.playbackRate = effectiveRate;
+  if ('preservesPitch' in audio) {
+    audio.preservesPitch = (pitchSemitones === 0);
+  }
+}
+
+function applyDspSettings() {
+  if (context) {
+    if (dspBassFilter) dspBassFilter.gain.setTargetAtTime(state.dsp.bass, context.currentTime, 0.03);
+    if (dspEchoGain) dspEchoGain.gain.setTargetAtTime((state.dsp.echo / 100) * 0.7, context.currentTime, 0.03);
+    if (dspReverbGain) dspReverbGain.gain.setTargetAtTime((state.dsp.reverb / 100) * 0.75, context.currentTime, 0.03);
+    if (dspChorusGain) dspChorusGain.gain.setTargetAtTime((state.dsp.chorus / 100) * 0.45 + (state.dsp.flanger / 100) * 0.45, context.currentTime, 0.03);
+    if (dspVoiceDryGain && dspVoiceWetGain) {
+      const isVoice = Boolean(state.dsp.voiceRemover);
+      dspVoiceDryGain.gain.setTargetAtTime(isVoice ? 0 : 1, context.currentTime, 0.03);
+      dspVoiceWetGain.gain.setTargetAtTime(isVoice ? 1 : 0, context.currentTime, 0.03);
+    }
+  }
+  applyPlaybackRates();
+}
+
 function setupAudio() {
   if (context || directAudio) return;
   const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
@@ -162,9 +223,95 @@ function setupAudio() {
     analyser = context.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = .8;
     compressor = context.createDynamicsCompressor(); compressor.threshold.value = -3; compressor.knee.value = 3; compressor.ratio.value = 12;
     masterGain = context.createGain(); panner = context.createStereoPanner();
+
+    // DSP Bass filter
+    dspBassFilter = context.createBiquadFilter();
+    dspBassFilter.type = 'lowshelf';
+    dspBassFilter.frequency.value = 120;
+    dspBassFilter.gain.value = state.dsp.bass;
+
+    // DSP Echo (delay + feedback)
+    dspEchoDelay = context.createDelay(1.0);
+    dspEchoDelay.delayTime.value = 0.28;
+    dspEchoFeedback = context.createGain();
+    dspEchoFeedback.gain.value = 0.35;
+    dspEchoGain = context.createGain();
+    dspEchoGain.gain.value = (state.dsp.echo / 100) * 0.7;
+    dspEchoDelay.connect(dspEchoFeedback);
+    dspEchoFeedback.connect(dspEchoDelay);
+    dspEchoDelay.connect(dspEchoGain);
+
+    // DSP Reverb
+    dspReverbConvolver = context.createConvolver();
+    dspReverbConvolver.buffer = createReverbImpulse(context);
+    dspReverbGain = context.createGain();
+    dspReverbGain.gain.value = (state.dsp.reverb / 100) * 0.75;
+    dspReverbConvolver.connect(dspReverbGain);
+
+    // DSP Chorus / Flanger
+    dspChorusDelay = context.createDelay(0.05);
+    dspChorusDelay.delayTime.value = 0.015;
+    dspChorusGain = context.createGain();
+    dspChorusGain.gain.value = (state.dsp.chorus / 100) * 0.45 + (state.dsp.flanger / 100) * 0.45;
+    try {
+      dspChorusLfo = context.createOscillator();
+      const lfoGain = context.createGain();
+      dspChorusLfo.frequency.value = 1.2;
+      lfoGain.gain.value = 0.003;
+      dspChorusLfo.connect(lfoGain);
+      lfoGain.connect(dspChorusDelay.delayTime);
+      dspChorusLfo.start();
+    } catch { /* oscillator fallback */ }
+    dspChorusDelay.connect(dspChorusGain);
+
+    // DSP Voice Remover (Dry / Wet with inverted R)
+    dspVoiceDryGain = context.createGain();
+    dspVoiceDryGain.gain.value = state.dsp.voiceRemover ? 0 : 1;
+    dspVoiceWetGain = context.createGain();
+    dspVoiceWetGain.gain.value = state.dsp.voiceRemover ? 1 : 0;
+
+    dspVoiceSplitter = context.createChannelSplitter(2);
+    dspVoiceMerger = context.createChannelMerger(2);
+    dspVoiceInvGain = context.createGain();
+    dspVoiceInvGain.gain.value = -1;
+
+    dspSumGain = context.createGain();
+
+    // Route: source -> EQ filters -> dspBassFilter -> compressor
     let previous = source;
     for (const filter of filters) { previous.connect(filter); previous = filter; }
-    previous.connect(compressor); compressor.connect(masterGain); masterGain.connect(panner); panner.connect(analyser); analyser.connect(context.destination);
+    previous.connect(dspBassFilter);
+    dspBassFilter.connect(compressor);
+
+    // Dry voice path
+    compressor.connect(dspVoiceDryGain);
+    dspVoiceDryGain.connect(dspSumGain);
+
+    // Voice Remover path
+    compressor.connect(dspVoiceSplitter);
+    dspVoiceSplitter.connect(dspVoiceMerger, 0, 0);
+    dspVoiceSplitter.connect(dspVoiceMerger, 0, 1);
+    dspVoiceSplitter.connect(dspVoiceInvGain, 1);
+    dspVoiceInvGain.connect(dspVoiceMerger, 0, 0);
+    dspVoiceInvGain.connect(dspVoiceMerger, 0, 1);
+    dspVoiceMerger.connect(dspVoiceWetGain);
+    dspVoiceWetGain.connect(dspSumGain);
+
+    // Parallel effects
+    compressor.connect(dspEchoDelay);
+    dspEchoGain.connect(dspSumGain);
+
+    compressor.connect(dspReverbConvolver);
+    dspReverbGain.connect(dspSumGain);
+
+    compressor.connect(dspChorusDelay);
+    dspChorusGain.connect(dspSumGain);
+
+    dspSumGain.connect(masterGain);
+    masterGain.connect(panner);
+    panner.connect(analyser);
+    analyser.connect(context.destination);
+
     // True stereo VU: tap panner output via a ChannelSplitter into separate L/R analysers
     try {
       analyserL = context.createAnalyser(); analyserL.fftSize = 2048; analyserL.smoothingTimeConstant = .75;
@@ -173,12 +320,13 @@ function setupAudio() {
       panner.connect(splitter);
       splitter.connect(analyserL, 0); // Left channel → analyserL
       splitter.connect(analyserR, 1); // Right channel → analyserR
-      // analyserL and analyserR are not connected to destination — measurement only
     } catch { analyserL = null; analyserR = null; }
+
     applyAudioSettings();
   } catch (error) {
     console.warn('Web Audio tidak tersedia; memakai pemutaran audio langsung.', error);
     context = null; filters = []; analyser = null; analyserL = null; analyserR = null; compressor = null; masterGain = null; panner = null; directAudio = true;
+    dspBassFilter = null; dspEchoDelay = null; dspEchoGain = null; dspReverbConvolver = null; dspReverbGain = null; dspChorusDelay = null; dspChorusGain = null; dspChorusLfo = null; dspVoiceDryGain = null; dspVoiceWetGain = null; dspSumGain = null;
   }
 }
 function applyAudioSettings() {
@@ -187,6 +335,7 @@ function applyAudioSettings() {
     const replay = state.replayGain ? (current()?.replayGain || 0) : 0;
     masterGain.gain.setTargetAtTime(10 ** ((state.preamp + replay) / 20), context.currentTime, .03);
   }
+  applyDspSettings();
 }
 async function sourceURL(track) {
   if (urls.has(track.id)) return urls.get(track.id);
@@ -339,8 +488,29 @@ function maybeCrossfade() {
 }
 async function togglePlay() {
   if (!loadedId) return selectTrack(state.currentId);
-  if (!audio.paused) { audio.pause(); return; }
-  try { setupAudio(); if (context) await context.resume(); await audio.play(); }
+  if (!audio.paused) {
+    if (state.dsp?.fadePause && masterGain && context) {
+      masterGain.gain.setTargetAtTime(0.0001, context.currentTime, 0.08);
+      setTimeout(() => {
+        audio.pause();
+        applyAudioSettings();
+      }, 120);
+    } else {
+      audio.pause();
+    }
+    return;
+  }
+  try {
+    setupAudio();
+    if (context) await context.resume();
+    if (state.dsp?.fadePause && masterGain && context) {
+      masterGain.gain.setValueAtTime(0.0001, context.currentTime);
+      await audio.play();
+      applyAudioSettings();
+    } else {
+      await audio.play();
+    }
+  }
   catch { toast('Audio belum dapat diputar. Coba pilih lagu atau impor file lain.'); }
 }
 function advance(direction = 1, automatic = false) {
@@ -601,10 +771,15 @@ function setupRackControls() {
 
   const dbxBadge = $('#dbx-badge');
   if (dbxBadge) {
-    dbxBadge.onclick = () => {
-      dbxBadge.classList.toggle('active');
-      const on = dbxBadge.classList.contains('active');
-      toast(on ? 'dbx Noise Reduction ON' : 'dbx Noise Reduction Bypass');
+    dbxBadge.onclick = (e) => {
+      e?.stopPropagation?.();
+      openDspDialog('general');
+    };
+    dbxBadge.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openDspDialog('general');
+      }
     };
   }
 
@@ -640,9 +815,38 @@ function setupRackControls() {
     $('#eq-dialog').showModal();
     $('#eq-toggle').setAttribute('aria-expanded', 'true');
   };
-  $$('#switch-eq-dsp, #btn-dsp, #btn-amplifier, #eq-toggle, #player-eq').forEach(el => {
+  $$('#switch-eq-dsp, #eq-toggle, #player-eq').forEach(el => {
     if (el) el.onclick = openEQ;
   });
+
+  const btnAmplifier = $('#btn-amplifier');
+  const ampUnit = $('#amplifier-unit');
+  const deckUnit = $('#cassette-deck-unit');
+  if (btnAmplifier && ampUnit) {
+    const updateAmpVisibility = (hidden, notify = true) => {
+      ampUnit.classList.toggle('hidden', hidden);
+      ampUnit.hidden = hidden;
+      btnAmplifier.classList.toggle('active', hidden);
+      btnAmplifier.setAttribute('aria-pressed', String(hidden));
+      deckUnit?.classList.toggle('standalone', hidden);
+      state.ampHidden = hidden;
+      if (notify) {
+        toast(hidden ? 'ATIGA Integrated DC Servo Amplifier disembunyikan' : 'ATIGA Integrated DC Servo Amplifier ditampilkan');
+        persist();
+      }
+    };
+    if (state.ampHidden) updateAmpVisibility(true, false);
+    btnAmplifier.onclick = (e) => {
+      e?.stopPropagation?.();
+      const isCurrentlyHidden = ampUnit.classList.contains('hidden');
+      updateAmpVisibility(!isCurrentlyHidden, true);
+    };
+  }
+
+  const btnDsp = $('#btn-dsp');
+  if (btnDsp) {
+    btnDsp.onclick = () => openDspDialog('general');
+  }
 
   const btnAmpEq = $('#btn-amp-eq');
   const btnAmpDsp = $('#btn-amp-dsp');
@@ -661,8 +865,9 @@ function setupRackControls() {
       e.stopPropagation();
       btnAmpDsp.classList.toggle('active');
       const on = btnAmpDsp.classList.contains('active');
-      openEQ();
-      toast(on ? 'DSP Enhancement Mode ON' : 'DSP Bypass');
+      $('#lamp-dsp')?.classList.toggle('active', on);
+      openDspDialog('general');
+      toast(on ? 'ATIGA AMP DSP Manager ON' : 'ATIGA AMP DSP Bypass');
     };
   }
 
@@ -1048,11 +1253,378 @@ function paintSpectrum(timestamp) {
     seg.classList.toggle('peak', idx === peakIdxR && idx >= litR && peakHoldR > 1);
   });
 }
+function makeDraggable(dialog, handle) {
+  let isDragging = false;
+  let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+
+  const onStart = (clientX, clientY, target) => {
+    if (target.closest('button, input, select, label')) return;
+    isDragging = true;
+    startX = clientX;
+    startY = clientY;
+    const rect = dialog.getBoundingClientRect();
+    initialLeft = rect.left;
+    initialTop = rect.top;
+    dialog.style.position = 'fixed';
+    dialog.style.left = `${initialLeft}px`;
+    dialog.style.top = `${initialTop}px`;
+    dialog.style.transform = 'none';
+    dialog.style.margin = '0';
+  };
+
+  const onMove = (clientX, clientY) => {
+    if (!isDragging) return;
+    const dx = clientX - startX;
+    const dy = clientY - startY;
+    const maxLeft = Math.max(0, window.innerWidth - dialog.offsetWidth);
+    const maxTop = Math.max(0, window.innerHeight - dialog.offsetHeight);
+    dialog.style.left = `${Math.max(0, Math.min(maxLeft, initialLeft + dx))}px`;
+    dialog.style.top = `${Math.max(0, Math.min(maxTop, initialTop + dy))}px`;
+  };
+
+  const onEnd = () => { isDragging = false; };
+
+  handle.addEventListener('mousedown', (e) => onStart(e.clientX, e.clientY, e.target));
+  window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+  window.addEventListener('mouseup', onEnd);
+
+  handle.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) onStart(e.touches[0].clientX, e.touches[0].clientY, e.target);
+  }, { passive: true });
+  window.addEventListener('touchmove', (e) => {
+    if (isDragging && e.touches.length === 1) onMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  window.addEventListener('touchend', onEnd);
+}
+
+function syncDspUi() {
+  const setVal = (id, val) => {
+    const el = $(`#${id}`);
+    if (el) el.value = val;
+  };
+  setVal('aimp-slider-echo', state.dsp.echo);
+  setVal('aimp-slider-reverb', state.dsp.reverb);
+  setVal('aimp-slider-flanger', state.dsp.flanger);
+  setVal('aimp-slider-chorus', state.dsp.chorus);
+  setVal('aimp-slider-bass', state.dsp.bass);
+  setVal('aimp-slider-stereo', state.dsp.stereo);
+  setVal('aimp-slider-speed', state.dsp.speed);
+  setVal('aimp-slider-tempo', state.dsp.tempo);
+  setVal('aimp-slider-pitch', state.dsp.pitch);
+
+  const checkVoice = $('#aimp-check-voice-remover');
+  if (checkVoice) checkVoice.checked = Boolean(state.dsp.voiceRemover);
+  const checkFadePause = $('#aimp-check-fade-pause');
+  if (checkFadePause) checkFadePause.checked = Boolean(state.dsp.fadePause);
+  const checkFadeNav = $('#aimp-check-fade-nav');
+  if (checkFadeNav) checkFadeNav.checked = Boolean(state.dsp.fadeNav);
+
+  // Equalizer
+  const eqPreset = $('#aimp-eq-preset');
+  if (eqPreset) eqPreset.value = state.preset || 'Flat';
+  frequencies.forEach((_, i) => {
+    setVal(`aimp-eq-band-${i}`, state.eq[i]);
+    const out = $(`#aimp-eq-val-${i}`);
+    if (out) out.textContent = state.eq[i] > 0 ? `+${state.eq[i]}` : String(state.eq[i]);
+  });
+
+  // Volume & Mixing
+  setVal('aimp-slider-preamp', state.preamp);
+  if ($('#aimp-preamp-val')) $('#aimp-preamp-val').textContent = `${state.preamp > 0 ? `+${state.preamp}` : state.preamp} dB`;
+  setVal('aimp-slider-balance', state.balance);
+  if ($('#aimp-balance-val')) $('#aimp-balance-val').textContent = state.balance === 0 ? '0 (Center)' : (state.balance < 0 ? `L ${Math.abs(Math.round(state.balance * 100))}%` : `R ${Math.round(state.balance * 100)}%`);
+  const checkReplay = $('#aimp-check-replaygain');
+  if (checkReplay) checkReplay.checked = Boolean(state.replayGain);
+  setVal('aimp-slider-crossfade', state.crossfade);
+  if ($('#aimp-crossfade-val')) $('#aimp-crossfade-val').textContent = `${state.crossfade} s`;
+  const checkGapless = $('#aimp-check-gapless');
+  if (checkGapless) checkGapless.checked = Boolean(state.gapless);
+}
+
+function openDspDialog(tab = 'general') {
+  const dialog = $('#dsp-dialog');
+  if (!dialog) return;
+
+  const tabEl = $(`#aimp-tab-${tab}`);
+  if (tabEl) tabEl.click();
+
+  if (dialog.open) return;
+
+  setupAudio();
+  syncDspUi();
+
+  try {
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
+  } catch (err) {
+    console.warn('showModal error:', err);
+    dialog.setAttribute('open', '');
+  }
+}
+
+function setupDspDialog() {
+  const dialog = $('#dsp-dialog');
+  if (!dialog) return;
+
+  const titlebar = $('#aimp-titlebar');
+  if (titlebar) {
+    makeDraggable(dialog, titlebar);
+  }
+
+  // Close helper
+  const closeDsp = () => {
+    if (!dialog.open) return;
+    try {
+      dialog.close();
+    } catch {
+      dialog.removeAttribute('open');
+    }
+  };
+
+  // Close buttons
+  const closeBtn = $('#aimp-close-btn');
+  const closeX = $('#aimp-close-x');
+  if (closeBtn) closeBtn.onclick = closeDsp;
+  if (closeX) closeX.onclick = closeDsp;
+
+  // Backdrop click closes dialog
+  dialog.addEventListener('click', (e) => {
+    if (!dialog.open) return;
+    const rect = dialog.getBoundingClientRect();
+    const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height && rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
+    if (!isInDialog) closeDsp();
+  });
+
+  // Tab switching
+  $$('#dsp-dialog .aimp-tab').forEach(tab => {
+    tab.onclick = () => {
+      $$('#dsp-dialog .aimp-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      const tabName = tab.dataset.tab;
+      $$('#dsp-dialog .aimp-panel').forEach(p => { p.hidden = true; });
+      const targetPanel = $(`#aimp-panel-${tabName}`);
+      if (targetPanel) targetPanel.hidden = false;
+    };
+  });
+
+  // Sliders mapping in General tab
+  const slidersConfig = [
+    { id: 'aimp-slider-echo', key: 'echo', def: 0 },
+    { id: 'aimp-slider-reverb', key: 'reverb', def: 0 },
+    { id: 'aimp-slider-flanger', key: 'flanger', def: 0 },
+    { id: 'aimp-slider-chorus', key: 'chorus', def: 0 },
+    { id: 'aimp-slider-bass', key: 'bass', def: 0 },
+    { id: 'aimp-slider-stereo', key: 'stereo', def: 0 },
+    { id: 'aimp-slider-speed', key: 'speed', def: 100 },
+    { id: 'aimp-slider-tempo', key: 'tempo', def: 100 },
+    { id: 'aimp-slider-pitch', key: 'pitch', def: 0 }
+  ];
+
+  slidersConfig.forEach(({ id, key, def }) => {
+    const slider = $(`#${id}`);
+    if (!slider) return;
+    slider.dataset.key = key;
+    slider.dataset.default = String(def);
+
+    slider.oninput = (e) => {
+      const val = Number(e.target.value);
+      state.dsp[key] = val;
+      applyDspSettings();
+      persist();
+    };
+
+    // Right click reset
+    slider.oncontextmenu = (e) => {
+      e.preventDefault();
+      slider.value = String(def);
+      state.dsp[key] = def;
+      applyDspSettings();
+      persist();
+    };
+  });
+
+  // Checkboxes in General tab
+  const checkVoice = $('#aimp-check-voice-remover');
+  if (checkVoice) {
+    checkVoice.onchange = (e) => {
+      state.dsp.voiceRemover = e.target.checked;
+      applyDspSettings();
+      persist();
+    };
+  }
+
+  const checkFadePause = $('#aimp-check-fade-pause');
+  if (checkFadePause) {
+    checkFadePause.onchange = (e) => {
+      state.dsp.fadePause = e.target.checked;
+      persist();
+    };
+  }
+
+  const checkFadeNav = $('#aimp-check-fade-nav');
+  if (checkFadeNav) {
+    checkFadeNav.onchange = (e) => {
+      state.dsp.fadeNav = e.target.checked;
+      persist();
+    };
+  }
+
+  // Reset to Defaults button
+  const resetBtn = $('#aimp-reset-all');
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      state.dsp = {
+        echo: 0,
+        reverb: 0,
+        flanger: 0,
+        chorus: 0,
+        bass: 0,
+        stereo: 0,
+        speed: 100,
+        tempo: 100,
+        pitch: 0,
+        voiceRemover: false,
+        fadePause: true,
+        fadeNav: true
+      };
+      syncDspUi();
+      applyDspSettings();
+      persist();
+      toast('Sound Effects diatur ulang ke bawaan.');
+    };
+  }
+
+  // Subpanel: Equalizer in DSP Manager
+  const aimpEqGrid = $('#aimp-eq-grid');
+  if (aimpEqGrid) {
+    aimpEqGrid.innerHTML = frequencies.map((freq, i) => `
+      <label class="aimp-eq-slider-band">
+        <output id="aimp-eq-val-${i}">${state.eq[i] > 0 ? `+${state.eq[i]}` : state.eq[i]}</output>
+        <input type="range" id="aimp-eq-band-${i}" min="-12" max="12" step="1" value="${state.eq[i]}" data-band="${i}" />
+        <span>${freq >= 1000 ? `${freq / 1000}k` : freq}</span>
+      </label>
+    `).join('');
+    aimpEqGrid.querySelectorAll('input').forEach(input => {
+      input.oninput = (e) => {
+        const idx = Number(e.target.dataset.band);
+        const val = Number(e.target.value);
+        state.eq[idx] = val;
+        if (filters[idx]) filters[idx].gain.setTargetAtTime(val, context?.currentTime || 0, 0.03);
+        const out = $(`#aimp-eq-val-${idx}`);
+        if (out) out.textContent = val > 0 ? `+${val}` : String(val);
+        const mainInput = $(`#eq-band-${idx}`);
+        if (mainInput) mainInput.value = String(val);
+        persist();
+      };
+      input.oncontextmenu = (e) => {
+        e.preventDefault();
+        input.value = '0';
+        input.dispatchEvent(new Event('input'));
+      };
+    });
+  }
+
+  const aimpEqPreset = $('#aimp-eq-preset');
+  if (aimpEqPreset) {
+    aimpEqPreset.value = state.preset || 'Flat';
+    aimpEqPreset.onchange = (e) => {
+      const preset = e.target.value;
+      const mainPreset = $('#eq-preset');
+      if (mainPreset) {
+        mainPreset.value = preset;
+        mainPreset.dispatchEvent(new Event('change'));
+      }
+      syncDspUi();
+    };
+  }
+
+  const aimpEqReset = $('#aimp-eq-reset-btn');
+  if (aimpEqReset) {
+    aimpEqReset.onclick = () => {
+      $('#eq-reset')?.click();
+      syncDspUi();
+    };
+  }
+
+  // Subpanel: Volume in DSP Manager
+  const aimpPreamp = $('#aimp-slider-preamp');
+  if (aimpPreamp) {
+    aimpPreamp.oninput = (e) => {
+      state.preamp = Number(e.target.value);
+      if ($('#aimp-preamp-val')) $('#aimp-preamp-val').textContent = `${state.preamp > 0 ? `+${state.preamp}` : state.preamp} dB`;
+      applyAudioSettings();
+      syncSettings();
+      persist();
+    };
+  }
+  const aimpBalance = $('#aimp-slider-balance');
+  if (aimpBalance) {
+    aimpBalance.oninput = (e) => {
+      state.balance = Number(e.target.value);
+      if ($('#aimp-balance-val')) $('#aimp-balance-val').textContent = state.balance === 0 ? '0 (Center)' : (state.balance < 0 ? `L ${Math.abs(Math.round(state.balance * 100))}%` : `R ${Math.round(state.balance * 100)}%`);
+      applyAudioSettings();
+      syncSettings();
+      persist();
+    };
+  }
+  const aimpReplay = $('#aimp-check-replaygain');
+  if (aimpReplay) {
+    aimpReplay.onchange = (e) => {
+      state.replayGain = e.target.checked;
+      applyAudioSettings();
+      syncSettings();
+      persist();
+    };
+  }
+
+  // Subpanel: Mixing in DSP Manager
+  const aimpCrossfade = $('#aimp-slider-crossfade');
+  if (aimpCrossfade) {
+    aimpCrossfade.oninput = (e) => {
+      state.crossfade = Number(e.target.value);
+      if ($('#aimp-crossfade-val')) $('#aimp-crossfade-val').textContent = `${state.crossfade} s`;
+      syncSettings();
+      persist();
+    };
+  }
+  const aimpGapless = $('#aimp-check-gapless');
+  if (aimpGapless) {
+    aimpGapless.onchange = (e) => {
+      state.gapless = e.target.checked;
+      audio.preload = state.gapless ? 'auto' : 'metadata';
+      syncSettings();
+      persist();
+    };
+  }
+
+  // Subpanel: Remove Silence in DSP Manager
+  const aimpSkipSilence = $('#aimp-check-skip-silence');
+  if (aimpSkipSilence) {
+    aimpSkipSilence.onchange = (e) => {
+      toast(e.target.checked ? 'Pendeteksi hening aktif.' : 'Pendeteksi hening dinonaktifkan.');
+    };
+  }
+  const aimpSilence = $('#aimp-slider-silence');
+  if (aimpSilence) {
+    aimpSilence.oninput = (e) => {
+      if ($('#aimp-silence-thresh-val')) $('#aimp-silence-thresh-val').textContent = `${e.target.value} dB`;
+    };
+  }
+}
+
 requestAnimationFrame(paintSpectrum);
 window.addEventListener('pagehide', persist);
 async function init() {
   addAdvancedUI(); applyTheme(); applyPanelOrder();
   setupRackControls();
+  setupDspDialog();
   render();
   try { db = await openDB(); const stored = await dbAction('readonly', store => store.getAll()); state.tracks.push(...stored.filter(t => t?.id && t.file instanceof Blob)); const directory = await directoryAction('readonly', store => store.get('music-root')); if (directory?.handle && (await directory.handle.queryPermission({ mode: 'read' })) === 'granted') { const files = await filesFromDirectory(directory.handle); await importFiles(files); } }
   catch { toast('Penyimpanan lokal tidak tersedia. Musik impor hanya tersimpan untuk sesi ini.'); }
