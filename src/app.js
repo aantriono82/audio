@@ -48,6 +48,12 @@ function applyTheme() {
 }
 function applyPanelOrder() {
   const app = $('#app'); const panels = { sidebar: $('.sidebar'), library: $('.library'), now: $('.now-panel') };
+  if (app.classList.contains('full-deck')) {
+    app.style.gridTemplateAreas = `'library now' 'player player'`;
+    app.style.gridTemplateRows = '1fr 112px';
+    app.dataset.panelOrder = 'full-deck';
+    return;
+  }
   state.panelOrder.forEach((name, index) => { if (panels[name]) panels[name].style.gridArea = `slot${index + 1}`; });
   app.style.gridTemplateAreas = `'header header header' 'slot1 slot2 slot3' 'player player player' 'status status status'`;
   app.dataset.panelOrder = state.panelOrder.join('-');
@@ -314,6 +320,7 @@ audio.addEventListener('pause', () => { $('#app').classList.remove('is-playing')
 audio.addEventListener('ended', () => advance(1,true));
 audio.addEventListener('error', () => { if (audio.src) toast('Format audio tidak didukung atau file rusak. Silakan coba file lain.'); });
 $('#play').onclick = togglePlay; $('#previous').onclick = () => advance(-1); $('#next').onclick = () => advance();
+$$('[data-deck-control]').forEach(button => { button.onclick = () => { const target = button.dataset.deckControl === 'stop' ? audio : $(`#${button.dataset.deckControl}`); if (button.dataset.deckControl === 'stop') { audio.pause(); audio.currentTime = 0; updateProgress(); } else target?.click(); }; });
 $('#play-session').textContent = 'Tambah musik';
 $('#play-session').onclick = () => $('#file-input').click();
 $('#seek').oninput = event => { if (loadedId && Number.isFinite(audio.duration)) { audio.currentTime = Number(event.target.value) / 100 * audio.duration; updateProgress(); } };
