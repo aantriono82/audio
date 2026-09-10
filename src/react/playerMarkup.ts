@@ -1,8 +1,8 @@
 export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
   <!-- Top Chassis Screws & Branding Rail -->
   <header class="titlebar rack-titlebar">
-    <div class="brand rack-brand"><span class="brand-emblem">T</span><span>TEAC</span><b>PRECISION HI-FI</b><span class="version">STUDIO RACK SYSTEM</span></div>
-    <div class="title-motto">V-3RX STEREO CASSETTE DECK &amp; DC SERVO AMPLIFIER</div>
+    <div class="brand rack-brand"><span class="brand-emblem">A</span><span>ATIGA</span><b>PRECISION HI-FI</b><span class="version">STUDIO RACK SYSTEM</span></div>
+    <div class="title-motto">AMP STEREO CASSETTE DECK &amp; DC SERVO AMPLIFIER</div>
     <div class="title-actions">
       <span class="local-indicator"><i></i> HIGH FIDELITY</span>
       <button class="icon-button" id="toggle-drawer-top" title="Buka / Tutup Arsip Kaset" aria-label="Buka arsip kaset" data-icon="library"></button>
@@ -17,7 +17,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
     <!-- ========================================================= -->
     <!-- UNIT 1: TEAC V-3RX STEREO CASSETTE DECK                   -->
     <!-- ========================================================= -->
-    <section class="teac-unit teac-cassette-deck" id="cassette-deck-unit" aria-label="TEAC V-3RX Stereo Cassette Deck">
+    <section class="teac-unit teac-cassette-deck" id="cassette-deck-unit" aria-label="ATIGA AMP Stereo Cassette Deck">
       <!-- Chassis Screws -->
       <div class="unit-screw screw-tl"></div>
       <div class="unit-screw screw-tr"></div>
@@ -27,8 +27,8 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
       <!-- Top Silkscreen Header -->
       <div class="deck-header-row">
         <div class="teac-logo-block">
-          <span class="teac-brand-text">TEAC</span>
-          <span class="teac-model-text">V-3RX</span>
+          <span class="teac-brand-text">ATIGA</span>
+          <span class="teac-model-text">AMP</span>
           <span class="teac-sub-text">Stereo Cassette Deck</span>
         </div>
       </div>
@@ -43,15 +43,15 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
               <span class="rocker-lens">POWER</span>
               <span class="rocker-metal"></span>
             </button>
-            <div class="rocker-sublabel">ON <span class="arr-up">▲</span> <span class="arr-down">▼</span> OFF</div>
+            <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
           </div>
 
           <div class="rotary-switch-block" id="deck-source-rotary" title="Source Selector">
-            <div class="rotary-knob knob-small knob-rotary-3pos" data-pos="0">
-              <div class="knob-indicator"></div>
-            </div>
             <div class="rotary-labels">
               <span>A</span><span>B</span><span>C</span>
+            </div>
+            <div class="rotary-knob knob-small knob-rotary-3pos" data-pos="0">
+              <div class="knob-indicator"></div>
             </div>
           </div>
 
@@ -66,13 +66,17 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
         <!-- Deck Center-Left: Cassette Door & BASF Tape -->
         <div class="cassette-door-bay" id="cassette-door-bay">
           <div class="bay-recess">
+            <div class="bay-screw bay-screw-left"></div>
+            <div class="bay-screw bay-screw-right"></div>
             <!-- Cassette Glass Window -->
             <div class="cassette-glass-window">
               <div class="glass-reflection"></div>
               <div class="glass-crosshairs">
-                <span class="ch-h1"></span><span class="ch-h2"></span><span class="ch-v"></span>
+                <span class="ch-h"></span>
+                <span class="ch-v1"></span>
+                <span class="ch-v-mid"></span>
+                <span class="ch-v2"></span>
               </div>
-              <div class="glass-screws"><i></i><i></i><i></i><i></i></div>
 
               <!-- BASF CR-E II 90 Cassette Tape Shell -->
               <div class="basf-cassette" id="basf-cassette">
@@ -126,146 +130,274 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 
         <!-- Deck Center: System/Menu, Digital Red Counter, Piano Keys -->
         <div class="deck-center-console">
-          <!-- Top island buttons: SYSTEM, MENU, AMPLIFIER, DSP & TAPE BIAS/EQ -->
-          <div class="console-subpanel">
-            <div class="sys-btn-grid">
-              <div class="sys-col"><button class="mini-bezel-btn" id="btn-system">SYSTEM</button><span class="col-sub">TAPE (BIAS/EQ)</span></div>
-              <div class="sys-col"><button class="mini-bezel-btn" id="btn-menu">MENU</button><span class="col-sub">NORMAL</span></div>
-              <div class="sys-col"><button class="mini-bezel-btn" id="btn-amplifier">AMPLIFIER</button><span class="col-sub">Co (CrO₂)</span></div>
-              <div class="sys-col"><button class="mini-bezel-btn" id="btn-dsp">DSP</button><span class="col-sub">METAL</span></div>
+          <!-- Top island matrix: SYSTEM / TAPE BIAS/EQ & dbx badge -->
+          <div class="console-matrix-panel">
+            <!-- Row 1: dbx badge aligned to the top right -->
+            <div class="matrix-top-header">
+              <div class="dbx-indicator-badge active" id="dbx-badge" title="dbx Dynamic Noise Reduction System" role="button" tabindex="0" aria-label="dbx Noise Reduction">
+                <span>dbx</span>
+              </div>
             </div>
-            <!-- Green DBX Badge -->
-            <div class="dbx-indicator-badge active" id="dbx-badge" title="dbx Dynamic Noise Reduction System">
-              <span>dbx</span>
+
+            <!-- Row 2: Push buttons for Menu, Amplifier, DSP -->
+            <div class="matrix-btn-row matrix-btn-row-top">
+              <div class="matrix-spacer"></div>
+              <div class="matrix-btn-cell">
+                <button class="matrix-btn" id="btn-menu" aria-label="Menu" title="Menu"></button>
+              </div>
+              <div class="matrix-btn-cell">
+                <button class="matrix-btn" id="btn-amplifier" aria-label="Amplifier" title="Amplifier"></button>
+              </div>
+              <div class="matrix-btn-cell">
+                <button class="matrix-btn" id="btn-dsp" aria-label="DSP" title="DSP"></button>
+              </div>
+            </div>
+
+            <!-- Row 3: Printed Matrix Legend Plaque -->
+            <div class="matrix-chart-card">
+              <div class="chart-row chart-row-top">
+                <div class="chart-col-head">SYSTEM</div>
+                <div class="chart-col-cell">MENU</div>
+                <div class="chart-col-cell">AMPLIFIER</div>
+                <div class="chart-col-cell">DSP</div>
+              </div>
+              <div class="chart-row chart-row-bottom">
+                <div class="chart-col-head">TAPE (BIAS/EQ)</div>
+                <div class="chart-col-cell">NORMAL</div>
+                <div class="chart-col-cell">Co (CrO₂)</div>
+                <div class="chart-col-cell">METAL</div>
+              </div>
+            </div>
+
+            <!-- Row 4: Push buttons for Normal, CrO2, Metal -->
+            <div class="matrix-btn-row matrix-btn-row-bottom">
+              <div class="matrix-spacer"></div>
+              <div class="matrix-btn-cell">
+                <button class="matrix-btn active" id="btn-tape-normal" aria-label="Tape Normal" title="Normal Bias/EQ"></button>
+              </div>
+              <div class="matrix-btn-cell">
+                <button class="matrix-btn" id="btn-tape-cro2" aria-label="Tape CrO2" title="CrO2 Bias/EQ"></button>
+              </div>
+              <div class="matrix-btn-cell">
+                <button class="matrix-btn" id="btn-tape-metal" aria-label="Tape Metal" title="Metal Bias/EQ"></button>
+              </div>
             </div>
           </div>
 
           <!-- Digital LED Tape Counter & Reset Knob -->
           <div class="tape-counter-row">
-            <div class="counter-recess">
+            <div class="counter-display-module">
               <span class="counter-legend">TAPE COUNTER</span>
-              <div class="seven-segment-display" id="digital-counter" aria-label="Penghitung pita kaset">
-                <span class="seg-digit" id="counter-m1">0</span>
-                <span class="seg-digit" id="counter-m2">0</span>
-                <span class="seg-colon">:</span>
-                <span class="seg-digit" id="counter-s1">0</span>
-                <span class="seg-digit" id="counter-s2">0</span>
+              <div class="counter-cluster">
+                <div class="seven-segment-display" id="digital-counter" aria-label="Penghitung pita kaset">
+                  <span class="seg-digit" id="counter-m1">0</span>
+                  <span class="seg-digit" id="counter-m2">0</span>
+                  <span class="seg-dot">.</span>
+                  <span class="seg-digit" id="counter-s1">1</span>
+                  <span class="seg-digit" id="counter-s2">7</span>
+                </div>
+                <button class="counter-reset-rect" id="counter-reset-btn" title="Reset Counter" aria-label="Atur ulang penghitung"></button>
               </div>
             </div>
-            <div class="counter-knob-block">
+            <div class="counter-knob-module">
               <span class="knob-label-mini">COUNT<br>H.M<br>TIME</span>
-              <button class="knob-rotary-reset" id="counter-reset-btn" title="Reset Counter" aria-label="Atur ulang penghitung"></button>
+              <div class="knob-counter-mode" id="counter-mode-knob">
+                <div class="counter-knob-notch"></div>
+              </div>
             </div>
           </div>
 
           <!-- Tactile Piano Transport Keys -->
           <div class="piano-transport-bank" aria-label="Kontrol transport pemutar kaset">
-            <!-- REW Key -->
-            <button class="piano-key" id="previous" data-deck-control="previous" title="Mundur / Lagu Sebelumnya" aria-label="Lagu sebelumnya">
-              <span class="piano-symbol">◄◄</span>
-            </button>
-            <!-- STOP Key -->
-            <button class="piano-key" id="stop-btn" data-deck-control="stop" title="Berhenti" aria-label="Berhenti">
+            <div class="piano-btn-col col-rew">
+              <span class="piano-label">◄◄</span>
+              <button class="piano-key key-narrow" id="previous" data-deck-control="previous" title="Mundur / Lagu Sebelumnya" aria-label="Lagu sebelumnya"></button>
+            </div>
+            <div class="piano-btn-col col-stop">
               <span class="piano-label">STOP</span>
-            </button>
-            <!-- PLAY Key (wider key) -->
-            <button class="piano-key piano-key-wide" id="play" data-deck-control="play" title="Putar / Jeda" aria-label="Putar">
-              <span class="piano-symbol">►</span>
-            </button>
-            <!-- FF Key -->
-            <button class="piano-key" id="next" data-deck-control="next" title="Maju / Lagu Berikutnya" aria-label="Lagu berikutnya">
-              <span class="piano-symbol">►►</span>
-            </button>
-            <!-- REC Key -->
-            <button class="piano-key key-rec" id="rec-btn" data-deck-control="rec" title="Rekam / Impor file audio" aria-label="Impor audio">
+              <button class="piano-key key-wide" id="stop-btn" data-deck-control="stop" title="Berhenti" aria-label="Berhenti"></button>
+            </div>
+            <div class="piano-btn-col col-play">
+              <span class="piano-label">►</span>
+              <button class="piano-key key-wide active" id="play" data-deck-control="play" title="Putar / Jeda" aria-label="Putar"></button>
+            </div>
+            <div class="piano-btn-col col-ff">
+              <span class="piano-label">►►</span>
+              <button class="piano-key key-narrow" id="next" data-deck-control="next" title="Maju / Lagu Berikutnya" aria-label="Lagu berikutnya"></button>
+            </div>
+            <div class="piano-btn-col col-rec">
               <span class="piano-label">REC</span>
-            </button>
-            <!-- LOOP Key -->
-            <button class="piano-key" id="repeat" data-deck-control="loop" title="Ulangi pemutaran" aria-label="Ulangi: mati">
+              <button class="piano-key key-narrow key-rec" id="rec-btn" data-deck-control="rec" title="Rekam / Impor file audio" aria-label="Impor audio"></button>
+            </div>
+            <div class="piano-btn-col col-loop">
               <span class="piano-label">LOOP</span>
-            </button>
-            <!-- PAUSE Key -->
-            <button class="piano-key" id="pause-btn" data-deck-control="pause" title="Jeda pemutaran" aria-label="Jeda">
+              <button class="piano-key key-narrow" id="repeat" data-deck-control="loop" title="Ulangi pemutaran" aria-label="Ulangi: mati"></button>
+            </div>
+            <div class="piano-btn-col col-pause">
               <span class="piano-label">PAUSE</span>
-            </button>
+              <button class="piano-key key-narrow" id="pause-btn" data-deck-control="pause" title="Jeda pemutaran" aria-label="Jeda"></button>
+            </div>
           </div>
         </div>
 
+        <!-- Deck Right-Center: Twin Vertical Edge VU Meters -->
         <!-- Deck Right-Center: Twin Vertical Edge VU Meters -->
         <div class="deck-vu-section">
           <div class="twin-vu-housing">
             <!-- Left Channel Meter -->
             <div class="vertical-vu-meter meter-left" id="vu-meter-l">
+              <div class="vu-glass-sheen"></div>
               <span class="meter-channel-tag">LEFT CHANNEL</span>
               <div class="meter-dial-face">
-                <div class="vu-graduations">
-                  <div class="scale-red-zone">
-                    <span>+5</span><span>+3</span><span>0</span>
-                  </div>
-                  <div class="scale-green-zone">
-                    <span>3</span><span>5</span><span>7</span><span>10</span><span>20</span>
+                <div class="vu-scale-graphic">
+                  <svg class="vu-scale-svg" viewBox="0 0 76 130">
+                    <path class="scale-arc-green" d="M 46 115 C 41 85, 40 55, 43 36" fill="none" stroke="#16a34a" stroke-width="2.5" />
+                    <path class="scale-arc-red" d="M 43 36 C 44 26, 46 16, 49 8" fill="none" stroke="#dc2626" stroke-width="2.5" />
+                    <line x1="39" y1="36" x2="47" y2="36" stroke="#000" stroke-width="1.5" />
+                  </svg>
+                  <div class="vu-scale-nums">
+                    <div class="sc-red">
+                      <span>5</span>
+                      <span>3</span>
+                      <span class="sc-zero">0</span>
+                    </div>
+                    <div class="sc-green">
+                      <span>3</span>
+                      <span>5</span>
+                      <span>7</span>
+                      <span>10</span>
+                      <span>20</span>
+                    </div>
                   </div>
                 </div>
-                <div class="vu-arc-line"></div>
                 <div class="vu-analog-needle" id="vu-needle-left"></div>
               </div>
-              <span class="meter-foot-label">dB<br><small>PEAK LEVEL</small></span>
+              <div class="meter-footer-tag">
+                <span class="db-txt">dB</span>
+                <span class="peak-txt">PEAK LEVEL</span>
+              </div>
             </div>
 
             <!-- Right Channel Meter -->
             <div class="vertical-vu-meter meter-right" id="vu-meter-r">
+              <div class="vu-glass-sheen"></div>
               <span class="meter-channel-tag">RIGHT CHANNEL</span>
               <div class="meter-dial-face">
-                <div class="vu-graduations">
-                  <div class="scale-red-zone">
-                    <span>+5</span><span>+3</span><span>0</span>
-                  </div>
-                  <div class="scale-green-zone">
-                    <span>3</span><span>5</span><span>7</span><span>10</span><span>20</span>
+                <div class="vu-scale-graphic">
+                  <svg class="vu-scale-svg" viewBox="0 0 76 130">
+                    <path class="scale-arc-green" d="M 30 115 C 35 85, 36 55, 33 36" fill="none" stroke="#16a34a" stroke-width="2.5" />
+                    <path class="scale-arc-red" d="M 33 36 C 32 26, 30 16, 27 8" fill="none" stroke="#dc2626" stroke-width="2.5" />
+                    <line x1="29" y1="36" x2="37" y2="36" stroke="#000" stroke-width="1.5" />
+                  </svg>
+                  <div class="vu-scale-nums">
+                    <div class="sc-red">
+                      <span>5</span>
+                      <span>3</span>
+                      <span class="sc-zero">0</span>
+                    </div>
+                    <div class="sc-green">
+                      <span>3</span>
+                      <span>5</span>
+                      <span>7</span>
+                      <span>10</span>
+                      <span>20</span>
+                    </div>
                   </div>
                 </div>
-                <div class="vu-arc-line"></div>
                 <div class="vu-analog-needle" id="vu-needle-right"></div>
               </div>
-              <span class="meter-foot-label">dB<br><small>PEAK LEVEL</small></span>
+              <div class="meter-footer-tag">
+                <span class="db-txt">dB</span>
+                <span class="peak-txt">PEAK LEVEL</span>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Deck Far Right: Concentric Volume/Balance, Mute, Mic & Phone Jacks -->
+        <!-- Deck Far Right: Concentric Volume/Balance, Mute, Mic & Phone Jacks -->
         <div class="deck-right-controls">
           <div class="dual-concentric-knob-module">
-            <span class="knob-title-top">VOLUME <span class="dot-sep">•</span> BALANCE</span>
-            <div class="concentric-dial-scale">
-              <div class="scale-tick t0">0</div>
-              <div class="scale-tick t1">1</div>
-              <div class="scale-tick t2">2</div>
-              <div class="scale-tick t3">3</div>
-              <div class="scale-tick t4">4</div>
-              <div class="scale-tick t5">5</div>
-              <div class="scale-tick t6">6</div>
-              <div class="scale-tick t7">7</div>
-              <div class="scale-tick t8">8</div>
-              <div class="scale-tick t9">9</div>
-              <div class="scale-tick t10">10</div>
+            <div class="volume-balance-header">
+              <span class="vb-txt">VOLUME</span>
+              <span class="vb-concentric-symbol">
+                <i class="vb-line-left"></i>
+                <i class="vb-outer-circle"></i>
+                <i class="vb-inner-dot"></i>
+                <i class="vb-line-right"></i>
+              </span>
+              <span class="vb-txt">BALANCE</span>
             </div>
-            <div class="knob-metal-body knob-large-dial" id="deck-volume-knob" title="Putar atau drag untuk mengubah volume">
-              <div class="knob-red-indicator" id="deck-vol-pointer"></div>
+
+            <div class="concentric-dial-outer">
+              <!-- Outer scale collar with 0..10 and radial ticks -->
+              <div class="concentric-dial-scale">
+                <span class="scale-tick sn0">0</span>
+                <span class="scale-tick sn1">1</span>
+                <span class="scale-tick sn2">2</span>
+                <span class="scale-tick sn3">3</span>
+                <span class="scale-tick sn4">4</span>
+                <span class="scale-tick sn5">5</span>
+                <span class="scale-tick sn6">6</span>
+                <span class="scale-tick sn7">7</span>
+                <span class="scale-tick sn8">8</span>
+                <span class="scale-tick sn9">9</span>
+                <span class="scale-tick sn10">10</span>
+
+                <div class="dial-radial-ticks">
+                  <i class="d-tick dt-m121"></i>
+                  <i class="d-tick dt-m94"></i>
+                  <i class="d-tick dt-m67"></i>
+                  <i class="d-tick dt-m40"></i>
+                  <i class="d-tick dt-m13"></i>
+                  <i class="d-tick dt-p13"></i>
+                  <i class="d-tick dt-p40"></i>
+                  <i class="d-tick dt-p67"></i>
+                  <i class="d-tick dt-p94"></i>
+                  <i class="d-tick dt-p121"></i>
+                </div>
+
+                <!-- Raised balance index tab with red vertical line at 10:30 -->
+                <div class="balance-index-tab">
+                  <div class="balance-red-line"></div>
+                </div>
+              </div>
+
+              <!-- Inner rotatable 102px volume knob -->
+              <div class="knob-concentric-housing">
+                <div class="knob-metal-body knob-large-dial" id="deck-volume-knob" title="Putar atau drag untuk mengubah volume">
+                  <div class="knob-face-wedge"></div>
+                  <div class="knob-indicator-notch" id="deck-vol-pointer"></div>
+                </div>
+              </div>
+
+              <!-- MUTE push switch nestled right at the bottom edge of the dial -->
+              <div class="deck-mute-module">
+                <div class="mute-switch-socket">
+                  <button class="push-rect-switch" id="mute" aria-label="Bisukan suara" aria-pressed="false">
+                    <span class="switch-pip"></span>
+                  </button>
+                </div>
+                <span class="switch-title">MUTE</span>
+                <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
+              </div>
             </div>
           </div>
 
-          <div class="deck-mute-module">
-            <span class="switch-title">MUTE</span>
-            <button class="push-rect-switch" id="mute" aria-label="Bisukan suara" aria-pressed="false">
-              <span class="switch-pip"></span>
-            </button>
-            <span class="switch-state-text">ON <span class="arr-up">▲</span> <span class="arr-down">▼</span> OFF</span>
-          </div>
-
+          <!-- Bottom 3 jacks -->
           <div class="jack-socket-row">
-            <div class="jack-item"><div class="phone-jack-socket"><i></i></div><span>L MIC</span></div>
-            <div class="jack-item"><div class="phone-jack-socket"><i></i></div><span>R</span></div>
-            <div class="jack-item"><div class="phone-jack-socket jack-phones"><i></i></div><span>PHONES</span></div>
+            <div class="jack-item">
+              <div class="phone-jack-socket"><i></i></div>
+              <span class="jack-label">L</span>
+            </div>
+            <div class="jack-item">
+              <div class="phone-jack-socket"><i></i></div>
+              <span class="jack-label">MIC &nbsp; R</span>
+            </div>
+            <div class="jack-item">
+              <div class="phone-jack-socket jack-phones"><i></i></div>
+              <span class="jack-label">PHONES</span>
+            </div>
           </div>
         </div>
 
@@ -278,7 +410,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
     <!-- ========================================================= -->
     <!-- UNIT 2: TEAC INTEGRATED DC SERVO AMPLIFIER                -->
     <!-- ========================================================= -->
-    <section class="teac-unit teac-amplifier" id="amplifier-unit" aria-label="TEAC Integrated DC Servo Amplifier">
+    <section class="teac-unit teac-amplifier" id="amplifier-unit" aria-label="ATIGA Integrated DC Servo Amplifier">
       <!-- Chassis Screws -->
       <div class="unit-screw screw-tl"></div>
       <div class="unit-screw screw-tr"></div>
@@ -288,7 +420,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
       <!-- Amplifier Header Silkscreen -->
       <div class="amp-header-row">
         <div class="teac-logo-block">
-          <span class="teac-brand-text">TEAC</span>
+          <span class="teac-brand-text">ATIGA</span>
           <span class="teac-sub-text">Integrated DC Servo Amplifier</span>
         </div>
       </div>
@@ -303,75 +435,131 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
               <span class="rocker-lens">POWER</span>
               <span class="rocker-metal"></span>
             </button>
-            <div class="rocker-sublabel">ON <span class="arr-up">▲</span> <span class="arr-down">▼</span> OFF</div>
+            <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
           </div>
           <div class="jack-item amp-phone-jack">
+            <span class="jack-label">PHONES</span>
             <div class="phone-jack-socket"><i></i></div>
-            <span>PHONES</span>
           </div>
         </div>
 
         <!-- Amp Center-Left: VFD / LED Output Power Watts Meter Display -->
         <div class="amp-vfd-display-panel">
           <div class="vfd-bezel-recess">
-            <div class="vfd-inner-screen">
-              <!-- Scale markings in Watts -->
-              <div class="watts-scale-row">
-                <span>.003</span><span>.015</span><span>0.04</span><span>0.1</span><span>0.3</span><span>0.7</span><span>2</span><span>5</span><span>10</span><span>20</span><span>40</span><span>80</span>
-                <span class="watts-unit">WATTS</span>
-              </div>
-
-              <!-- Left Channel Bar -->
-              <div class="watts-channel-row">
-                <span class="ch-label">LEFT</span>
-                <div class="watts-bar-track" id="watts-track-left">
-                  <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
-                  <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
-                  <div class="watts-seg amber"></div><div class="watts-seg amber"></div><div class="watts-seg amber"></div>
-                  <div class="watts-seg red"></div><div class="watts-seg red"></div><div class="watts-seg red"></div>
+            <div class="vfd-screen-frame">
+              <div class="vfd-glass-streak"></div>
+              <div class="vfd-inner-screen">
+                <!-- Scale markings in Watts with vertical grid ticks -->
+                <div class="watts-scale-row">
+                  <div class="watts-col"><span>.003</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>.015</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>0.04</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>0.1</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>0.3</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>0.7</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>2</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>5</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>10</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>20</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>40</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>80</span><i class="w-tick"></i></div>
+                  <div class="watts-col watts-col-unit"><span class="w-sep">|</span><span class="watts-unit">WATTS</span></div>
                 </div>
-                <span class="peak-text">PEAK</span>
-              </div>
 
-              <!-- Center Graticule Ticks -->
-              <div class="vfd-center-graticule">
-                <span>||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||</span>
-              </div>
-
-              <!-- Right Channel Bar -->
-              <div class="watts-channel-row">
-                <span class="ch-label">RIGHT</span>
-                <div class="watts-bar-track" id="watts-track-right">
-                  <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
-                  <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
-                  <div class="watts-seg amber"></div><div class="watts-seg amber"></div><div class="watts-seg amber"></div>
-                  <div class="watts-seg red"></div><div class="watts-seg red"></div><div class="watts-seg red"></div>
+                <!-- Left Channel Bar -->
+                <div class="watts-channel-row">
+                  <span class="ch-label">LEFT</span>
+                  <div class="watts-bar-track" id="watts-track-left">
+                    <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
+                    <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
+                    <div class="watts-seg amber"></div><div class="watts-seg amber"></div><div class="watts-seg amber"></div>
+                    <div class="watts-seg red"></div><div class="watts-seg red"></div><div class="watts-seg red"></div>
+                  </div>
+                  <div class="ch-status-indicator">
+                    <i class="vfd-led-dot active" id="dot-peak"></i>
+                    <span class="peak-text">PEAK</span>
+                  </div>
                 </div>
-                <span class="vu-text">VU</span>
-              </div>
 
-              <!-- Indicator Lamps: LEFT, RIGHT, STEREO, EQUALIZER, MUTE -->
-              <div class="amp-indicator-lamps">
-                <div class="amp-lamp-item"><i class="lamp-dot green active"></i><span>LEFT</span></div>
-                <div class="amp-lamp-item"><i class="lamp-dot green active"></i><span>RIGHT</span></div>
-                <div class="amp-lamp-item"><i class="lamp-dot green active"></i><span>STEREO</span></div>
-                <div class="amp-lamp-item"><i class="lamp-dot amber" id="lamp-equalizer"></i><span>EQUALIZER</span></div>
-                <div class="amp-lamp-item"><i class="lamp-dot red" id="lamp-mute"></i><span>MUTE</span></div>
+                <!-- Center Graticule Ticks -->
+                <div class="vfd-center-graticule">
+                  <div class="graticule-axis">
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i></div>
+                  </div>
+                </div>
+
+                <!-- Right Channel Bar -->
+                <div class="watts-channel-row">
+                  <span class="ch-label">RIGHT</span>
+                  <div class="watts-bar-track" id="watts-track-right">
+                    <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
+                    <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
+                    <div class="watts-seg amber"></div><div class="watts-seg amber"></div><div class="watts-seg amber"></div>
+                    <div class="watts-seg red"></div><div class="watts-seg red"></div><div class="watts-seg red"></div>
+                  </div>
+                  <div class="ch-status-indicator">
+                    <span class="vu-text">VU</span>
+                    <i class="vfd-led-dot active" id="dot-vu"></i>
+                  </div>
+                </div>
+
+                <!-- Bottom Graticule Ticks below Right Channel -->
+                <div class="vfd-bottom-ticks">
+                  <div class="gr-bot-tick"></div><div class="gr-bot-tick"></div><div class="gr-bot-tick"></div>
+                  <div class="gr-bot-tick"></div><div class="gr-bot-tick"></div><div class="gr-bot-tick"></div>
+                  <div class="gr-bot-tick"></div><div class="gr-bot-tick"></div><div class="gr-bot-tick"></div>
+                  <div class="gr-bot-tick"></div><div class="gr-bot-tick"></div><div class="gr-bot-tick"></div>
+                </div>
+
+                <!-- Indicator Lamps / Status Cells -->
+                <div class="amp-indicator-lamps">
+                  <div class="amp-lamp-item"><i class="lamp-dot green active" id="lamp-left"></i><span>LEFT</span></div>
+                  <div class="amp-lamp-item"><i class="lamp-dot green active" id="lamp-right"></i><span>RIGHT</span></div>
+                  <div class="amp-lamp-item"><i class="lamp-dot green active" id="lamp-stereo"></i><span>STEREO</span></div>
+                  <div class="amp-lamp-item"><i class="lamp-dot amber" id="lamp-equalizer"></i><span>EQUALIZER</span></div>
+                  <div class="amp-lamp-item"><i class="lamp-dot red" id="lamp-mute"></i><span>MUTE</span></div>
+                </div>
               </div>
             </div>
 
             <!-- Lower Buttons on the VFD Bezel: SPEAKERS & DISPLAY -->
             <div class="vfd-lower-push-buttons">
               <div class="speaker-btn-group">
-                <button class="bezel-push-tab active" id="spk-left">LEFT</button>
-                <button class="bezel-push-tab active" id="spk-right">RIGHT</button>
-                <button class="bezel-push-tab active" id="spk-stereo">STEREO</button>
-                <span class="btn-group-label">SPEAKERS</span>
+                <div class="bezel-btn-cell">
+                  <span class="bezel-btn-label">LEFT</span>
+                  <button class="bezel-push-tab active" id="spk-left" aria-label="Speaker Left"></button>
+                </div>
+                <div class="bezel-btn-cell">
+                  <span class="bezel-btn-label">RIGHT</span>
+                  <button class="bezel-push-tab active" id="spk-right" aria-label="Speaker Right"></button>
+                </div>
+                <div class="bezel-btn-cell">
+                  <span class="bezel-btn-label">STEREO</span>
+                  <button class="bezel-push-tab active" id="spk-stereo" aria-label="Speaker Stereo"></button>
+                </div>
+                <span class="btn-group-title">SPEAKERS</span>
               </div>
               <div class="display-btn-group">
-                <span class="btn-group-label">DISPLAY</span>
-                <button class="bezel-push-tab" id="dsp-vu">VU</button>
-                <button class="bezel-push-tab active" id="dsp-peak">PEAK</button>
+                <span class="btn-group-title">DISPLAY</span>
+                <div class="bezel-btn-cell">
+                  <span class="bezel-btn-label">VU</span>
+                  <button class="bezel-push-tab" id="dsp-vu" aria-label="Display VU"></button>
+                </div>
+                <div class="bezel-btn-cell">
+                  <span class="bezel-btn-label">PEAK</span>
+                  <button class="bezel-push-tab active" id="dsp-peak" aria-label="Display Peak"></button>
+                </div>
               </div>
             </div>
           </div>
@@ -383,99 +571,191 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           <!-- Top Row of Knobs: BASS, TREBLE, PREAMP, BALANCE -->
           <div class="amp-top-knob-row">
             <!-- BASS Knob -->
-            <div class="rotary-control-module">
+            <div class="rotary-control-module tone-large-module">
               <span class="knob-label">BASS</span>
-              <div class="knob-scale-arc">
-                <span>12</span><span>3</span><span>0</span><span>3</span><span>12</span>
+              <div class="tone-dial-housing">
+                <div class="knob-scale-arc tone-scale-9">
+                  <span class="sc-num sc-m12">12</span>
+                  <i class="sc-tick st-m126"></i>
+                  <span class="sc-num sc-m9">9</span>
+                  <i class="sc-tick st-m90"></i>
+                  <span class="sc-num sc-m6">6</span>
+                  <i class="sc-tick st-m54"></i>
+                  <span class="sc-num sc-m3">3</span>
+                  <i class="sc-tick st-m18"></i>
+                  <span class="sc-num sc-0">0</span>
+                  <i class="sc-tick st-p18"></i>
+                  <span class="sc-num sc-p3">3</span>
+                  <i class="sc-tick st-p54"></i>
+                  <span class="sc-num sc-p6">6</span>
+                  <i class="sc-tick st-p90"></i>
+                  <span class="sc-num sc-p9">9</span>
+                  <i class="sc-tick st-p126"></i>
+                  <span class="sc-num sc-p12">12</span>
+                  <i class="sc-tick st-m162"></i>
+                  <i class="sc-tick st-p162"></i>
+                </div>
+                <div class="knob-metal-body knob-medium" id="knob-bass" data-param="bass" title="Pengatur Bas (-12 s/d +12 dB)">
+                  <div class="knob-indicator-line"></div>
+                </div>
               </div>
-              <div class="knob-metal-body knob-medium" id="knob-bass" data-param="bass" title="Pengatur Bas (-12 s/d +12 dB)">
-                <div class="knob-indicator-line"></div>
-              </div>
-              <span class="knob-sub-sign">−&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+</span>
+              <div class="knob-sub-signs"><span>−</span><span>+</span></div>
             </div>
 
             <!-- TREBLE Knob -->
-            <div class="rotary-control-module">
+            <div class="rotary-control-module tone-large-module">
               <span class="knob-label">TREBLE</span>
-              <div class="knob-scale-arc">
-                <span>12</span><span>3</span><span>0</span><span>3</span><span>12</span>
+              <div class="tone-dial-housing">
+                <div class="knob-scale-arc tone-scale-9">
+                  <span class="sc-num sc-m12">12</span>
+                  <i class="sc-tick st-m126"></i>
+                  <span class="sc-num sc-m9">9</span>
+                  <i class="sc-tick st-m90"></i>
+                  <span class="sc-num sc-m6">6</span>
+                  <i class="sc-tick st-m54"></i>
+                  <span class="sc-num sc-m3">3</span>
+                  <i class="sc-tick st-m18"></i>
+                  <span class="sc-num sc-0">0</span>
+                  <i class="sc-tick st-p18"></i>
+                  <span class="sc-num sc-p3">3</span>
+                  <i class="sc-tick st-p54"></i>
+                  <span class="sc-num sc-p6">6</span>
+                  <i class="sc-tick st-p90"></i>
+                  <span class="sc-num sc-p9">9</span>
+                  <i class="sc-tick st-p126"></i>
+                  <span class="sc-num sc-p12">12</span>
+                  <i class="sc-tick st-m162"></i>
+                  <i class="sc-tick st-p162"></i>
+                </div>
+                <div class="knob-metal-body knob-medium" id="knob-treble" data-param="treble" title="Pengatur Treble (-12 s/d +12 dB)">
+                  <div class="knob-indicator-line"></div>
+                </div>
               </div>
-              <div class="knob-metal-body knob-medium" id="knob-treble" data-param="treble" title="Pengatur Treble (-12 s/d +12 dB)">
-                <div class="knob-indicator-line"></div>
-              </div>
-              <span class="knob-sub-sign">−&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+</span>
+              <div class="knob-sub-signs"><span>−</span><span>+</span></div>
             </div>
 
             <!-- PREAMP Knob -->
-            <div class="rotary-control-module">
+            <div class="rotary-control-module tone-large-module">
               <span class="knob-label">PREAMP</span>
-              <div class="knob-scale-arc">
-                <span>12</span><span>3</span><span>0</span><span>3</span><span>12</span>
+              <div class="tone-dial-housing">
+                <div class="knob-scale-arc tone-scale-9">
+                  <span class="sc-num sc-m12">12</span>
+                  <i class="sc-tick st-m126"></i>
+                  <span class="sc-num sc-m9">9</span>
+                  <i class="sc-tick st-m90"></i>
+                  <span class="sc-num sc-m6">6</span>
+                  <i class="sc-tick st-m54"></i>
+                  <span class="sc-num sc-m3">3</span>
+                  <i class="sc-tick st-m18"></i>
+                  <span class="sc-num sc-0">0</span>
+                  <i class="sc-tick st-p18"></i>
+                  <span class="sc-num sc-p3">3</span>
+                  <i class="sc-tick st-p54"></i>
+                  <span class="sc-num sc-p6">6</span>
+                  <i class="sc-tick st-p90"></i>
+                  <span class="sc-num sc-p9">9</span>
+                  <i class="sc-tick st-p126"></i>
+                  <span class="sc-num sc-p12">12</span>
+                  <i class="sc-tick st-m162"></i>
+                  <i class="sc-tick st-p162"></i>
+                </div>
+                <div class="knob-metal-body knob-medium" id="knob-preamp" data-param="preamp" title="Pengatur Preamp (-12 s/d +12 dB)">
+                  <div class="knob-indicator-line"></div>
+                </div>
               </div>
-              <div class="knob-metal-body knob-medium" id="knob-preamp" data-param="preamp" title="Pengatur Preamp (-12 s/d +12 dB)">
-                <div class="knob-indicator-line"></div>
-              </div>
-              <span class="knob-sub-sign">−&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+</span>
+              <div class="knob-sub-signs"><span>−</span><span>+</span></div>
             </div>
 
             <!-- BALANCE Knob -->
-            <div class="rotary-control-module">
+            <div class="rotary-control-module tone-large-module">
               <span class="knob-label">BALANCE</span>
-              <div class="knob-scale-arc">
-                <span>2</span><span>1</span><span>0</span><span>1</span><span>2</span>
+              <div class="tone-dial-housing">
+                <div class="knob-scale-arc tone-scale-balance">
+                  <span class="sc-num sc-b8l">8</span>
+                  <i class="sc-tick st-m126"></i>
+                  <span class="sc-num sc-b6l">6</span>
+                  <i class="sc-tick st-m90"></i>
+                  <span class="sc-num sc-b4l">4</span>
+                  <i class="sc-tick st-m54"></i>
+                  <span class="sc-num sc-b2l">2</span>
+                  <i class="sc-tick st-m18"></i>
+                  <span class="sc-num sc-b0">0</span>
+                  <i class="sc-tick st-p18"></i>
+                  <span class="sc-num sc-b2r">2</span>
+                  <i class="sc-tick st-p54"></i>
+                  <span class="sc-num sc-b4r">4</span>
+                  <i class="sc-tick st-p90"></i>
+                  <span class="sc-num sc-b6r">6</span>
+                  <i class="sc-tick st-p126"></i>
+                  <span class="sc-num sc-b8r">8</span>
+                  <i class="sc-tick st-m162"></i>
+                  <i class="sc-tick st-p162"></i>
+                </div>
+                <div class="knob-metal-body knob-medium" id="knob-balance" data-param="balance" title="Keseimbangan Kiri / Kanan">
+                  <div class="knob-indicator-line"></div>
+                </div>
               </div>
-              <div class="knob-metal-body knob-medium" id="knob-balance" data-param="balance" title="Keseimbangan Kiri / Kanan">
-                <div class="knob-indicator-line"></div>
-              </div>
-              <span class="knob-sub-sign">L&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R</span>
+              <div class="knob-sub-signs"><span>L</span><span>R</span></div>
             </div>
           </div>
 
-          <!-- Bottom Row: EQUALIZER/DSP, TRUE BASS, ENHANCER, REVERB, MUTE -->
+          <!-- Bottom Row: EQUALIZER/DSP dual keys, TRUE BASS, ENHANCER, REVERB, MUTE -->
           <div class="amp-bottom-knob-row">
-            <!-- EQUALIZER / DSP Switch -->
-            <div class="amp-switch-module">
+            <!-- Dual Push Keys: EQUALIZER and DSP -->
+            <div class="amp-switch-module amp-dual-keys-block">
               <div class="switch-head-labels"><span>EQUALIZER</span><span>DSP</span></div>
-              <button class="horiz-slider-switch" id="switch-eq-dsp" title="Buka Ekualiser 10-Band / DSP">
-                <span class="slider-thumb"></span>
-              </button>
-              <div class="rocker-sublabel">ON <span class="arr-up">▲</span> <span class="arr-down">▼</span> OFF</div>
+              <div class="amp-dual-keys-housing" id="switch-eq-dsp" title="Buka Ekualiser 10-Band / DSP">
+                <button class="amp-dual-key-btn active" id="btn-amp-eq"><span></span></button>
+                <button class="amp-dual-key-btn" id="btn-amp-dsp"><span></span></button>
+              </div>
+              <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
             </div>
 
             <!-- TRUE BASS Knob -->
             <div class="rotary-control-module mini-module">
+              <div class="mini-dial-ticks">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </div>
               <div class="knob-metal-body knob-small" id="knob-true-bass" data-param="truebass" title="True Bass Enhancer">
                 <div class="knob-indicator-line"></div>
               </div>
-              <span class="knob-sub-sign">−&nbsp;&nbsp;&nbsp;+</span>
+              <div class="knob-sub-signs mini-signs"><span>−</span><span>+</span></div>
               <span class="knob-label-bottom">TRUE BASS</span>
             </div>
 
             <!-- ENHANCER Knob -->
             <div class="rotary-control-module mini-module">
+              <div class="mini-dial-ticks">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </div>
               <div class="knob-metal-body knob-small" id="knob-enhancer" data-param="enhancer" title="Sound Enhancer / Clarity">
                 <div class="knob-indicator-line"></div>
               </div>
-              <span class="knob-sub-sign">−&nbsp;&nbsp;&nbsp;+</span>
+              <div class="knob-sub-signs mini-signs"><span>−</span><span>+</span></div>
               <span class="knob-label-bottom">ENHANCER</span>
             </div>
 
             <!-- REVERB Knob -->
             <div class="rotary-control-module mini-module">
+              <div class="mini-dial-ticks">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </div>
               <div class="knob-metal-body knob-small" id="knob-reverb" data-param="reverb" title="Studio Reverb Effect">
                 <div class="knob-indicator-line"></div>
               </div>
-              <span class="knob-sub-sign">−&nbsp;&nbsp;&nbsp;+</span>
+              <div class="knob-sub-signs mini-signs"><span>−</span><span>+</span></div>
               <span class="knob-label-bottom">REVERB</span>
             </div>
 
-            <!-- MUTE Switch -->
+            <!-- MUTE Push Switch -->
             <div class="amp-switch-module amp-mute-block">
               <span class="switch-head-labels">MUTE</span>
-              <button class="push-rect-switch" id="amp-mute-switch" title="Bisukan Suara">
-                <span class="switch-pip"></span>
-              </button>
-              <div class="rocker-sublabel">ON <span class="arr-up">▲</span> <span class="arr-down">▼</span> OFF</div>
+              <div class="amp-mute-recess">
+                <button class="push-rect-switch" id="amp-mute-switch" title="Bisukan Suara">
+                  <span class="switch-pip"></span>
+                </button>
+              </div>
+              <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
             </div>
           </div>
 
@@ -483,22 +763,39 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 
         <!-- Amp Far Right: GIANT MASTER VOLUME KNOB -->
         <div class="amp-master-volume-section">
-          <span class="master-vol-title">VOLUME</span>
-          <div class="giant-knob-dial-scale">
-            <span class="gv-tick gv0">0</span>
-            <span class="gv-tick gv1">1</span>
-            <span class="gv-tick gv2">2</span>
-            <span class="gv-tick gv3">3</span>
-            <span class="gv-tick gv4">4</span>
-            <span class="gv-tick gv5">5</span>
-            <span class="gv-tick gv6">6</span>
-            <span class="gv-tick gv7">7</span>
-            <span class="gv-tick gv8">8</span>
-            <span class="gv-tick gv9">9</span>
-            <span class="gv-tick gv10">10</span>
-          </div>
-          <div class="giant-metal-knob" id="giant-master-volume" title="Master Volume (Putar atau Drag)">
-            <div class="giant-knob-notch" id="giant-vol-notch"></div>
+          <div class="vol-dial-housing">
+            <span class="master-vol-title">VOLUME</span>
+            <div class="giant-knob-dial-scale">
+              <span class="gv-tick gv0">0</span>
+              <span class="gv-tick gv1">1</span>
+              <span class="gv-tick gv2">2</span>
+              <span class="gv-tick gv3">3</span>
+              <span class="gv-tick gv4">4</span>
+              <span class="gv-tick gv5">5</span>
+              <span class="gv-tick gv6">6</span>
+              <span class="gv-tick gv7">7</span>
+              <span class="gv-tick gv8">8</span>
+              <span class="gv-tick gv9">9</span>
+              <span class="gv-tick gv10">10</span>
+              <!-- intermediate radial tick marks -->
+              <div class="gv-ticks-ring">
+                <i class="gvt gt-m154"></i>
+                <i class="gvt gt-m126"></i>
+                <i class="gvt gt-m98"></i>
+                <i class="gvt gt-m70"></i>
+                <i class="gvt gt-m42"></i>
+                <i class="gvt gt-m14"></i>
+                <i class="gvt gt-p14"></i>
+                <i class="gvt gt-p42"></i>
+                <i class="gvt gt-p70"></i>
+                <i class="gvt gt-p98"></i>
+                <i class="gvt gt-p126"></i>
+                <i class="gvt gt-p154"></i>
+              </div>
+            </div>
+            <div class="giant-metal-knob" id="giant-master-volume" title="Master Volume (Putar atau Drag)">
+              <div class="giant-knob-notch" id="giant-vol-notch"></div>
+            </div>
           </div>
         </div>
 
@@ -517,7 +814,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
     <!-- Drawer Header & Handle -->
     <div class="drawer-handle-bar" id="drawer-toggle-handle">
       <div class="handle-grip"><span></span><span></span><span></span></div>
-      <span class="handle-title">▲ OPEN TEAC TAPE ARCHIVE &amp; PROGRAM INDEX</span>
+      <span class="handle-title">▲ OPEN ATIGA TAPE ARCHIVE &amp; PROGRAM INDEX</span>
       <div class="handle-actions">
         <span class="drawer-status-led"><i></i> ARCHIVE READY</span>
       </div>
@@ -528,7 +825,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
       <!-- Sidebar / Source Navigator -->
       <aside class="sidebar rack-sidebar">
         <div class="side-brand">
-          <span>TEAC</span><strong>TAPE INDEX</strong><small>LOCAL AUDIO ARCHIVE</small>
+          <span>ATIGA</span><strong>TAPE INDEX</strong><small>LOCAL AUDIO ARCHIVE</small>
         </div>
         <div class="sidebar-heading">SOURCE SELECTOR</div>
         <nav aria-label="Koleksi musik">
@@ -607,7 +904,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
         <!-- Album Art Card -->
         <div class="album-art large-art" id="now-art" data-art="0">
           <div class="art-grid"></div>
-          <span class="art-label">NOW PLAYING<br><small>TEAC PRECISION HI-FI</small></span>
+          <span class="art-label">NOW PLAYING<br><small>ATIGA PRECISION HI-FI</small></span>
           <div class="art-sun"></div>
           <div class="art-horizon"></div>
           <span class="art-title">AFTER HOURS<span>ATIGA SESSIONS</span></span>
@@ -684,8 +981,8 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 
   <!-- Status Bar -->
   <div class="statusbar">
-    <span><i></i> POWER ON <span class="status-separator">/</span> TEAC DC SERVO DRIVE</span>
-    <span>TEAC V-3RX STEREO CASSETTE DECK <span class="status-separator">·</span> PRECISION AUDIO</span>
+    <span><i></i> POWER ON <span class="status-separator">/</span> ATIGA DC SERVO DRIVE</span>
+    <span>ATIGA AMP STEREO CASSETTE DECK <span class="status-separator">·</span> PRECISION AUDIO</span>
   </div>
 </div>
 
@@ -702,7 +999,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 <dialog id="eq-dialog">
   <form method="dialog" class="dialog-heading">
     <div>
-      <div class="eyebrow">TEAC / TONE CONTROL &amp; DSP</div>
+      <div class="eyebrow">ATIGA / TONE CONTROL &amp; DSP</div>
       <h2>Ekualiser Grafis<span>.</span></h2>
     </div>
     <button class="icon-button" aria-label="Tutup ekualiser" data-icon="close"></button>
@@ -746,7 +1043,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 
 <dialog id="help-dialog">
   <form method="dialog" class="dialog-heading">
-    <h2>TEAC V-3RX &amp; DC SERVO AMPLIFIER<span>.</span></h2>
+    <h2>ATIGA AMP &amp; DC SERVO AMPLIFIER<span>.</span></h2>
     <button class="icon-button" aria-label="Tutup panduan" data-icon="close"></button>
   </form>
   <p>Sistem pemutar musik vintage Hi-Fi dengan cassette deck mekanis dan amplifier terintegrasi. Gunakan tombol tuts piano untuk kontrol playback, knob putar untuk mengatur volume, bass, treble, dan balance.</p>

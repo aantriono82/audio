@@ -9,8 +9,8 @@ Error generating stack: `+e.message+`
 `).replace(Ad,``)}function Md(e,t){return t=jd(t),jd(e)===t}function $(e,t,n,r,i,a){switch(n){case`children`:typeof r==`string`?t===`body`||t===`textarea`&&r===``||tn(e,r):(typeof r==`number`||typeof r==`bigint`)&&t!==`body`&&tn(e,``+r);break;case`className`:zt(e,`class`,r);break;case`tabIndex`:zt(e,`tabindex`,r);break;case`dir`:case`role`:case`viewBox`:case`width`:case`height`:zt(e,n,r);break;case`style`:an(e,r,a);break;case`data`:if(t!==`object`){zt(e,`data`,r);break}case`src`:case`href`:if(r===``&&(t!==`a`||n!==`href`)){e.removeAttribute(n);break}if(r==null||typeof r==`function`||typeof r==`symbol`||typeof r==`boolean`){e.removeAttribute(n);break}r=ln(``+r),e.setAttribute(n,r);break;case`action`:case`formAction`:if(typeof r==`function`){e.setAttribute(n,`javascript:throw new Error('A React form was unexpectedly submitted. If you called form.submit() manually, consider using form.requestSubmit() instead. If you\\'re trying to use event.stopPropagation() in a submit event handler, consider also calling event.preventDefault().')`);break}if(typeof a==`function`&&(n===`formAction`?(t!==`input`&&$(e,t,`name`,i.name,i,null),$(e,t,`formEncType`,i.formEncType,i,null),$(e,t,`formMethod`,i.formMethod,i,null),$(e,t,`formTarget`,i.formTarget,i,null)):($(e,t,`encType`,i.encType,i,null),$(e,t,`method`,i.method,i,null),$(e,t,`target`,i.target,i,null))),r==null||typeof r==`symbol`||typeof r==`boolean`){e.removeAttribute(n);break}r=ln(``+r),e.setAttribute(n,r);break;case`onClick`:r!=null&&(e.onclick=un);break;case`onScroll`:r!=null&&Q(`scroll`,e);break;case`onScrollEnd`:r!=null&&Q(`scrollend`,e);break;case`dangerouslySetInnerHTML`:if(r!=null){if(typeof r!=`object`||!(`__html`in r))throw Error(s(61));if(n=r.__html,n!=null){if(i.children!=null)throw Error(s(60));e.innerHTML=n}}break;case`multiple`:e.multiple=r&&typeof r!=`function`&&typeof r!=`symbol`;break;case`muted`:e.muted=r&&typeof r!=`function`&&typeof r!=`symbol`;break;case`suppressContentEditableWarning`:case`suppressHydrationWarning`:case`defaultValue`:case`defaultChecked`:case`innerHTML`:case`ref`:break;case`autoFocus`:break;case`xlinkHref`:if(r==null||typeof r==`function`||typeof r==`boolean`||typeof r==`symbol`){e.removeAttribute(`xlink:href`);break}n=ln(``+r),e.setAttributeNS(`http://www.w3.org/1999/xlink`,`xlink:href`,n);break;case`contentEditable`:case`spellCheck`:case`draggable`:case`value`:case`autoReverse`:case`externalResourcesRequired`:case`focusable`:case`preserveAlpha`:r!=null&&typeof r!=`function`&&typeof r!=`symbol`?e.setAttribute(n,``+r):e.removeAttribute(n);break;case`inert`:case`allowFullScreen`:case`async`:case`autoPlay`:case`controls`:case`default`:case`defer`:case`disabled`:case`disablePictureInPicture`:case`disableRemotePlayback`:case`formNoValidate`:case`hidden`:case`loop`:case`noModule`:case`noValidate`:case`open`:case`playsInline`:case`readOnly`:case`required`:case`reversed`:case`scoped`:case`seamless`:case`itemScope`:r&&typeof r!=`function`&&typeof r!=`symbol`?e.setAttribute(n,``):e.removeAttribute(n);break;case`capture`:case`download`:!0===r?e.setAttribute(n,``):!1!==r&&r!=null&&typeof r!=`function`&&typeof r!=`symbol`?e.setAttribute(n,r):e.removeAttribute(n);break;case`cols`:case`rows`:case`size`:case`span`:r!=null&&typeof r!=`function`&&typeof r!=`symbol`&&!isNaN(r)&&1<=r?e.setAttribute(n,r):e.removeAttribute(n);break;case`rowSpan`:case`start`:r==null||typeof r==`function`||typeof r==`symbol`||isNaN(r)?e.removeAttribute(n):e.setAttribute(n,r);break;case`popover`:Q(`beforetoggle`,e),Q(`toggle`,e),Rt(e,`popover`,r);break;case`xlinkActuate`:Bt(e,`http://www.w3.org/1999/xlink`,`xlink:actuate`,r);break;case`xlinkArcrole`:Bt(e,`http://www.w3.org/1999/xlink`,`xlink:arcrole`,r);break;case`xlinkRole`:Bt(e,`http://www.w3.org/1999/xlink`,`xlink:role`,r);break;case`xlinkShow`:Bt(e,`http://www.w3.org/1999/xlink`,`xlink:show`,r);break;case`xlinkTitle`:Bt(e,`http://www.w3.org/1999/xlink`,`xlink:title`,r);break;case`xlinkType`:Bt(e,`http://www.w3.org/1999/xlink`,`xlink:type`,r);break;case`xmlBase`:Bt(e,`http://www.w3.org/XML/1998/namespace`,`xml:base`,r);break;case`xmlLang`:Bt(e,`http://www.w3.org/XML/1998/namespace`,`xml:lang`,r);break;case`xmlSpace`:Bt(e,`http://www.w3.org/XML/1998/namespace`,`xml:space`,r);break;case`is`:Rt(e,`is`,r);break;case`innerText`:case`textContent`:break;default:(!(2<n.length)||n[0]!==`o`&&n[0]!==`O`||n[1]!==`n`&&n[1]!==`N`)&&(n=sn.get(n)||n,Rt(e,n,r))}}function Nd(e,t,n,r,i,a){switch(n){case`style`:an(e,r,a);break;case`dangerouslySetInnerHTML`:if(r!=null){if(typeof r!=`object`||!(`__html`in r))throw Error(s(61));if(n=r.__html,n!=null){if(i.children!=null)throw Error(s(60));e.innerHTML=n}}break;case`children`:typeof r==`string`?tn(e,r):(typeof r==`number`||typeof r==`bigint`)&&tn(e,``+r);break;case`onScroll`:r!=null&&Q(`scroll`,e);break;case`onScrollEnd`:r!=null&&Q(`scrollend`,e);break;case`onClick`:r!=null&&(e.onclick=un);break;case`suppressContentEditableWarning`:case`suppressHydrationWarning`:case`innerHTML`:case`ref`:break;case`innerText`:case`textContent`:break;default:if(!jt.hasOwnProperty(n))a:{if(n[0]===`o`&&n[1]===`n`&&(i=n.endsWith(`Capture`),t=n.slice(2,i?n.length-7:void 0),a=e[vt]||null,a=a==null?null:a[n],typeof a==`function`&&e.removeEventListener(t,a,i),typeof r==`function`)){typeof a!=`function`&&a!==null&&(n in e?e[n]=null:e.hasAttribute(n)&&e.removeAttribute(n)),e.addEventListener(t,r,i);break a}n in e?e[n]=r:!0===r?e.setAttribute(n,``):Rt(e,n,r)}}}function Pd(e,t,n){switch(t){case`div`:case`span`:case`svg`:case`path`:case`a`:case`g`:case`p`:case`li`:break;case`img`:Q(`error`,e),Q(`load`,e);var r=!1,i=!1,a;for(a in n)if(n.hasOwnProperty(a)){var o=n[a];if(o!=null)switch(a){case`src`:r=!0;break;case`srcSet`:i=!0;break;case`children`:case`dangerouslySetInnerHTML`:throw Error(s(137,t));default:$(e,t,a,o,n,null)}}i&&$(e,t,`srcSet`,n.srcSet,n,null),r&&$(e,t,`src`,n.src,n,null);return;case`input`:Q(`invalid`,e);var c=a=o=i=null,l=null,u=null;for(r in n)if(n.hasOwnProperty(r)){var d=n[r];if(d!=null)switch(r){case`name`:i=d;break;case`type`:o=d;break;case`checked`:l=d;break;case`defaultChecked`:u=d;break;case`value`:a=d;break;case`defaultValue`:c=d;break;case`children`:case`dangerouslySetInnerHTML`:if(d!=null)throw Error(s(137,t));break;default:$(e,t,r,d,n,null)}}Xt(e,a,c,l,u,o,i,!1);return;case`select`:for(i in Q(`invalid`,e),r=o=a=null,n)if(n.hasOwnProperty(i)&&(c=n[i],c!=null))switch(i){case`value`:a=c;break;case`defaultValue`:o=c;break;case`multiple`:r=c;default:$(e,t,i,c,n,null)}t=a,n=o,e.multiple=!!r,t==null?n!=null&&Qt(e,!!r,n,!0):Qt(e,!!r,t,!1);return;case`textarea`:for(o in Q(`invalid`,e),a=i=r=null,n)if(n.hasOwnProperty(o)&&(c=n[o],c!=null))switch(o){case`value`:r=c;break;case`defaultValue`:i=c;break;case`children`:a=c;break;case`dangerouslySetInnerHTML`:if(c!=null)throw Error(s(91));break;default:$(e,t,o,c,n,null)}en(e,r,i,a);return;case`option`:for(l in n)if(n.hasOwnProperty(l)&&(r=n[l],r!=null))switch(l){case`selected`:e.selected=r&&typeof r!=`function`&&typeof r!=`symbol`;break;default:$(e,t,l,r,n,null)}return;case`dialog`:Q(`beforetoggle`,e),Q(`toggle`,e),Q(`cancel`,e),Q(`close`,e);break;case`iframe`:case`object`:Q(`load`,e);break;case`video`:case`audio`:for(r=0;r<_d.length;r++)Q(_d[r],e);break;case`image`:Q(`error`,e),Q(`load`,e);break;case`details`:Q(`toggle`,e);break;case`embed`:case`source`:case`link`:Q(`error`,e),Q(`load`,e);case`area`:case`base`:case`br`:case`col`:case`hr`:case`keygen`:case`meta`:case`param`:case`track`:case`wbr`:case`menuitem`:for(u in n)if(n.hasOwnProperty(u)&&(r=n[u],r!=null))switch(u){case`children`:case`dangerouslySetInnerHTML`:throw Error(s(137,t));default:$(e,t,u,r,n,null)}return;default:if(on(t)){for(d in n)n.hasOwnProperty(d)&&(r=n[d],r!==void 0&&Nd(e,t,d,r,n,void 0));return}}for(c in n)n.hasOwnProperty(c)&&(r=n[c],r!=null&&$(e,t,c,r,n,null))}function Fd(e,t,n,r){switch(t){case`div`:case`span`:case`svg`:case`path`:case`a`:case`g`:case`p`:case`li`:break;case`input`:var i=null,a=null,o=null,c=null,l=null,u=null,d=null;for(m in n){var f=n[m];if(n.hasOwnProperty(m)&&f!=null)switch(m){case`checked`:break;case`value`:break;case`defaultValue`:l=f;default:r.hasOwnProperty(m)||$(e,t,m,null,r,f)}}for(var p in r){var m=r[p];if(f=n[p],r.hasOwnProperty(p)&&(m!=null||f!=null))switch(p){case`type`:a=m;break;case`name`:i=m;break;case`checked`:u=m;break;case`defaultChecked`:d=m;break;case`value`:o=m;break;case`defaultValue`:c=m;break;case`children`:case`dangerouslySetInnerHTML`:if(m!=null)throw Error(s(137,t));break;default:m!==f&&$(e,t,p,m,r,f)}}Yt(e,o,c,l,u,d,a,i);return;case`select`:for(a in m=o=c=p=null,n)if(l=n[a],n.hasOwnProperty(a)&&l!=null)switch(a){case`value`:break;case`multiple`:m=l;default:r.hasOwnProperty(a)||$(e,t,a,null,r,l)}for(i in r)if(a=r[i],l=n[i],r.hasOwnProperty(i)&&(a!=null||l!=null))switch(i){case`value`:p=a;break;case`defaultValue`:c=a;break;case`multiple`:o=a;default:a!==l&&$(e,t,i,a,r,l)}t=c,n=o,r=m,p==null?!!r!=!!n&&(t==null?Qt(e,!!n,n?[]:``,!1):Qt(e,!!n,t,!0)):Qt(e,!!n,p,!1);return;case`textarea`:for(c in m=p=null,n)if(i=n[c],n.hasOwnProperty(c)&&i!=null&&!r.hasOwnProperty(c))switch(c){case`value`:break;case`children`:break;default:$(e,t,c,null,r,i)}for(o in r)if(i=r[o],a=n[o],r.hasOwnProperty(o)&&(i!=null||a!=null))switch(o){case`value`:p=i;break;case`defaultValue`:m=i;break;case`children`:break;case`dangerouslySetInnerHTML`:if(i!=null)throw Error(s(91));break;default:i!==a&&$(e,t,o,i,r,a)}$t(e,p,m);return;case`option`:for(var h in n)if(p=n[h],n.hasOwnProperty(h)&&p!=null&&!r.hasOwnProperty(h))switch(h){case`selected`:e.selected=!1;break;default:$(e,t,h,null,r,p)}for(l in r)if(p=r[l],m=n[l],r.hasOwnProperty(l)&&p!==m&&(p!=null||m!=null))switch(l){case`selected`:e.selected=p&&typeof p!=`function`&&typeof p!=`symbol`;break;default:$(e,t,l,p,r,m)}return;case`img`:case`link`:case`area`:case`base`:case`br`:case`col`:case`embed`:case`hr`:case`keygen`:case`meta`:case`param`:case`source`:case`track`:case`wbr`:case`menuitem`:for(var g in n)p=n[g],n.hasOwnProperty(g)&&p!=null&&!r.hasOwnProperty(g)&&$(e,t,g,null,r,p);for(u in r)if(p=r[u],m=n[u],r.hasOwnProperty(u)&&p!==m&&(p!=null||m!=null))switch(u){case`children`:case`dangerouslySetInnerHTML`:if(p!=null)throw Error(s(137,t));break;default:$(e,t,u,p,r,m)}return;default:if(on(t)){for(var _ in n)p=n[_],n.hasOwnProperty(_)&&p!==void 0&&!r.hasOwnProperty(_)&&Nd(e,t,_,void 0,r,p);for(d in r)p=r[d],m=n[d],!r.hasOwnProperty(d)||p===m||p===void 0&&m===void 0||Nd(e,t,d,p,r,m);return}}for(var v in n)p=n[v],n.hasOwnProperty(v)&&p!=null&&!r.hasOwnProperty(v)&&$(e,t,v,null,r,p);for(f in r)p=r[f],m=n[f],!r.hasOwnProperty(f)||p===m||p==null&&m==null||$(e,t,f,p,r,m)}function Id(e){switch(e){case`css`:case`script`:case`font`:case`img`:case`image`:case`input`:case`link`:return!0;default:return!1}}function Ld(){if(typeof performance.getEntriesByType==`function`){for(var e=0,t=0,n=performance.getEntriesByType(`resource`),r=0;r<n.length;r++){var i=n[r],a=i.transferSize,o=i.initiatorType,s=i.duration;if(a&&s&&Id(o)){for(o=0,s=i.responseEnd,r+=1;r<n.length;r++){var c=n[r],l=c.startTime;if(l>s)break;var u=c.transferSize,d=c.initiatorType;u&&Id(d)&&(c=c.responseEnd,o+=u*(c<s?1:(s-l)/(c-l)))}if(--r,t+=8*(a+o)/(i.duration/1e3),e++,10<e)break}}if(0<e)return t/e/1e6}return navigator.connection&&(e=navigator.connection.downlink,typeof e==`number`)?e:5}var Rd=null,zd=null;function Bd(e){return e.nodeType===9?e:e.ownerDocument}function Vd(e){switch(e){case`http://www.w3.org/2000/svg`:return 1;case`http://www.w3.org/1998/Math/MathML`:return 2;default:return 0}}function Hd(e,t){if(e===0)switch(t){case`svg`:return 1;case`math`:return 2;default:return 0}return e===1&&t===`foreignObject`?0:e}function Ud(e,t){return e===`textarea`||e===`noscript`||typeof t.children==`string`||typeof t.children==`number`||typeof t.children==`bigint`||typeof t.dangerouslySetInnerHTML==`object`&&t.dangerouslySetInnerHTML!==null&&t.dangerouslySetInnerHTML.__html!=null}var Wd=null;function Gd(){var e=window.event;return e&&e.type===`popstate`?e!==Wd&&(Wd=e,!0):(Wd=null,!1)}var Kd=typeof setTimeout==`function`?setTimeout:void 0,qd=typeof clearTimeout==`function`?clearTimeout:void 0,Jd=typeof Promise==`function`?Promise:void 0,Yd=typeof queueMicrotask==`function`?queueMicrotask:Jd===void 0?Kd:function(e){return Jd.resolve(null).then(e).catch(Xd)};function Xd(e){setTimeout(function(){throw e})}function Zd(e){return e===`head`}function Qd(e,t){var n=t,r=0;do{var i=n.nextSibling;if(e.removeChild(n),i&&i.nodeType===8){if(n=i.data,n===`/$`||n===`/&`){if(r===0){e.removeChild(i),Np(t);return}r--}else if(n===`$`||n===`$?`||n===`$~`||n===`$!`||n===`&`)r++;else if(n===`html`)pf(e.ownerDocument.documentElement);else if(n===`head`){n=e.ownerDocument.head,pf(n);for(var a=n.firstChild;a;){var o=a.nextSibling,s=a.nodeName;a[wt]||s===`SCRIPT`||s===`STYLE`||s===`LINK`&&a.rel.toLowerCase()===`stylesheet`||n.removeChild(a),a=o}}else n===`body`&&pf(e.ownerDocument.body)}n=i}while(n);Np(t)}function $d(e,t){var n=e;e=0;do{var r=n.nextSibling;if(n.nodeType===1?t?(n._stashedDisplay=n.style.display,n.style.display=`none`):(n.style.display=n._stashedDisplay||``,n.getAttribute(`style`)===``&&n.removeAttribute(`style`)):n.nodeType===3&&(t?(n._stashedText=n.nodeValue,n.nodeValue=``):n.nodeValue=n._stashedText||``),r&&r.nodeType===8){if(n=r.data,n===`/$`){if(e===0)break;e--}else n!==`$`&&n!==`$?`&&n!==`$~`&&n!==`$!`||e++}n=r}while(n)}function ef(e){var t=e.firstChild;for(t&&t.nodeType===10&&(t=t.nextSibling);t;){var n=t;switch(t=t.nextSibling,n.nodeName){case`HTML`:case`HEAD`:case`BODY`:ef(n),Tt(n);continue;case`SCRIPT`:case`STYLE`:continue;case`LINK`:if(n.rel.toLowerCase()===`stylesheet`)continue}e.removeChild(n)}}function tf(e,t,n,r){for(;e.nodeType===1;){var i=n;if(e.nodeName.toLowerCase()!==t.toLowerCase()){if(!r&&(e.nodeName!==`INPUT`||e.type!==`hidden`))break}else if(!r){if(t===`input`&&e.type===`hidden`){var a=i.name==null?null:``+i.name;if(i.type===`hidden`&&e.getAttribute(`name`)===a)return e}else return e}else if(!e[wt])switch(t){case`meta`:if(!e.hasAttribute(`itemprop`))break;return e;case`link`:if(a=e.getAttribute(`rel`),a===`stylesheet`&&e.hasAttribute(`data-precedence`)||a!==i.rel||e.getAttribute(`href`)!==(i.href==null||i.href===``?null:i.href)||e.getAttribute(`crossorigin`)!==(i.crossOrigin==null?null:i.crossOrigin)||e.getAttribute(`title`)!==(i.title==null?null:i.title))break;return e;case`style`:if(e.hasAttribute(`data-precedence`))break;return e;case`script`:if(a=e.getAttribute(`src`),(a!==(i.src==null?null:i.src)||e.getAttribute(`type`)!==(i.type==null?null:i.type)||e.getAttribute(`crossorigin`)!==(i.crossOrigin==null?null:i.crossOrigin))&&a&&e.hasAttribute(`async`)&&!e.hasAttribute(`itemprop`))break;return e;default:return e}if(e=cf(e.nextSibling),e===null)break}return null}function nf(e,t,n){if(t===``)return null;for(;e.nodeType!==3;)if((e.nodeType!==1||e.nodeName!==`INPUT`||e.type!==`hidden`)&&!n||(e=cf(e.nextSibling),e===null))return null;return e}function rf(e,t){for(;e.nodeType!==8;)if((e.nodeType!==1||e.nodeName!==`INPUT`||e.type!==`hidden`)&&!t||(e=cf(e.nextSibling),e===null))return null;return e}function af(e){return e.data===`$?`||e.data===`$~`}function of(e){return e.data===`$!`||e.data===`$?`&&e.ownerDocument.readyState!==`loading`}function sf(e,t){var n=e.ownerDocument;if(e.data===`$~`)e._reactRetry=t;else if(e.data!==`$?`||n.readyState!==`loading`)t();else{var r=function(){t(),n.removeEventListener(`DOMContentLoaded`,r)};n.addEventListener(`DOMContentLoaded`,r),e._reactRetry=r}}function cf(e){for(;e!=null;e=e.nextSibling){var t=e.nodeType;if(t===1||t===3)break;if(t===8){if(t=e.data,t===`$`||t===`$!`||t===`$?`||t===`$~`||t===`&`||t===`F!`||t===`F`)break;if(t===`/$`||t===`/&`)return null}}return e}var lf=null;function uf(e){e=e.nextSibling;for(var t=0;e;){if(e.nodeType===8){var n=e.data;if(n===`/$`||n===`/&`){if(t===0)return cf(e.nextSibling);t--}else n!==`$`&&n!==`$!`&&n!==`$?`&&n!==`$~`&&n!==`&`||t++}e=e.nextSibling}return null}function df(e){e=e.previousSibling;for(var t=0;e;){if(e.nodeType===8){var n=e.data;if(n===`$`||n===`$!`||n===`$?`||n===`$~`||n===`&`){if(t===0)return e;t--}else n!==`/$`&&n!==`/&`||t++}e=e.previousSibling}return null}function ff(e,t,n){switch(t=Bd(n),e){case`html`:if(e=t.documentElement,!e)throw Error(s(452));return e;case`head`:if(e=t.head,!e)throw Error(s(453));return e;case`body`:if(e=t.body,!e)throw Error(s(454));return e;default:throw Error(s(451))}}function pf(e){for(var t=e.attributes;t.length;)e.removeAttributeNode(t[0]);Tt(e)}var mf=new Map,hf=new Set;function gf(e){return typeof e.getRootNode==`function`?e.getRootNode():e.nodeType===9?e:e.ownerDocument}var _f=T.d;T.d={f:vf,r:yf,D:Sf,C:Cf,L:wf,m:Tf,X:Df,S:Ef,M:Of};function vf(){var e=_f.f(),t=bu();return e||t}function yf(e){var t=Dt(e);t!==null&&t.tag===5&&t.type===`form`?js(t):_f.r(e)}var bf=typeof document>`u`?null:document;function xf(e,t,n){var r=bf;if(r&&typeof t==`string`&&t){var i=Jt(t);i=`link[rel="`+e+`"][href="`+i+`"]`,typeof n==`string`&&(i+=`[crossorigin="`+n+`"]`),hf.has(i)||(hf.add(i),e={rel:e,crossOrigin:n,href:t},r.querySelector(i)===null&&(t=r.createElement(`link`),Pd(t,`link`,e),O(t),r.head.appendChild(t)))}}function Sf(e){_f.D(e),xf(`dns-prefetch`,e,null)}function Cf(e,t){_f.C(e,t),xf(`preconnect`,e,t)}function wf(e,t,n){_f.L(e,t,n);var r=bf;if(r&&e&&t){var i=`link[rel="preload"][as="`+Jt(t)+`"]`;t===`image`&&n&&n.imageSrcSet?(i+=`[imagesrcset="`+Jt(n.imageSrcSet)+`"]`,typeof n.imageSizes==`string`&&(i+=`[imagesizes="`+Jt(n.imageSizes)+`"]`)):i+=`[href="`+Jt(e)+`"]`;var a=i;switch(t){case`style`:a=Af(e);break;case`script`:a=Pf(e)}mf.has(a)||(e=h({rel:`preload`,href:t===`image`&&n&&n.imageSrcSet?void 0:e,as:t},n),mf.set(a,e),r.querySelector(i)!==null||t===`style`&&r.querySelector(jf(a))||t===`script`&&r.querySelector(Ff(a))||(t=r.createElement(`link`),Pd(t,`link`,e),O(t),r.head.appendChild(t)))}}function Tf(e,t){_f.m(e,t);var n=bf;if(n&&e){var r=t&&typeof t.as==`string`?t.as:`script`,i=`link[rel="modulepreload"][as="`+Jt(r)+`"][href="`+Jt(e)+`"]`,a=i;switch(r){case`audioworklet`:case`paintworklet`:case`serviceworker`:case`sharedworker`:case`worker`:case`script`:a=Pf(e)}if(!mf.has(a)&&(e=h({rel:`modulepreload`,href:e},t),mf.set(a,e),n.querySelector(i)===null)){switch(r){case`audioworklet`:case`paintworklet`:case`serviceworker`:case`sharedworker`:case`worker`:case`script`:if(n.querySelector(Ff(a)))return}r=n.createElement(`link`),Pd(r,`link`,e),O(r),n.head.appendChild(r)}}}function Ef(e,t,n){_f.S(e,t,n);var r=bf;if(r&&e){var i=kt(r).hoistableStyles,a=Af(e);t||=`default`;var o=i.get(a);if(!o){var s={loading:0,preload:null};if(o=r.querySelector(jf(a)))s.loading=5;else{e=h({rel:`stylesheet`,href:e,"data-precedence":t},n),(n=mf.get(a))&&Rf(e,n);var c=o=r.createElement(`link`);O(c),Pd(c,`link`,e),c._p=new Promise(function(e,t){c.onload=e,c.onerror=t}),c.addEventListener(`load`,function(){s.loading|=1}),c.addEventListener(`error`,function(){s.loading|=2}),s.loading|=4,Lf(o,t,r)}o={type:`stylesheet`,instance:o,count:1,state:s},i.set(a,o)}}}function Df(e,t){_f.X(e,t);var n=bf;if(n&&e){var r=kt(n).hoistableScripts,i=Pf(e),a=r.get(i);a||(a=n.querySelector(Ff(i)),a||(e=h({src:e,async:!0},t),(t=mf.get(i))&&zf(e,t),a=n.createElement(`script`),O(a),Pd(a,`link`,e),n.head.appendChild(a)),a={type:`script`,instance:a,count:1,state:null},r.set(i,a))}}function Of(e,t){_f.M(e,t);var n=bf;if(n&&e){var r=kt(n).hoistableScripts,i=Pf(e),a=r.get(i);a||(a=n.querySelector(Ff(i)),a||(e=h({src:e,async:!0,type:`module`},t),(t=mf.get(i))&&zf(e,t),a=n.createElement(`script`),O(a),Pd(a,`link`,e),n.head.appendChild(a)),a={type:`script`,instance:a,count:1,state:null},r.set(i,a))}}function kf(e,t,n,r){var i=(i=ve.current)?gf(i):null;if(!i)throw Error(s(446));switch(e){case`meta`:case`title`:return null;case`style`:return typeof n.precedence==`string`&&typeof n.href==`string`?(t=Af(n.href),n=kt(i).hoistableStyles,r=n.get(t),r||(r={type:`style`,instance:null,count:0,state:null},n.set(t,r)),r):{type:`void`,instance:null,count:0,state:null};case`link`:if(n.rel===`stylesheet`&&typeof n.href==`string`&&typeof n.precedence==`string`){e=Af(n.href);var a=kt(i).hoistableStyles,o=a.get(e);if(o||(i=i.ownerDocument||i,o={type:`stylesheet`,instance:null,count:0,state:{loading:0,preload:null}},a.set(e,o),(a=i.querySelector(jf(e)))&&!a._p&&(o.instance=a,o.state.loading=5),mf.has(e)||(n={rel:`preload`,as:`style`,href:n.href,crossOrigin:n.crossOrigin,integrity:n.integrity,media:n.media,hrefLang:n.hrefLang,referrerPolicy:n.referrerPolicy},mf.set(e,n),a||Nf(i,e,n,o.state))),t&&r===null)throw Error(s(528,``));return o}if(t&&r!==null)throw Error(s(529,``));return null;case`script`:return t=n.async,n=n.src,typeof n==`string`&&t&&typeof t!=`function`&&typeof t!=`symbol`?(t=Pf(n),n=kt(i).hoistableScripts,r=n.get(t),r||(r={type:`script`,instance:null,count:0,state:null},n.set(t,r)),r):{type:`void`,instance:null,count:0,state:null};default:throw Error(s(444,e))}}function Af(e){return`href="`+Jt(e)+`"`}function jf(e){return`link[rel="stylesheet"][`+e+`]`}function Mf(e){return h({},e,{"data-precedence":e.precedence,precedence:null})}function Nf(e,t,n,r){e.querySelector(`link[rel="preload"][as="style"][`+t+`]`)?r.loading=1:(t=e.createElement(`link`),r.preload=t,t.addEventListener(`load`,function(){return r.loading|=1}),t.addEventListener(`error`,function(){return r.loading|=2}),Pd(t,`link`,n),O(t),e.head.appendChild(t))}function Pf(e){return`[src="`+Jt(e)+`"]`}function Ff(e){return`script[async]`+e}function If(e,t,n){if(t.count++,t.instance===null)switch(t.type){case`style`:var r=e.querySelector(`style[data-href~="`+Jt(n.href)+`"]`);if(r)return t.instance=r,O(r),r;var i=h({},n,{"data-href":n.href,"data-precedence":n.precedence,href:null,precedence:null});return r=(e.ownerDocument||e).createElement(`style`),O(r),Pd(r,`style`,i),Lf(r,n.precedence,e),t.instance=r;case`stylesheet`:i=Af(n.href);var a=e.querySelector(jf(i));if(a)return t.state.loading|=4,t.instance=a,O(a),a;r=Mf(n),(i=mf.get(i))&&Rf(r,i),a=(e.ownerDocument||e).createElement(`link`),O(a);var o=a;return o._p=new Promise(function(e,t){o.onload=e,o.onerror=t}),Pd(a,`link`,r),t.state.loading|=4,Lf(a,n.precedence,e),t.instance=a;case`script`:return a=Pf(n.src),(i=e.querySelector(Ff(a)))?(t.instance=i,O(i),i):(r=n,(i=mf.get(a))&&(r=h({},n),zf(r,i)),e=e.ownerDocument||e,i=e.createElement(`script`),O(i),Pd(i,`link`,r),e.head.appendChild(i),t.instance=i);case`void`:return null;default:throw Error(s(443,t.type))}else t.type===`stylesheet`&&!(t.state.loading&4)&&(r=t.instance,t.state.loading|=4,Lf(r,n.precedence,e));return t.instance}function Lf(e,t,n){for(var r=n.querySelectorAll(`link[rel="stylesheet"][data-precedence],style[data-precedence]`),i=r.length?r[r.length-1]:null,a=i,o=0;o<r.length;o++){var s=r[o];if(s.dataset.precedence===t)a=s;else if(a!==i)break}a?a.parentNode.insertBefore(e,a.nextSibling):(t=n.nodeType===9?n.head:n,t.insertBefore(e,t.firstChild))}function Rf(e,t){e.crossOrigin??=t.crossOrigin,e.referrerPolicy??=t.referrerPolicy,e.title??=t.title}function zf(e,t){e.crossOrigin??=t.crossOrigin,e.referrerPolicy??=t.referrerPolicy,e.integrity??=t.integrity}var Bf=null;function Vf(e,t,n){if(Bf===null){var r=new Map,i=Bf=new Map;i.set(n,r)}else i=Bf,r=i.get(n),r||(r=new Map,i.set(n,r));if(r.has(e))return r;for(r.set(e,null),n=n.getElementsByTagName(e),i=0;i<n.length;i++){var a=n[i];if(!(a[wt]||a[_t]||e===`link`&&a.getAttribute(`rel`)===`stylesheet`)&&a.namespaceURI!==`http://www.w3.org/2000/svg`){var o=a.getAttribute(t)||``;o=e+o;var s=r.get(o);s?s.push(a):r.set(o,[a])}}return r}function Hf(e,t,n){e=e.ownerDocument||e,e.head.insertBefore(n,t===`title`?e.querySelector(`head > title`):null)}function Uf(e,t,n){if(n===1||t.itemProp!=null)return!1;switch(e){case`meta`:case`title`:return!0;case`style`:if(typeof t.precedence!=`string`||typeof t.href!=`string`||t.href===``)break;return!0;case`link`:if(typeof t.rel!=`string`||typeof t.href!=`string`||t.href===``||t.onLoad||t.onError)break;switch(t.rel){case`stylesheet`:return e=t.disabled,typeof t.precedence==`string`&&e==null;default:return!0}case`script`:if(t.async&&typeof t.async!=`function`&&typeof t.async!=`symbol`&&!t.onLoad&&!t.onError&&t.src&&typeof t.src==`string`)return!0}return!1}function Wf(e){return!(e.type===`stylesheet`&&!(e.state.loading&3))}function Gf(e,t,n,r){if(n.type===`stylesheet`&&(typeof r.media!=`string`||!1!==matchMedia(r.media).matches)&&!(n.state.loading&4)){if(n.instance===null){var i=Af(r.href),a=t.querySelector(jf(i));if(a){t=a._p,typeof t==`object`&&t&&typeof t.then==`function`&&(e.count++,e=Jf.bind(e),t.then(e,e)),n.state.loading|=4,n.instance=a,O(a);return}a=t.ownerDocument||t,r=Mf(r),(i=mf.get(i))&&Rf(r,i),a=a.createElement(`link`),O(a);var o=a;o._p=new Promise(function(e,t){o.onload=e,o.onerror=t}),Pd(a,`link`,r),n.instance=a}e.stylesheets===null&&(e.stylesheets=new Map),e.stylesheets.set(n,t),(t=n.state.preload)&&!(n.state.loading&3)&&(e.count++,n=Jf.bind(e),t.addEventListener(`load`,n),t.addEventListener(`error`,n))}}var Kf=0;function qf(e,t){return e.stylesheets&&e.count===0&&Xf(e,e.stylesheets),0<e.count||0<e.imgCount?function(n){var r=setTimeout(function(){if(e.stylesheets&&Xf(e,e.stylesheets),e.unsuspend){var t=e.unsuspend;e.unsuspend=null,t()}},6e4+t);0<e.imgBytes&&Kf===0&&(Kf=62500*Ld());var i=setTimeout(function(){if(e.waitingForImages=!1,e.count===0&&(e.stylesheets&&Xf(e,e.stylesheets),e.unsuspend)){var t=e.unsuspend;e.unsuspend=null,t()}},(e.imgBytes>Kf?50:800)+t);return e.unsuspend=n,function(){e.unsuspend=null,clearTimeout(r),clearTimeout(i)}}:null}function Jf(){if(this.count--,this.count===0&&(this.imgCount===0||!this.waitingForImages)){if(this.stylesheets)Xf(this,this.stylesheets);else if(this.unsuspend){var e=this.unsuspend;this.unsuspend=null,e()}}}var Yf=null;function Xf(e,t){e.stylesheets=null,e.unsuspend!==null&&(e.count++,Yf=new Map,t.forEach(Zf,e),Yf=null,Jf.call(e))}function Zf(e,t){if(!(t.state.loading&4)){var n=Yf.get(e);if(n)var r=n.get(null);else{n=new Map,Yf.set(e,n);for(var i=e.querySelectorAll(`link[data-precedence],style[data-precedence]`),a=0;a<i.length;a++){var o=i[a];(o.nodeName===`LINK`||o.getAttribute(`media`)!==`not all`)&&(n.set(o.dataset.precedence,o),r=o)}r&&n.set(null,r)}i=t.instance,o=i.getAttribute(`data-precedence`),a=n.get(o)||r,a===r&&n.set(null,i),n.set(o,i),this.count++,r=Jf.bind(this),i.addEventListener(`load`,r),i.addEventListener(`error`,r),a?a.parentNode.insertBefore(i,a.nextSibling):(e=e.nodeType===9?e.head:e,e.insertBefore(i,e.firstChild)),t.state.loading|=4}}var Qf={$$typeof:te,Provider:null,Consumer:null,_currentValue:fe,_currentValue2:fe,_threadCount:0};function $f(e,t,n,r,i,a,o,s,c){this.tag=1,this.containerInfo=e,this.pingCache=this.current=this.pendingChildren=null,this.timeoutHandle=-1,this.callbackNode=this.next=this.pendingContext=this.context=this.cancelPendingCommit=null,this.callbackPriority=0,this.expirationTimes=ot(-1),this.entangledLanes=this.shellSuspendCounter=this.errorRecoveryDisabledLanes=this.expiredLanes=this.warmLanes=this.pingedLanes=this.suspendedLanes=this.pendingLanes=0,this.entanglements=ot(0),this.hiddenUpdates=ot(null),this.identifierPrefix=r,this.onUncaughtError=i,this.onCaughtError=a,this.onRecoverableError=o,this.pooledCache=null,this.pooledCacheLanes=0,this.formState=c,this.incompleteTransitions=new Map}function ep(e,t,n,r,i,a,o,s,c,l,u,d){return e=new $f(e,t,n,o,c,l,u,d,s),t=1,!0===a&&(t|=24),a=vi(3,null,null,t),e.current=a,a.stateNode=e,t=ha(),t.refCount++,e.pooledCache=t,t.refCount++,a.memoizedState={element:r,isDehydrated:n,cache:t},Ja(a),e}function tp(e){return e?(e=gi,e):gi}function np(e,t,n,r,i,a){i=tp(i),r.context===null?r.context=i:r.pendingContext=i,r=Xa(t),r.payload={element:n},a=a===void 0?null:a,a!==null&&(r.callback=a),n=Za(e,r,t),n!==null&&(hu(n,e,t),Qa(n,e,t))}function rp(e,t){if(e=e.memoizedState,e!==null&&e.dehydrated!==null){var n=e.retryLane;e.retryLane=n!==0&&n<t?n:t}}function ip(e,t){rp(e,t),(e=e.alternate)&&rp(e,t)}function ap(e){if(e.tag===13||e.tag===31){var t=pi(e,67108864);t!==null&&hu(t,e,67108864),ip(e,67108864)}}function op(e){if(e.tag===13||e.tag===31){var t=pu();t=ft(t);var n=pi(e,t);n!==null&&hu(n,e,t),ip(e,t)}}var sp=!0;function cp(e,t,n,r){var i=w.T;w.T=null;var a=T.p;try{T.p=2,up(e,t,n,r)}finally{T.p=a,w.T=i}}function lp(e,t,n,r){var i=w.T;w.T=null;var a=T.p;try{T.p=8,up(e,t,n,r)}finally{T.p=a,w.T=i}}function up(e,t,n,r){if(sp){var i=dp(r);if(i===null)wd(e,t,r,fp,n),Cp(e,r);else if(Tp(i,e,t,n,r))r.stopPropagation();else if(Cp(e,r),t&4&&-1<Sp.indexOf(e)){for(;i!==null;){var a=Dt(i);if(a!==null)switch(a.tag){case 3:if(a=a.stateNode,a.current.memoizedState.isDehydrated){var o=tt(a.pendingLanes);if(o!==0){var s=a;for(s.pendingLanes|=2,s.entangledLanes|=2;o;){var c=1<<31-Je(o);s.entanglements[1]|=c,o&=~c}rd(a),!(W&6)&&(nu=Ie()+500,id(0,!1))}}break;case 31:case 13:s=pi(a,2),s!==null&&hu(s,a,2),bu(),ip(a,2)}if(a=dp(r),a===null&&wd(e,t,r,fp,n),a===i)break;i=a}i!==null&&r.stopPropagation()}else wd(e,t,r,null,n)}}function dp(e){return e=fn(e),pp(e)}var fp=null;function pp(e){if(fp=null,e=Et(e),e!==null){var t=l(e);if(t===null)e=null;else{var n=t.tag;if(n===13){if(e=u(t),e!==null)return e;e=null}else if(n===31){if(e=d(t),e!==null)return e;e=null}else if(n===3){if(t.stateNode.current.memoizedState.isDehydrated)return t.tag===3?t.stateNode.containerInfo:null;e=null}else t!==e&&(e=null)}}return fp=e,null}function mp(e){switch(e){case`beforetoggle`:case`cancel`:case`click`:case`close`:case`contextmenu`:case`copy`:case`cut`:case`auxclick`:case`dblclick`:case`dragend`:case`dragstart`:case`drop`:case`focusin`:case`focusout`:case`input`:case`invalid`:case`keydown`:case`keypress`:case`keyup`:case`mousedown`:case`mouseup`:case`paste`:case`pause`:case`play`:case`pointercancel`:case`pointerdown`:case`pointerup`:case`ratechange`:case`reset`:case`resize`:case`seeked`:case`submit`:case`toggle`:case`touchcancel`:case`touchend`:case`touchstart`:case`volumechange`:case`change`:case`selectionchange`:case`textInput`:case`compositionstart`:case`compositionend`:case`compositionupdate`:case`beforeblur`:case`afterblur`:case`beforeinput`:case`blur`:case`fullscreenchange`:case`focus`:case`hashchange`:case`popstate`:case`select`:case`selectstart`:return 2;case`drag`:case`dragenter`:case`dragexit`:case`dragleave`:case`dragover`:case`mousemove`:case`mouseout`:case`mouseover`:case`pointermove`:case`pointerout`:case`pointerover`:case`scroll`:case`touchmove`:case`wheel`:case`mouseenter`:case`mouseleave`:case`pointerenter`:case`pointerleave`:return 8;case`message`:switch(Le()){case Re:return 2;case ze:return 8;case Be:case Ve:return 32;case He:return 268435456;default:return 32}default:return 32}}var hp=!1,gp=null,_p=null,vp=null,yp=new Map,bp=new Map,xp=[],Sp=`mousedown mouseup touchcancel touchend touchstart auxclick dblclick pointercancel pointerdown pointerup dragend dragstart drop compositionend compositionstart keydown keypress keyup input textInput copy cut paste click change contextmenu reset`.split(` `);function Cp(e,t){switch(e){case`focusin`:case`focusout`:gp=null;break;case`dragenter`:case`dragleave`:_p=null;break;case`mouseover`:case`mouseout`:vp=null;break;case`pointerover`:case`pointerout`:yp.delete(t.pointerId);break;case`gotpointercapture`:case`lostpointercapture`:bp.delete(t.pointerId)}}function wp(e,t,n,r,i,a){return e===null||e.nativeEvent!==a?(e={blockedOn:t,domEventName:n,eventSystemFlags:r,nativeEvent:a,targetContainers:[i]},t!==null&&(t=Dt(t),t!==null&&ap(t)),e):(e.eventSystemFlags|=r,t=e.targetContainers,i!==null&&t.indexOf(i)===-1&&t.push(i),e)}function Tp(e,t,n,r,i){switch(t){case`focusin`:return gp=wp(gp,e,t,n,r,i),!0;case`dragenter`:return _p=wp(_p,e,t,n,r,i),!0;case`mouseover`:return vp=wp(vp,e,t,n,r,i),!0;case`pointerover`:var a=i.pointerId;return yp.set(a,wp(yp.get(a)||null,e,t,n,r,i)),!0;case`gotpointercapture`:return a=i.pointerId,bp.set(a,wp(bp.get(a)||null,e,t,n,r,i)),!0}return!1}function Ep(e){var t=Et(e.target);if(t!==null){var n=l(t);if(n!==null){if(t=n.tag,t===13){if(t=u(n),t!==null){e.blockedOn=t,ht(e.priority,function(){op(n)});return}}else if(t===31){if(t=d(n),t!==null){e.blockedOn=t,ht(e.priority,function(){op(n)});return}}else if(t===3&&n.stateNode.current.memoizedState.isDehydrated){e.blockedOn=n.tag===3?n.stateNode.containerInfo:null;return}}}e.blockedOn=null}function Dp(e){if(e.blockedOn!==null)return!1;for(var t=e.targetContainers;0<t.length;){var n=dp(e.nativeEvent);if(n===null){n=e.nativeEvent;var r=new n.constructor(n.type,n);dn=r,n.target.dispatchEvent(r),dn=null}else return t=Dt(n),t!==null&&ap(t),e.blockedOn=n,!1;t.shift()}return!0}function Op(e,t,n){Dp(e)&&n.delete(t)}function kp(){hp=!1,gp!==null&&Dp(gp)&&(gp=null),_p!==null&&Dp(_p)&&(_p=null),vp!==null&&Dp(vp)&&(vp=null),yp.forEach(Op),bp.forEach(Op)}function Ap(e,n){e.blockedOn===n&&(e.blockedOn=null,hp||(hp=!0,t.unstable_scheduleCallback(t.unstable_NormalPriority,kp)))}var jp=null;function Mp(e){jp!==e&&(jp=e,t.unstable_scheduleCallback(t.unstable_NormalPriority,function(){jp===e&&(jp=null);for(var t=0;t<e.length;t+=3){var n=e[t],r=e[t+1],i=e[t+2];if(typeof r!=`function`){if(pp(r||n)===null)continue;break}var a=Dt(n);a!==null&&(e.splice(t,3),t-=3,ks(a,{pending:!0,data:i,method:n.method,action:r},r,i))}}))}function Np(e){function t(t){return Ap(t,e)}gp!==null&&Ap(gp,e),_p!==null&&Ap(_p,e),vp!==null&&Ap(vp,e),yp.forEach(t),bp.forEach(t);for(var n=0;n<xp.length;n++){var r=xp[n];r.blockedOn===e&&(r.blockedOn=null)}for(;0<xp.length&&(n=xp[0],n.blockedOn===null);)Ep(n),n.blockedOn===null&&xp.shift();if(n=(e.ownerDocument||e).$$reactFormReplay,n!=null)for(r=0;r<n.length;r+=3){var i=n[r],a=n[r+1],o=i[vt]||null;if(typeof a==`function`)o||Mp(n);else if(o){var s=null;if(a&&a.hasAttribute(`formAction`)){if(i=a,o=a[vt]||null)s=o.formAction;else if(pp(i)!==null)continue}else s=o.action;typeof s==`function`?n[r+1]=s:(n.splice(r,3),r-=3),Mp(n)}}}function Pp(){function e(e){e.canIntercept&&e.info===`react-transition`&&e.intercept({handler:function(){return new Promise(function(e){return i=e})},focusReset:`manual`,scroll:`manual`})}function t(){i!==null&&(i(),i=null),r||setTimeout(n,20)}function n(){if(!r&&!navigation.transition){var e=navigation.currentEntry;e&&e.url!=null&&navigation.navigate(e.url,{state:e.getState(),info:`react-transition`,history:`replace`})}}if(typeof navigation==`object`){var r=!1,i=null;return navigation.addEventListener(`navigate`,e),navigation.addEventListener(`navigatesuccess`,t),navigation.addEventListener(`navigateerror`,t),setTimeout(n,100),function(){r=!0,navigation.removeEventListener(`navigate`,e),navigation.removeEventListener(`navigatesuccess`,t),navigation.removeEventListener(`navigateerror`,t),i!==null&&(i(),i=null)}}}function Fp(e){this._internalRoot=e}Ip.prototype.render=Fp.prototype.render=function(e){var t=this._internalRoot;if(t===null)throw Error(s(409));var n=t.current;np(n,pu(),e,t,null,null)},Ip.prototype.unmount=Fp.prototype.unmount=function(){var e=this._internalRoot;if(e!==null){this._internalRoot=null;var t=e.containerInfo;np(e.current,2,null,e,null,null),bu(),t[yt]=null}};function Ip(e){this._internalRoot=e}Ip.prototype.unstable_scheduleHydration=function(e){if(e){var t=mt();e={blockedOn:null,target:e,priority:t};for(var n=0;n<xp.length&&t!==0&&t<xp[n].priority;n++);xp.splice(n,0,e),n===0&&Ep(e)}};var Lp=r.version;if(Lp!==`19.2.8`)throw Error(s(527,Lp,`19.2.8`));T.findDOMNode=function(e){var t=e._reactInternals;if(t===void 0)throw typeof e.render==`function`?Error(s(188)):(e=Object.keys(e).join(`,`),Error(s(268,e)));return e=p(t),e=e===null?null:m(e),e=e===null?null:e.stateNode,e};var Rp={bundleType:0,version:`19.2.8`,rendererPackageName:`react-dom`,currentDispatcherRef:w,reconcilerVersion:`19.2.8`};if(typeof __REACT_DEVTOOLS_GLOBAL_HOOK__<`u`){var zp=__REACT_DEVTOOLS_GLOBAL_HOOK__;if(!zp.isDisabled&&zp.supportsFiber)try{Ge=zp.inject(Rp),Ke=zp}catch{}}e.createRoot=function(e,t){if(!c(e))throw Error(s(299));var n=!1,r=``,i=Qs,a=$s,o=ec;return t!=null&&(!0===t.unstable_strictMode&&(n=!0),t.identifierPrefix!==void 0&&(r=t.identifierPrefix),t.onUncaughtError!==void 0&&(i=t.onUncaughtError),t.onCaughtError!==void 0&&(a=t.onCaughtError),t.onRecoverableError!==void 0&&(o=t.onRecoverableError)),t=ep(e,1,!1,null,null,n,r,null,i,a,o,Pp),e[yt]=t.current,Sd(e),new Fp(t)}})),c=e(((e,t)=>{function n(){if(!(typeof __REACT_DEVTOOLS_GLOBAL_HOOK__>`u`||typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE!=`function`))try{__REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE(n)}catch(e){console.error(e)}}n(),t.exports=s()})),l=i(),u=c(),d=String.raw`<div class="app teac-rack-app" id="app">
   <!-- Top Chassis Screws & Branding Rail -->
   <header class="titlebar rack-titlebar">
-    <div class="brand rack-brand"><span class="brand-emblem">T</span><span>TEAC</span><b>PRECISION HI-FI</b><span class="version">STUDIO RACK SYSTEM</span></div>
-    <div class="title-motto">V-3RX STEREO CASSETTE DECK &amp; DC SERVO AMPLIFIER</div>
+    <div class="brand rack-brand"><span class="brand-emblem">A</span><span>ATIGA</span><b>PRECISION HI-FI</b><span class="version">STUDIO RACK SYSTEM</span></div>
+    <div class="title-motto">AMP STEREO CASSETTE DECK &amp; DC SERVO AMPLIFIER</div>
     <div class="title-actions">
       <span class="local-indicator"><i></i> HIGH FIDELITY</span>
       <button class="icon-button" id="toggle-drawer-top" title="Buka / Tutup Arsip Kaset" aria-label="Buka arsip kaset" data-icon="library"></button>
@@ -25,7 +25,7 @@ Error generating stack: `+e.message+`
     <!-- ========================================================= -->
     <!-- UNIT 1: TEAC V-3RX STEREO CASSETTE DECK                   -->
     <!-- ========================================================= -->
-    <section class="teac-unit teac-cassette-deck" id="cassette-deck-unit" aria-label="TEAC V-3RX Stereo Cassette Deck">
+    <section class="teac-unit teac-cassette-deck" id="cassette-deck-unit" aria-label="ATIGA AMP Stereo Cassette Deck">
       <!-- Chassis Screws -->
       <div class="unit-screw screw-tl"></div>
       <div class="unit-screw screw-tr"></div>
@@ -35,8 +35,8 @@ Error generating stack: `+e.message+`
       <!-- Top Silkscreen Header -->
       <div class="deck-header-row">
         <div class="teac-logo-block">
-          <span class="teac-brand-text">TEAC</span>
-          <span class="teac-model-text">V-3RX</span>
+          <span class="teac-brand-text">ATIGA</span>
+          <span class="teac-model-text">AMP</span>
           <span class="teac-sub-text">Stereo Cassette Deck</span>
         </div>
       </div>
@@ -51,15 +51,15 @@ Error generating stack: `+e.message+`
               <span class="rocker-lens">POWER</span>
               <span class="rocker-metal"></span>
             </button>
-            <div class="rocker-sublabel">ON <span class="arr-up">▲</span> <span class="arr-down">▼</span> OFF</div>
+            <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
           </div>
 
           <div class="rotary-switch-block" id="deck-source-rotary" title="Source Selector">
-            <div class="rotary-knob knob-small knob-rotary-3pos" data-pos="0">
-              <div class="knob-indicator"></div>
-            </div>
             <div class="rotary-labels">
               <span>A</span><span>B</span><span>C</span>
+            </div>
+            <div class="rotary-knob knob-small knob-rotary-3pos" data-pos="0">
+              <div class="knob-indicator"></div>
             </div>
           </div>
 
@@ -74,13 +74,17 @@ Error generating stack: `+e.message+`
         <!-- Deck Center-Left: Cassette Door & BASF Tape -->
         <div class="cassette-door-bay" id="cassette-door-bay">
           <div class="bay-recess">
+            <div class="bay-screw bay-screw-left"></div>
+            <div class="bay-screw bay-screw-right"></div>
             <!-- Cassette Glass Window -->
             <div class="cassette-glass-window">
               <div class="glass-reflection"></div>
               <div class="glass-crosshairs">
-                <span class="ch-h1"></span><span class="ch-h2"></span><span class="ch-v"></span>
+                <span class="ch-h"></span>
+                <span class="ch-v1"></span>
+                <span class="ch-v-mid"></span>
+                <span class="ch-v2"></span>
               </div>
-              <div class="glass-screws"><i></i><i></i><i></i><i></i></div>
 
               <!-- BASF CR-E II 90 Cassette Tape Shell -->
               <div class="basf-cassette" id="basf-cassette">
@@ -134,146 +138,274 @@ Error generating stack: `+e.message+`
 
         <!-- Deck Center: System/Menu, Digital Red Counter, Piano Keys -->
         <div class="deck-center-console">
-          <!-- Top island buttons: SYSTEM, MENU, AMPLIFIER, DSP & TAPE BIAS/EQ -->
-          <div class="console-subpanel">
-            <div class="sys-btn-grid">
-              <div class="sys-col"><button class="mini-bezel-btn" id="btn-system">SYSTEM</button><span class="col-sub">TAPE (BIAS/EQ)</span></div>
-              <div class="sys-col"><button class="mini-bezel-btn" id="btn-menu">MENU</button><span class="col-sub">NORMAL</span></div>
-              <div class="sys-col"><button class="mini-bezel-btn" id="btn-amplifier">AMPLIFIER</button><span class="col-sub">Co (CrO₂)</span></div>
-              <div class="sys-col"><button class="mini-bezel-btn" id="btn-dsp">DSP</button><span class="col-sub">METAL</span></div>
+          <!-- Top island matrix: SYSTEM / TAPE BIAS/EQ & dbx badge -->
+          <div class="console-matrix-panel">
+            <!-- Row 1: dbx badge aligned to the top right -->
+            <div class="matrix-top-header">
+              <div class="dbx-indicator-badge active" id="dbx-badge" title="dbx Dynamic Noise Reduction System" role="button" tabindex="0" aria-label="dbx Noise Reduction">
+                <span>dbx</span>
+              </div>
             </div>
-            <!-- Green DBX Badge -->
-            <div class="dbx-indicator-badge active" id="dbx-badge" title="dbx Dynamic Noise Reduction System">
-              <span>dbx</span>
+
+            <!-- Row 2: Push buttons for Menu, Amplifier, DSP -->
+            <div class="matrix-btn-row matrix-btn-row-top">
+              <div class="matrix-spacer"></div>
+              <div class="matrix-btn-cell">
+                <button class="matrix-btn" id="btn-menu" aria-label="Menu" title="Menu"></button>
+              </div>
+              <div class="matrix-btn-cell">
+                <button class="matrix-btn" id="btn-amplifier" aria-label="Amplifier" title="Amplifier"></button>
+              </div>
+              <div class="matrix-btn-cell">
+                <button class="matrix-btn" id="btn-dsp" aria-label="DSP" title="DSP"></button>
+              </div>
+            </div>
+
+            <!-- Row 3: Printed Matrix Legend Plaque -->
+            <div class="matrix-chart-card">
+              <div class="chart-row chart-row-top">
+                <div class="chart-col-head">SYSTEM</div>
+                <div class="chart-col-cell">MENU</div>
+                <div class="chart-col-cell">AMPLIFIER</div>
+                <div class="chart-col-cell">DSP</div>
+              </div>
+              <div class="chart-row chart-row-bottom">
+                <div class="chart-col-head">TAPE (BIAS/EQ)</div>
+                <div class="chart-col-cell">NORMAL</div>
+                <div class="chart-col-cell">Co (CrO₂)</div>
+                <div class="chart-col-cell">METAL</div>
+              </div>
+            </div>
+
+            <!-- Row 4: Push buttons for Normal, CrO2, Metal -->
+            <div class="matrix-btn-row matrix-btn-row-bottom">
+              <div class="matrix-spacer"></div>
+              <div class="matrix-btn-cell">
+                <button class="matrix-btn active" id="btn-tape-normal" aria-label="Tape Normal" title="Normal Bias/EQ"></button>
+              </div>
+              <div class="matrix-btn-cell">
+                <button class="matrix-btn" id="btn-tape-cro2" aria-label="Tape CrO2" title="CrO2 Bias/EQ"></button>
+              </div>
+              <div class="matrix-btn-cell">
+                <button class="matrix-btn" id="btn-tape-metal" aria-label="Tape Metal" title="Metal Bias/EQ"></button>
+              </div>
             </div>
           </div>
 
           <!-- Digital LED Tape Counter & Reset Knob -->
           <div class="tape-counter-row">
-            <div class="counter-recess">
+            <div class="counter-display-module">
               <span class="counter-legend">TAPE COUNTER</span>
-              <div class="seven-segment-display" id="digital-counter" aria-label="Penghitung pita kaset">
-                <span class="seg-digit" id="counter-m1">0</span>
-                <span class="seg-digit" id="counter-m2">0</span>
-                <span class="seg-colon">:</span>
-                <span class="seg-digit" id="counter-s1">0</span>
-                <span class="seg-digit" id="counter-s2">0</span>
+              <div class="counter-cluster">
+                <div class="seven-segment-display" id="digital-counter" aria-label="Penghitung pita kaset">
+                  <span class="seg-digit" id="counter-m1">0</span>
+                  <span class="seg-digit" id="counter-m2">0</span>
+                  <span class="seg-dot">.</span>
+                  <span class="seg-digit" id="counter-s1">1</span>
+                  <span class="seg-digit" id="counter-s2">7</span>
+                </div>
+                <button class="counter-reset-rect" id="counter-reset-btn" title="Reset Counter" aria-label="Atur ulang penghitung"></button>
               </div>
             </div>
-            <div class="counter-knob-block">
+            <div class="counter-knob-module">
               <span class="knob-label-mini">COUNT<br>H.M<br>TIME</span>
-              <button class="knob-rotary-reset" id="counter-reset-btn" title="Reset Counter" aria-label="Atur ulang penghitung"></button>
+              <div class="knob-counter-mode" id="counter-mode-knob">
+                <div class="counter-knob-notch"></div>
+              </div>
             </div>
           </div>
 
           <!-- Tactile Piano Transport Keys -->
           <div class="piano-transport-bank" aria-label="Kontrol transport pemutar kaset">
-            <!-- REW Key -->
-            <button class="piano-key" id="previous" data-deck-control="previous" title="Mundur / Lagu Sebelumnya" aria-label="Lagu sebelumnya">
-              <span class="piano-symbol">◄◄</span>
-            </button>
-            <!-- STOP Key -->
-            <button class="piano-key" id="stop-btn" data-deck-control="stop" title="Berhenti" aria-label="Berhenti">
+            <div class="piano-btn-col col-rew">
+              <span class="piano-label">◄◄</span>
+              <button class="piano-key key-narrow" id="previous" data-deck-control="previous" title="Mundur / Lagu Sebelumnya" aria-label="Lagu sebelumnya"></button>
+            </div>
+            <div class="piano-btn-col col-stop">
               <span class="piano-label">STOP</span>
-            </button>
-            <!-- PLAY Key (wider key) -->
-            <button class="piano-key piano-key-wide" id="play" data-deck-control="play" title="Putar / Jeda" aria-label="Putar">
-              <span class="piano-symbol">►</span>
-            </button>
-            <!-- FF Key -->
-            <button class="piano-key" id="next" data-deck-control="next" title="Maju / Lagu Berikutnya" aria-label="Lagu berikutnya">
-              <span class="piano-symbol">►►</span>
-            </button>
-            <!-- REC Key -->
-            <button class="piano-key key-rec" id="rec-btn" data-deck-control="rec" title="Rekam / Impor file audio" aria-label="Impor audio">
+              <button class="piano-key key-wide" id="stop-btn" data-deck-control="stop" title="Berhenti" aria-label="Berhenti"></button>
+            </div>
+            <div class="piano-btn-col col-play">
+              <span class="piano-label">►</span>
+              <button class="piano-key key-wide active" id="play" data-deck-control="play" title="Putar / Jeda" aria-label="Putar"></button>
+            </div>
+            <div class="piano-btn-col col-ff">
+              <span class="piano-label">►►</span>
+              <button class="piano-key key-narrow" id="next" data-deck-control="next" title="Maju / Lagu Berikutnya" aria-label="Lagu berikutnya"></button>
+            </div>
+            <div class="piano-btn-col col-rec">
               <span class="piano-label">REC</span>
-            </button>
-            <!-- LOOP Key -->
-            <button class="piano-key" id="repeat" data-deck-control="loop" title="Ulangi pemutaran" aria-label="Ulangi: mati">
+              <button class="piano-key key-narrow key-rec" id="rec-btn" data-deck-control="rec" title="Rekam / Impor file audio" aria-label="Impor audio"></button>
+            </div>
+            <div class="piano-btn-col col-loop">
               <span class="piano-label">LOOP</span>
-            </button>
-            <!-- PAUSE Key -->
-            <button class="piano-key" id="pause-btn" data-deck-control="pause" title="Jeda pemutaran" aria-label="Jeda">
+              <button class="piano-key key-narrow" id="repeat" data-deck-control="loop" title="Ulangi pemutaran" aria-label="Ulangi: mati"></button>
+            </div>
+            <div class="piano-btn-col col-pause">
               <span class="piano-label">PAUSE</span>
-            </button>
+              <button class="piano-key key-narrow" id="pause-btn" data-deck-control="pause" title="Jeda pemutaran" aria-label="Jeda"></button>
+            </div>
           </div>
         </div>
 
+        <!-- Deck Right-Center: Twin Vertical Edge VU Meters -->
         <!-- Deck Right-Center: Twin Vertical Edge VU Meters -->
         <div class="deck-vu-section">
           <div class="twin-vu-housing">
             <!-- Left Channel Meter -->
             <div class="vertical-vu-meter meter-left" id="vu-meter-l">
+              <div class="vu-glass-sheen"></div>
               <span class="meter-channel-tag">LEFT CHANNEL</span>
               <div class="meter-dial-face">
-                <div class="vu-graduations">
-                  <div class="scale-red-zone">
-                    <span>+5</span><span>+3</span><span>0</span>
-                  </div>
-                  <div class="scale-green-zone">
-                    <span>3</span><span>5</span><span>7</span><span>10</span><span>20</span>
+                <div class="vu-scale-graphic">
+                  <svg class="vu-scale-svg" viewBox="0 0 76 130">
+                    <path class="scale-arc-green" d="M 46 115 C 41 85, 40 55, 43 36" fill="none" stroke="#16a34a" stroke-width="2.5" />
+                    <path class="scale-arc-red" d="M 43 36 C 44 26, 46 16, 49 8" fill="none" stroke="#dc2626" stroke-width="2.5" />
+                    <line x1="39" y1="36" x2="47" y2="36" stroke="#000" stroke-width="1.5" />
+                  </svg>
+                  <div class="vu-scale-nums">
+                    <div class="sc-red">
+                      <span>5</span>
+                      <span>3</span>
+                      <span class="sc-zero">0</span>
+                    </div>
+                    <div class="sc-green">
+                      <span>3</span>
+                      <span>5</span>
+                      <span>7</span>
+                      <span>10</span>
+                      <span>20</span>
+                    </div>
                   </div>
                 </div>
-                <div class="vu-arc-line"></div>
                 <div class="vu-analog-needle" id="vu-needle-left"></div>
               </div>
-              <span class="meter-foot-label">dB<br><small>PEAK LEVEL</small></span>
+              <div class="meter-footer-tag">
+                <span class="db-txt">dB</span>
+                <span class="peak-txt">PEAK LEVEL</span>
+              </div>
             </div>
 
             <!-- Right Channel Meter -->
             <div class="vertical-vu-meter meter-right" id="vu-meter-r">
+              <div class="vu-glass-sheen"></div>
               <span class="meter-channel-tag">RIGHT CHANNEL</span>
               <div class="meter-dial-face">
-                <div class="vu-graduations">
-                  <div class="scale-red-zone">
-                    <span>+5</span><span>+3</span><span>0</span>
-                  </div>
-                  <div class="scale-green-zone">
-                    <span>3</span><span>5</span><span>7</span><span>10</span><span>20</span>
+                <div class="vu-scale-graphic">
+                  <svg class="vu-scale-svg" viewBox="0 0 76 130">
+                    <path class="scale-arc-green" d="M 30 115 C 35 85, 36 55, 33 36" fill="none" stroke="#16a34a" stroke-width="2.5" />
+                    <path class="scale-arc-red" d="M 33 36 C 32 26, 30 16, 27 8" fill="none" stroke="#dc2626" stroke-width="2.5" />
+                    <line x1="29" y1="36" x2="37" y2="36" stroke="#000" stroke-width="1.5" />
+                  </svg>
+                  <div class="vu-scale-nums">
+                    <div class="sc-red">
+                      <span>5</span>
+                      <span>3</span>
+                      <span class="sc-zero">0</span>
+                    </div>
+                    <div class="sc-green">
+                      <span>3</span>
+                      <span>5</span>
+                      <span>7</span>
+                      <span>10</span>
+                      <span>20</span>
+                    </div>
                   </div>
                 </div>
-                <div class="vu-arc-line"></div>
                 <div class="vu-analog-needle" id="vu-needle-right"></div>
               </div>
-              <span class="meter-foot-label">dB<br><small>PEAK LEVEL</small></span>
+              <div class="meter-footer-tag">
+                <span class="db-txt">dB</span>
+                <span class="peak-txt">PEAK LEVEL</span>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Deck Far Right: Concentric Volume/Balance, Mute, Mic & Phone Jacks -->
+        <!-- Deck Far Right: Concentric Volume/Balance, Mute, Mic & Phone Jacks -->
         <div class="deck-right-controls">
           <div class="dual-concentric-knob-module">
-            <span class="knob-title-top">VOLUME <span class="dot-sep">•</span> BALANCE</span>
-            <div class="concentric-dial-scale">
-              <div class="scale-tick t0">0</div>
-              <div class="scale-tick t1">1</div>
-              <div class="scale-tick t2">2</div>
-              <div class="scale-tick t3">3</div>
-              <div class="scale-tick t4">4</div>
-              <div class="scale-tick t5">5</div>
-              <div class="scale-tick t6">6</div>
-              <div class="scale-tick t7">7</div>
-              <div class="scale-tick t8">8</div>
-              <div class="scale-tick t9">9</div>
-              <div class="scale-tick t10">10</div>
+            <div class="volume-balance-header">
+              <span class="vb-txt">VOLUME</span>
+              <span class="vb-concentric-symbol">
+                <i class="vb-line-left"></i>
+                <i class="vb-outer-circle"></i>
+                <i class="vb-inner-dot"></i>
+                <i class="vb-line-right"></i>
+              </span>
+              <span class="vb-txt">BALANCE</span>
             </div>
-            <div class="knob-metal-body knob-large-dial" id="deck-volume-knob" title="Putar atau drag untuk mengubah volume">
-              <div class="knob-red-indicator" id="deck-vol-pointer"></div>
+
+            <div class="concentric-dial-outer">
+              <!-- Outer scale collar with 0..10 and radial ticks -->
+              <div class="concentric-dial-scale">
+                <span class="scale-tick sn0">0</span>
+                <span class="scale-tick sn1">1</span>
+                <span class="scale-tick sn2">2</span>
+                <span class="scale-tick sn3">3</span>
+                <span class="scale-tick sn4">4</span>
+                <span class="scale-tick sn5">5</span>
+                <span class="scale-tick sn6">6</span>
+                <span class="scale-tick sn7">7</span>
+                <span class="scale-tick sn8">8</span>
+                <span class="scale-tick sn9">9</span>
+                <span class="scale-tick sn10">10</span>
+
+                <div class="dial-radial-ticks">
+                  <i class="d-tick dt-m121"></i>
+                  <i class="d-tick dt-m94"></i>
+                  <i class="d-tick dt-m67"></i>
+                  <i class="d-tick dt-m40"></i>
+                  <i class="d-tick dt-m13"></i>
+                  <i class="d-tick dt-p13"></i>
+                  <i class="d-tick dt-p40"></i>
+                  <i class="d-tick dt-p67"></i>
+                  <i class="d-tick dt-p94"></i>
+                  <i class="d-tick dt-p121"></i>
+                </div>
+
+                <!-- Raised balance index tab with red vertical line at 10:30 -->
+                <div class="balance-index-tab">
+                  <div class="balance-red-line"></div>
+                </div>
+              </div>
+
+              <!-- Inner rotatable 102px volume knob -->
+              <div class="knob-concentric-housing">
+                <div class="knob-metal-body knob-large-dial" id="deck-volume-knob" title="Putar atau drag untuk mengubah volume">
+                  <div class="knob-face-wedge"></div>
+                  <div class="knob-indicator-notch" id="deck-vol-pointer"></div>
+                </div>
+              </div>
+
+              <!-- MUTE push switch nestled right at the bottom edge of the dial -->
+              <div class="deck-mute-module">
+                <div class="mute-switch-socket">
+                  <button class="push-rect-switch" id="mute" aria-label="Bisukan suara" aria-pressed="false">
+                    <span class="switch-pip"></span>
+                  </button>
+                </div>
+                <span class="switch-title">MUTE</span>
+                <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
+              </div>
             </div>
           </div>
 
-          <div class="deck-mute-module">
-            <span class="switch-title">MUTE</span>
-            <button class="push-rect-switch" id="mute" aria-label="Bisukan suara" aria-pressed="false">
-              <span class="switch-pip"></span>
-            </button>
-            <span class="switch-state-text">ON <span class="arr-up">▲</span> <span class="arr-down">▼</span> OFF</span>
-          </div>
-
+          <!-- Bottom 3 jacks -->
           <div class="jack-socket-row">
-            <div class="jack-item"><div class="phone-jack-socket"><i></i></div><span>L MIC</span></div>
-            <div class="jack-item"><div class="phone-jack-socket"><i></i></div><span>R</span></div>
-            <div class="jack-item"><div class="phone-jack-socket jack-phones"><i></i></div><span>PHONES</span></div>
+            <div class="jack-item">
+              <div class="phone-jack-socket"><i></i></div>
+              <span class="jack-label">L</span>
+            </div>
+            <div class="jack-item">
+              <div class="phone-jack-socket"><i></i></div>
+              <span class="jack-label">MIC &nbsp; R</span>
+            </div>
+            <div class="jack-item">
+              <div class="phone-jack-socket jack-phones"><i></i></div>
+              <span class="jack-label">PHONES</span>
+            </div>
           </div>
         </div>
 
@@ -286,7 +418,7 @@ Error generating stack: `+e.message+`
     <!-- ========================================================= -->
     <!-- UNIT 2: TEAC INTEGRATED DC SERVO AMPLIFIER                -->
     <!-- ========================================================= -->
-    <section class="teac-unit teac-amplifier" id="amplifier-unit" aria-label="TEAC Integrated DC Servo Amplifier">
+    <section class="teac-unit teac-amplifier" id="amplifier-unit" aria-label="ATIGA Integrated DC Servo Amplifier">
       <!-- Chassis Screws -->
       <div class="unit-screw screw-tl"></div>
       <div class="unit-screw screw-tr"></div>
@@ -296,7 +428,7 @@ Error generating stack: `+e.message+`
       <!-- Amplifier Header Silkscreen -->
       <div class="amp-header-row">
         <div class="teac-logo-block">
-          <span class="teac-brand-text">TEAC</span>
+          <span class="teac-brand-text">ATIGA</span>
           <span class="teac-sub-text">Integrated DC Servo Amplifier</span>
         </div>
       </div>
@@ -311,75 +443,131 @@ Error generating stack: `+e.message+`
               <span class="rocker-lens">POWER</span>
               <span class="rocker-metal"></span>
             </button>
-            <div class="rocker-sublabel">ON <span class="arr-up">▲</span> <span class="arr-down">▼</span> OFF</div>
+            <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
           </div>
           <div class="jack-item amp-phone-jack">
+            <span class="jack-label">PHONES</span>
             <div class="phone-jack-socket"><i></i></div>
-            <span>PHONES</span>
           </div>
         </div>
 
         <!-- Amp Center-Left: VFD / LED Output Power Watts Meter Display -->
         <div class="amp-vfd-display-panel">
           <div class="vfd-bezel-recess">
-            <div class="vfd-inner-screen">
-              <!-- Scale markings in Watts -->
-              <div class="watts-scale-row">
-                <span>.003</span><span>.015</span><span>0.04</span><span>0.1</span><span>0.3</span><span>0.7</span><span>2</span><span>5</span><span>10</span><span>20</span><span>40</span><span>80</span>
-                <span class="watts-unit">WATTS</span>
-              </div>
-
-              <!-- Left Channel Bar -->
-              <div class="watts-channel-row">
-                <span class="ch-label">LEFT</span>
-                <div class="watts-bar-track" id="watts-track-left">
-                  <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
-                  <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
-                  <div class="watts-seg amber"></div><div class="watts-seg amber"></div><div class="watts-seg amber"></div>
-                  <div class="watts-seg red"></div><div class="watts-seg red"></div><div class="watts-seg red"></div>
+            <div class="vfd-screen-frame">
+              <div class="vfd-glass-streak"></div>
+              <div class="vfd-inner-screen">
+                <!-- Scale markings in Watts with vertical grid ticks -->
+                <div class="watts-scale-row">
+                  <div class="watts-col"><span>.003</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>.015</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>0.04</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>0.1</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>0.3</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>0.7</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>2</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>5</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>10</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>20</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>40</span><i class="w-tick"></i></div>
+                  <div class="watts-col"><span>80</span><i class="w-tick"></i></div>
+                  <div class="watts-col watts-col-unit"><span class="w-sep">|</span><span class="watts-unit">WATTS</span></div>
                 </div>
-                <span class="peak-text">PEAK</span>
-              </div>
 
-              <!-- Center Graticule Ticks -->
-              <div class="vfd-center-graticule">
-                <span>||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||</span>
-              </div>
-
-              <!-- Right Channel Bar -->
-              <div class="watts-channel-row">
-                <span class="ch-label">RIGHT</span>
-                <div class="watts-bar-track" id="watts-track-right">
-                  <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
-                  <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
-                  <div class="watts-seg amber"></div><div class="watts-seg amber"></div><div class="watts-seg amber"></div>
-                  <div class="watts-seg red"></div><div class="watts-seg red"></div><div class="watts-seg red"></div>
+                <!-- Left Channel Bar -->
+                <div class="watts-channel-row">
+                  <span class="ch-label">LEFT</span>
+                  <div class="watts-bar-track" id="watts-track-left">
+                    <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
+                    <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
+                    <div class="watts-seg amber"></div><div class="watts-seg amber"></div><div class="watts-seg amber"></div>
+                    <div class="watts-seg red"></div><div class="watts-seg red"></div><div class="watts-seg red"></div>
+                  </div>
+                  <div class="ch-status-indicator">
+                    <i class="vfd-led-dot active" id="dot-peak"></i>
+                    <span class="peak-text">PEAK</span>
+                  </div>
                 </div>
-                <span class="vu-text">VU</span>
-              </div>
 
-              <!-- Indicator Lamps: LEFT, RIGHT, STEREO, EQUALIZER, MUTE -->
-              <div class="amp-indicator-lamps">
-                <div class="amp-lamp-item"><i class="lamp-dot green active"></i><span>LEFT</span></div>
-                <div class="amp-lamp-item"><i class="lamp-dot green active"></i><span>RIGHT</span></div>
-                <div class="amp-lamp-item"><i class="lamp-dot green active"></i><span>STEREO</span></div>
-                <div class="amp-lamp-item"><i class="lamp-dot amber" id="lamp-equalizer"></i><span>EQUALIZER</span></div>
-                <div class="amp-lamp-item"><i class="lamp-dot red" id="lamp-mute"></i><span>MUTE</span></div>
+                <!-- Center Graticule Ticks -->
+                <div class="vfd-center-graticule">
+                  <div class="graticule-axis">
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i><i class="gr-sub"></i><i class="gr-sub"></i><i class="gr-sub"></i></div>
+                    <div class="gr-col"><i class="gr-maj"></i></div>
+                  </div>
+                </div>
+
+                <!-- Right Channel Bar -->
+                <div class="watts-channel-row">
+                  <span class="ch-label">RIGHT</span>
+                  <div class="watts-bar-track" id="watts-track-right">
+                    <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
+                    <div class="watts-seg green"></div><div class="watts-seg green"></div><div class="watts-seg green"></div>
+                    <div class="watts-seg amber"></div><div class="watts-seg amber"></div><div class="watts-seg amber"></div>
+                    <div class="watts-seg red"></div><div class="watts-seg red"></div><div class="watts-seg red"></div>
+                  </div>
+                  <div class="ch-status-indicator">
+                    <span class="vu-text">VU</span>
+                    <i class="vfd-led-dot active" id="dot-vu"></i>
+                  </div>
+                </div>
+
+                <!-- Bottom Graticule Ticks below Right Channel -->
+                <div class="vfd-bottom-ticks">
+                  <div class="gr-bot-tick"></div><div class="gr-bot-tick"></div><div class="gr-bot-tick"></div>
+                  <div class="gr-bot-tick"></div><div class="gr-bot-tick"></div><div class="gr-bot-tick"></div>
+                  <div class="gr-bot-tick"></div><div class="gr-bot-tick"></div><div class="gr-bot-tick"></div>
+                  <div class="gr-bot-tick"></div><div class="gr-bot-tick"></div><div class="gr-bot-tick"></div>
+                </div>
+
+                <!-- Indicator Lamps / Status Cells -->
+                <div class="amp-indicator-lamps">
+                  <div class="amp-lamp-item"><i class="lamp-dot green active" id="lamp-left"></i><span>LEFT</span></div>
+                  <div class="amp-lamp-item"><i class="lamp-dot green active" id="lamp-right"></i><span>RIGHT</span></div>
+                  <div class="amp-lamp-item"><i class="lamp-dot green active" id="lamp-stereo"></i><span>STEREO</span></div>
+                  <div class="amp-lamp-item"><i class="lamp-dot amber" id="lamp-equalizer"></i><span>EQUALIZER</span></div>
+                  <div class="amp-lamp-item"><i class="lamp-dot red" id="lamp-mute"></i><span>MUTE</span></div>
+                </div>
               </div>
             </div>
 
             <!-- Lower Buttons on the VFD Bezel: SPEAKERS & DISPLAY -->
             <div class="vfd-lower-push-buttons">
               <div class="speaker-btn-group">
-                <button class="bezel-push-tab active" id="spk-left">LEFT</button>
-                <button class="bezel-push-tab active" id="spk-right">RIGHT</button>
-                <button class="bezel-push-tab active" id="spk-stereo">STEREO</button>
-                <span class="btn-group-label">SPEAKERS</span>
+                <div class="bezel-btn-cell">
+                  <span class="bezel-btn-label">LEFT</span>
+                  <button class="bezel-push-tab active" id="spk-left" aria-label="Speaker Left"></button>
+                </div>
+                <div class="bezel-btn-cell">
+                  <span class="bezel-btn-label">RIGHT</span>
+                  <button class="bezel-push-tab active" id="spk-right" aria-label="Speaker Right"></button>
+                </div>
+                <div class="bezel-btn-cell">
+                  <span class="bezel-btn-label">STEREO</span>
+                  <button class="bezel-push-tab active" id="spk-stereo" aria-label="Speaker Stereo"></button>
+                </div>
+                <span class="btn-group-title">SPEAKERS</span>
               </div>
               <div class="display-btn-group">
-                <span class="btn-group-label">DISPLAY</span>
-                <button class="bezel-push-tab" id="dsp-vu">VU</button>
-                <button class="bezel-push-tab active" id="dsp-peak">PEAK</button>
+                <span class="btn-group-title">DISPLAY</span>
+                <div class="bezel-btn-cell">
+                  <span class="bezel-btn-label">VU</span>
+                  <button class="bezel-push-tab" id="dsp-vu" aria-label="Display VU"></button>
+                </div>
+                <div class="bezel-btn-cell">
+                  <span class="bezel-btn-label">PEAK</span>
+                  <button class="bezel-push-tab active" id="dsp-peak" aria-label="Display Peak"></button>
+                </div>
               </div>
             </div>
           </div>
@@ -391,99 +579,191 @@ Error generating stack: `+e.message+`
           <!-- Top Row of Knobs: BASS, TREBLE, PREAMP, BALANCE -->
           <div class="amp-top-knob-row">
             <!-- BASS Knob -->
-            <div class="rotary-control-module">
+            <div class="rotary-control-module tone-large-module">
               <span class="knob-label">BASS</span>
-              <div class="knob-scale-arc">
-                <span>12</span><span>3</span><span>0</span><span>3</span><span>12</span>
+              <div class="tone-dial-housing">
+                <div class="knob-scale-arc tone-scale-9">
+                  <span class="sc-num sc-m12">12</span>
+                  <i class="sc-tick st-m126"></i>
+                  <span class="sc-num sc-m9">9</span>
+                  <i class="sc-tick st-m90"></i>
+                  <span class="sc-num sc-m6">6</span>
+                  <i class="sc-tick st-m54"></i>
+                  <span class="sc-num sc-m3">3</span>
+                  <i class="sc-tick st-m18"></i>
+                  <span class="sc-num sc-0">0</span>
+                  <i class="sc-tick st-p18"></i>
+                  <span class="sc-num sc-p3">3</span>
+                  <i class="sc-tick st-p54"></i>
+                  <span class="sc-num sc-p6">6</span>
+                  <i class="sc-tick st-p90"></i>
+                  <span class="sc-num sc-p9">9</span>
+                  <i class="sc-tick st-p126"></i>
+                  <span class="sc-num sc-p12">12</span>
+                  <i class="sc-tick st-m162"></i>
+                  <i class="sc-tick st-p162"></i>
+                </div>
+                <div class="knob-metal-body knob-medium" id="knob-bass" data-param="bass" title="Pengatur Bas (-12 s/d +12 dB)">
+                  <div class="knob-indicator-line"></div>
+                </div>
               </div>
-              <div class="knob-metal-body knob-medium" id="knob-bass" data-param="bass" title="Pengatur Bas (-12 s/d +12 dB)">
-                <div class="knob-indicator-line"></div>
-              </div>
-              <span class="knob-sub-sign">−&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+</span>
+              <div class="knob-sub-signs"><span>−</span><span>+</span></div>
             </div>
 
             <!-- TREBLE Knob -->
-            <div class="rotary-control-module">
+            <div class="rotary-control-module tone-large-module">
               <span class="knob-label">TREBLE</span>
-              <div class="knob-scale-arc">
-                <span>12</span><span>3</span><span>0</span><span>3</span><span>12</span>
+              <div class="tone-dial-housing">
+                <div class="knob-scale-arc tone-scale-9">
+                  <span class="sc-num sc-m12">12</span>
+                  <i class="sc-tick st-m126"></i>
+                  <span class="sc-num sc-m9">9</span>
+                  <i class="sc-tick st-m90"></i>
+                  <span class="sc-num sc-m6">6</span>
+                  <i class="sc-tick st-m54"></i>
+                  <span class="sc-num sc-m3">3</span>
+                  <i class="sc-tick st-m18"></i>
+                  <span class="sc-num sc-0">0</span>
+                  <i class="sc-tick st-p18"></i>
+                  <span class="sc-num sc-p3">3</span>
+                  <i class="sc-tick st-p54"></i>
+                  <span class="sc-num sc-p6">6</span>
+                  <i class="sc-tick st-p90"></i>
+                  <span class="sc-num sc-p9">9</span>
+                  <i class="sc-tick st-p126"></i>
+                  <span class="sc-num sc-p12">12</span>
+                  <i class="sc-tick st-m162"></i>
+                  <i class="sc-tick st-p162"></i>
+                </div>
+                <div class="knob-metal-body knob-medium" id="knob-treble" data-param="treble" title="Pengatur Treble (-12 s/d +12 dB)">
+                  <div class="knob-indicator-line"></div>
+                </div>
               </div>
-              <div class="knob-metal-body knob-medium" id="knob-treble" data-param="treble" title="Pengatur Treble (-12 s/d +12 dB)">
-                <div class="knob-indicator-line"></div>
-              </div>
-              <span class="knob-sub-sign">−&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+</span>
+              <div class="knob-sub-signs"><span>−</span><span>+</span></div>
             </div>
 
             <!-- PREAMP Knob -->
-            <div class="rotary-control-module">
+            <div class="rotary-control-module tone-large-module">
               <span class="knob-label">PREAMP</span>
-              <div class="knob-scale-arc">
-                <span>12</span><span>3</span><span>0</span><span>3</span><span>12</span>
+              <div class="tone-dial-housing">
+                <div class="knob-scale-arc tone-scale-9">
+                  <span class="sc-num sc-m12">12</span>
+                  <i class="sc-tick st-m126"></i>
+                  <span class="sc-num sc-m9">9</span>
+                  <i class="sc-tick st-m90"></i>
+                  <span class="sc-num sc-m6">6</span>
+                  <i class="sc-tick st-m54"></i>
+                  <span class="sc-num sc-m3">3</span>
+                  <i class="sc-tick st-m18"></i>
+                  <span class="sc-num sc-0">0</span>
+                  <i class="sc-tick st-p18"></i>
+                  <span class="sc-num sc-p3">3</span>
+                  <i class="sc-tick st-p54"></i>
+                  <span class="sc-num sc-p6">6</span>
+                  <i class="sc-tick st-p90"></i>
+                  <span class="sc-num sc-p9">9</span>
+                  <i class="sc-tick st-p126"></i>
+                  <span class="sc-num sc-p12">12</span>
+                  <i class="sc-tick st-m162"></i>
+                  <i class="sc-tick st-p162"></i>
+                </div>
+                <div class="knob-metal-body knob-medium" id="knob-preamp" data-param="preamp" title="Pengatur Preamp (-12 s/d +12 dB)">
+                  <div class="knob-indicator-line"></div>
+                </div>
               </div>
-              <div class="knob-metal-body knob-medium" id="knob-preamp" data-param="preamp" title="Pengatur Preamp (-12 s/d +12 dB)">
-                <div class="knob-indicator-line"></div>
-              </div>
-              <span class="knob-sub-sign">−&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+</span>
+              <div class="knob-sub-signs"><span>−</span><span>+</span></div>
             </div>
 
             <!-- BALANCE Knob -->
-            <div class="rotary-control-module">
+            <div class="rotary-control-module tone-large-module">
               <span class="knob-label">BALANCE</span>
-              <div class="knob-scale-arc">
-                <span>2</span><span>1</span><span>0</span><span>1</span><span>2</span>
+              <div class="tone-dial-housing">
+                <div class="knob-scale-arc tone-scale-balance">
+                  <span class="sc-num sc-b8l">8</span>
+                  <i class="sc-tick st-m126"></i>
+                  <span class="sc-num sc-b6l">6</span>
+                  <i class="sc-tick st-m90"></i>
+                  <span class="sc-num sc-b4l">4</span>
+                  <i class="sc-tick st-m54"></i>
+                  <span class="sc-num sc-b2l">2</span>
+                  <i class="sc-tick st-m18"></i>
+                  <span class="sc-num sc-b0">0</span>
+                  <i class="sc-tick st-p18"></i>
+                  <span class="sc-num sc-b2r">2</span>
+                  <i class="sc-tick st-p54"></i>
+                  <span class="sc-num sc-b4r">4</span>
+                  <i class="sc-tick st-p90"></i>
+                  <span class="sc-num sc-b6r">6</span>
+                  <i class="sc-tick st-p126"></i>
+                  <span class="sc-num sc-b8r">8</span>
+                  <i class="sc-tick st-m162"></i>
+                  <i class="sc-tick st-p162"></i>
+                </div>
+                <div class="knob-metal-body knob-medium" id="knob-balance" data-param="balance" title="Keseimbangan Kiri / Kanan">
+                  <div class="knob-indicator-line"></div>
+                </div>
               </div>
-              <div class="knob-metal-body knob-medium" id="knob-balance" data-param="balance" title="Keseimbangan Kiri / Kanan">
-                <div class="knob-indicator-line"></div>
-              </div>
-              <span class="knob-sub-sign">L&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R</span>
+              <div class="knob-sub-signs"><span>L</span><span>R</span></div>
             </div>
           </div>
 
-          <!-- Bottom Row: EQUALIZER/DSP, TRUE BASS, ENHANCER, REVERB, MUTE -->
+          <!-- Bottom Row: EQUALIZER/DSP dual keys, TRUE BASS, ENHANCER, REVERB, MUTE -->
           <div class="amp-bottom-knob-row">
-            <!-- EQUALIZER / DSP Switch -->
-            <div class="amp-switch-module">
+            <!-- Dual Push Keys: EQUALIZER and DSP -->
+            <div class="amp-switch-module amp-dual-keys-block">
               <div class="switch-head-labels"><span>EQUALIZER</span><span>DSP</span></div>
-              <button class="horiz-slider-switch" id="switch-eq-dsp" title="Buka Ekualiser 10-Band / DSP">
-                <span class="slider-thumb"></span>
-              </button>
-              <div class="rocker-sublabel">ON <span class="arr-up">▲</span> <span class="arr-down">▼</span> OFF</div>
+              <div class="amp-dual-keys-housing" id="switch-eq-dsp" title="Buka Ekualiser 10-Band / DSP">
+                <button class="amp-dual-key-btn active" id="btn-amp-eq"><span></span></button>
+                <button class="amp-dual-key-btn" id="btn-amp-dsp"><span></span></button>
+              </div>
+              <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
             </div>
 
             <!-- TRUE BASS Knob -->
             <div class="rotary-control-module mini-module">
+              <div class="mini-dial-ticks">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </div>
               <div class="knob-metal-body knob-small" id="knob-true-bass" data-param="truebass" title="True Bass Enhancer">
                 <div class="knob-indicator-line"></div>
               </div>
-              <span class="knob-sub-sign">−&nbsp;&nbsp;&nbsp;+</span>
+              <div class="knob-sub-signs mini-signs"><span>−</span><span>+</span></div>
               <span class="knob-label-bottom">TRUE BASS</span>
             </div>
 
             <!-- ENHANCER Knob -->
             <div class="rotary-control-module mini-module">
+              <div class="mini-dial-ticks">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </div>
               <div class="knob-metal-body knob-small" id="knob-enhancer" data-param="enhancer" title="Sound Enhancer / Clarity">
                 <div class="knob-indicator-line"></div>
               </div>
-              <span class="knob-sub-sign">−&nbsp;&nbsp;&nbsp;+</span>
+              <div class="knob-sub-signs mini-signs"><span>−</span><span>+</span></div>
               <span class="knob-label-bottom">ENHANCER</span>
             </div>
 
             <!-- REVERB Knob -->
             <div class="rotary-control-module mini-module">
+              <div class="mini-dial-ticks">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </div>
               <div class="knob-metal-body knob-small" id="knob-reverb" data-param="reverb" title="Studio Reverb Effect">
                 <div class="knob-indicator-line"></div>
               </div>
-              <span class="knob-sub-sign">−&nbsp;&nbsp;&nbsp;+</span>
+              <div class="knob-sub-signs mini-signs"><span>−</span><span>+</span></div>
               <span class="knob-label-bottom">REVERB</span>
             </div>
 
-            <!-- MUTE Switch -->
+            <!-- MUTE Push Switch -->
             <div class="amp-switch-module amp-mute-block">
               <span class="switch-head-labels">MUTE</span>
-              <button class="push-rect-switch" id="amp-mute-switch" title="Bisukan Suara">
-                <span class="switch-pip"></span>
-              </button>
-              <div class="rocker-sublabel">ON <span class="arr-up">▲</span> <span class="arr-down">▼</span> OFF</div>
+              <div class="amp-mute-recess">
+                <button class="push-rect-switch" id="amp-mute-switch" title="Bisukan Suara">
+                  <span class="switch-pip"></span>
+                </button>
+              </div>
+              <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
             </div>
           </div>
 
@@ -491,22 +771,39 @@ Error generating stack: `+e.message+`
 
         <!-- Amp Far Right: GIANT MASTER VOLUME KNOB -->
         <div class="amp-master-volume-section">
-          <span class="master-vol-title">VOLUME</span>
-          <div class="giant-knob-dial-scale">
-            <span class="gv-tick gv0">0</span>
-            <span class="gv-tick gv1">1</span>
-            <span class="gv-tick gv2">2</span>
-            <span class="gv-tick gv3">3</span>
-            <span class="gv-tick gv4">4</span>
-            <span class="gv-tick gv5">5</span>
-            <span class="gv-tick gv6">6</span>
-            <span class="gv-tick gv7">7</span>
-            <span class="gv-tick gv8">8</span>
-            <span class="gv-tick gv9">9</span>
-            <span class="gv-tick gv10">10</span>
-          </div>
-          <div class="giant-metal-knob" id="giant-master-volume" title="Master Volume (Putar atau Drag)">
-            <div class="giant-knob-notch" id="giant-vol-notch"></div>
+          <div class="vol-dial-housing">
+            <span class="master-vol-title">VOLUME</span>
+            <div class="giant-knob-dial-scale">
+              <span class="gv-tick gv0">0</span>
+              <span class="gv-tick gv1">1</span>
+              <span class="gv-tick gv2">2</span>
+              <span class="gv-tick gv3">3</span>
+              <span class="gv-tick gv4">4</span>
+              <span class="gv-tick gv5">5</span>
+              <span class="gv-tick gv6">6</span>
+              <span class="gv-tick gv7">7</span>
+              <span class="gv-tick gv8">8</span>
+              <span class="gv-tick gv9">9</span>
+              <span class="gv-tick gv10">10</span>
+              <!-- intermediate radial tick marks -->
+              <div class="gv-ticks-ring">
+                <i class="gvt gt-m154"></i>
+                <i class="gvt gt-m126"></i>
+                <i class="gvt gt-m98"></i>
+                <i class="gvt gt-m70"></i>
+                <i class="gvt gt-m42"></i>
+                <i class="gvt gt-m14"></i>
+                <i class="gvt gt-p14"></i>
+                <i class="gvt gt-p42"></i>
+                <i class="gvt gt-p70"></i>
+                <i class="gvt gt-p98"></i>
+                <i class="gvt gt-p126"></i>
+                <i class="gvt gt-p154"></i>
+              </div>
+            </div>
+            <div class="giant-metal-knob" id="giant-master-volume" title="Master Volume (Putar atau Drag)">
+              <div class="giant-knob-notch" id="giant-vol-notch"></div>
+            </div>
           </div>
         </div>
 
@@ -525,7 +822,7 @@ Error generating stack: `+e.message+`
     <!-- Drawer Header & Handle -->
     <div class="drawer-handle-bar" id="drawer-toggle-handle">
       <div class="handle-grip"><span></span><span></span><span></span></div>
-      <span class="handle-title">▲ OPEN TEAC TAPE ARCHIVE &amp; PROGRAM INDEX</span>
+      <span class="handle-title">▲ OPEN ATIGA TAPE ARCHIVE &amp; PROGRAM INDEX</span>
       <div class="handle-actions">
         <span class="drawer-status-led"><i></i> ARCHIVE READY</span>
       </div>
@@ -536,7 +833,7 @@ Error generating stack: `+e.message+`
       <!-- Sidebar / Source Navigator -->
       <aside class="sidebar rack-sidebar">
         <div class="side-brand">
-          <span>TEAC</span><strong>TAPE INDEX</strong><small>LOCAL AUDIO ARCHIVE</small>
+          <span>ATIGA</span><strong>TAPE INDEX</strong><small>LOCAL AUDIO ARCHIVE</small>
         </div>
         <div class="sidebar-heading">SOURCE SELECTOR</div>
         <nav aria-label="Koleksi musik">
@@ -615,7 +912,7 @@ Error generating stack: `+e.message+`
         <!-- Album Art Card -->
         <div class="album-art large-art" id="now-art" data-art="0">
           <div class="art-grid"></div>
-          <span class="art-label">NOW PLAYING<br><small>TEAC PRECISION HI-FI</small></span>
+          <span class="art-label">NOW PLAYING<br><small>ATIGA PRECISION HI-FI</small></span>
           <div class="art-sun"></div>
           <div class="art-horizon"></div>
           <span class="art-title">AFTER HOURS<span>ATIGA SESSIONS</span></span>
@@ -692,8 +989,8 @@ Error generating stack: `+e.message+`
 
   <!-- Status Bar -->
   <div class="statusbar">
-    <span><i></i> POWER ON <span class="status-separator">/</span> TEAC DC SERVO DRIVE</span>
-    <span>TEAC V-3RX STEREO CASSETTE DECK <span class="status-separator">·</span> PRECISION AUDIO</span>
+    <span><i></i> POWER ON <span class="status-separator">/</span> ATIGA DC SERVO DRIVE</span>
+    <span>ATIGA AMP STEREO CASSETTE DECK <span class="status-separator">·</span> PRECISION AUDIO</span>
   </div>
 </div>
 
@@ -710,7 +1007,7 @@ Error generating stack: `+e.message+`
 <dialog id="eq-dialog">
   <form method="dialog" class="dialog-heading">
     <div>
-      <div class="eyebrow">TEAC / TONE CONTROL &amp; DSP</div>
+      <div class="eyebrow">ATIGA / TONE CONTROL &amp; DSP</div>
       <h2>Ekualiser Grafis<span>.</span></h2>
     </div>
     <button class="icon-button" aria-label="Tutup ekualiser" data-icon="close"></button>
@@ -754,7 +1051,7 @@ Error generating stack: `+e.message+`
 
 <dialog id="help-dialog">
   <form method="dialog" class="dialog-heading">
-    <h2>TEAC V-3RX &amp; DC SERVO AMPLIFIER<span>.</span></h2>
+    <h2>ATIGA AMP &amp; DC SERVO AMPLIFIER<span>.</span></h2>
     <button class="icon-button" aria-label="Tutup panduan" data-icon="close"></button>
   </form>
   <p>Sistem pemutar musik vintage Hi-Fi dengan cassette deck mekanis dan amplifier terintegrasi. Gunakan tombol tuts piano untuk kontrol playback, knob putar untuk mengatur volume, bass, treble, dan balance.</p>
@@ -769,4 +1066,4 @@ Error generating stack: `+e.message+`
 
 <div role="status" id="toast" class="toast" hidden></div>
 <audio id="audio" preload="auto"></audio>
-`,f=e((e=>{var t=Symbol.for(`react.transitional.element`);function n(e,n,r){var i=null;if(r!==void 0&&(i=``+r),n.key!==void 0&&(i=``+n.key),`key`in n)for(var a in r={},n)a!==`key`&&(r[a]=n[a]);else r=n;return n=r.ref,{$$typeof:t,type:e,key:i,ref:n===void 0?null:n,props:r}}e.jsx=n})),p=e(((e,t)=>{t.exports=f()}))(),m=`modulepreload`,h=function(e){return`/`+e},g={},_=function(e,t,n){let r=Promise.resolve();if(t&&t.length>0){let e=document.getElementsByTagName(`link`),i=document.querySelector(`meta[property=csp-nonce]`),a=i?.nonce||i?.getAttribute(`nonce`);function o(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}function s(e){return import.meta.resolve?import.meta.resolve(e):new URL(e,import.meta.url).href}r=o(t.map(t=>{if(t=h(t,n),t=s(t),t in g)return;g[t]=!0;let r=t.endsWith(`.css`);for(let n=e.length-1;n>=0;n--){let i=e[n];if(i.href===t&&(!r||i.rel===`stylesheet`))return}let i=document.createElement(`link`);if(i.rel=r?`stylesheet`:m,r||(i.as=`script`),i.crossOrigin=``,i.href=t,a&&i.setAttribute(`nonce`,a),document.head.appendChild(i),r)return new Promise((e,n)=>{i.addEventListener(`load`,e),i.addEventListener(`error`,()=>n(Error(`Unable to preload CSS for ${t}`)))})}))}function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})};function v(){return(0,l.useEffect)(()=>{_(()=>import(`./app-DscVtt4Z.js`),[])},[]),(0,p.jsx)(`div`,{dangerouslySetInnerHTML:{__html:d}})}var y=document.getElementById(`root`);if(!y)throw Error(`Elemen root React tidak ditemukan.`);(0,u.createRoot)(y).render((0,p.jsx)(v,{}));export{_ as t};
+`,f=e((e=>{var t=Symbol.for(`react.transitional.element`);function n(e,n,r){var i=null;if(r!==void 0&&(i=``+r),n.key!==void 0&&(i=``+n.key),`key`in n)for(var a in r={},n)a!==`key`&&(r[a]=n[a]);else r=n;return n=r.ref,{$$typeof:t,type:e,key:i,ref:n===void 0?null:n,props:r}}e.jsx=n})),p=e(((e,t)=>{t.exports=f()}))(),m=`modulepreload`,h=function(e){return`/`+e},g={},_=function(e,t,n){let r=Promise.resolve();if(t&&t.length>0){let e=document.getElementsByTagName(`link`),i=document.querySelector(`meta[property=csp-nonce]`),a=i?.nonce||i?.getAttribute(`nonce`);function o(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}function s(e){return import.meta.resolve?import.meta.resolve(e):new URL(e,import.meta.url).href}r=o(t.map(t=>{if(t=h(t,n),t=s(t),t in g)return;g[t]=!0;let r=t.endsWith(`.css`);for(let n=e.length-1;n>=0;n--){let i=e[n];if(i.href===t&&(!r||i.rel===`stylesheet`))return}let i=document.createElement(`link`);if(i.rel=r?`stylesheet`:m,r||(i.as=`script`),i.crossOrigin=``,i.href=t,a&&i.setAttribute(`nonce`,a),document.head.appendChild(i),r)return new Promise((e,n)=>{i.addEventListener(`load`,e),i.addEventListener(`error`,()=>n(Error(`Unable to preload CSS for ${t}`)))})}))}function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})};function v(){return(0,l.useEffect)(()=>{_(()=>import(`./app-CScK92Sy.js`),[])},[]),(0,p.jsx)(`div`,{dangerouslySetInnerHTML:{__html:d}})}var y=document.getElementById(`root`);if(!y)throw Error(`Elemen root React tidak ditemukan.`);(0,u.createRoot)(y).render((0,p.jsx)(v,{}));export{_ as t};

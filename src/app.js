@@ -115,7 +115,7 @@ const state = {
 };
 const audio = $('#audio');
 state.playlists = state.playlists.filter(playlist => !['after-hours', 'slow-living'].includes(playlist.id));
-let context, analyser, filters = [], compressor, masterGain, panner, db, loadedId, playbackToken = 0, lastSavedSecond = -1, directAudio = false;
+let context, analyser, analyserL, analyserR, filters = [], compressor, masterGain, panner, db, loadedId, playbackToken = 0, lastSavedSecond = -1, directAudio = false;
 let giantVolKnob, deckVolKnob, balKnob, preampKnob, bassKnob, trebleKnob;
 let crossfadeTimer, crossfadeStarted = false;
 const urls = new Map();
@@ -165,10 +165,20 @@ function setupAudio() {
     let previous = source;
     for (const filter of filters) { previous.connect(filter); previous = filter; }
     previous.connect(compressor); compressor.connect(masterGain); masterGain.connect(panner); panner.connect(analyser); analyser.connect(context.destination);
+    // True stereo VU: tap panner output via a ChannelSplitter into separate L/R analysers
+    try {
+      analyserL = context.createAnalyser(); analyserL.fftSize = 2048; analyserL.smoothingTimeConstant = .75;
+      analyserR = context.createAnalyser(); analyserR.fftSize = 2048; analyserR.smoothingTimeConstant = .75;
+      const splitter = context.createChannelSplitter(2);
+      panner.connect(splitter);
+      splitter.connect(analyserL, 0); // Left channel → analyserL
+      splitter.connect(analyserR, 1); // Right channel → analyserR
+      // analyserL and analyserR are not connected to destination — measurement only
+    } catch { analyserL = null; analyserR = null; }
     applyAudioSettings();
   } catch (error) {
     console.warn('Web Audio tidak tersedia; memakai pemutaran audio langsung.', error);
-    context = null; filters = []; analyser = null; compressor = null; masterGain = null; panner = null; directAudio = true;
+    context = null; filters = []; analyser = null; analyserL = null; analyserR = null; compressor = null; masterGain = null; panner = null; directAudio = true;
   }
 }
 function applyAudioSettings() {
@@ -280,15 +290,12 @@ function renderModes() {
     repeatBtn.classList.toggle('active', state.repeat > 0);
     repeatBtn.setAttribute('aria-label', `Ulangi: ${['mati', 'semua lagu', 'satu lagu'][state.repeat]}`);
     repeatBtn.title = repeatBtn.getAttribute('aria-label');
-    const label = repeatBtn.querySelector('.piano-label');
-    if (!label) {
-      repeatBtn.innerHTML = icon('repeat') + (state.repeat === 2 ? '<small>1</small>' : '');
-    }
   }
   $('#volume').value = state.volume; audio.volume = state.volume; $('#volume').style.setProperty('--fill',`${state.volume * 100}%`);
-  $('#mute').innerHTML = icon(audio.muted || !state.volume ? 'muted' : 'volume');
-  $('#amp-mute-switch')?.classList.toggle('active', Boolean(audio.muted));
-  $('#lamp-mute')?.classList.toggle('active', Boolean(audio.muted || !state.volume));
+  const isMuted = Boolean(audio.muted || !state.volume);
+  $('#mute')?.classList.toggle('active', isMuted);
+  $('#amp-mute-switch')?.classList.toggle('active', isMuted);
+  $('#lamp-mute')?.classList.toggle('active', isMuted);
   giantVolKnob?.setVal(state.volume, false);
   deckVolKnob?.setVal(state.volume, false);
 }
@@ -358,9 +365,7 @@ audio.addEventListener('timeupdate', () => { updateProgress(); maybeCrossfade();
 audio.addEventListener('loadedmetadata', () => { if (Number.isFinite(audio.duration)) current().duration = audio.duration; updateProgress(); renderTracks(); });
 audio.addEventListener('play', () => {
   $('#app').classList.add('is-playing');
-  const playSym = $('#play .piano-symbol');
-  if (playSym) playSym.textContent = '❚❚';
-  else $('#play').innerHTML = icon('pause');
+  $('#cassette-door-bay')?.classList.add('is-playing');
   $('#play').classList.add('active');
   $('#pause-btn')?.classList.remove('active');
   $('#play').setAttribute('aria-label','Jeda');
@@ -371,9 +376,7 @@ audio.addEventListener('play', () => {
 });
 audio.addEventListener('pause', () => {
   $('#app').classList.remove('is-playing');
-  const playSym = $('#play .piano-symbol');
-  if (playSym) playSym.textContent = '►';
-  else $('#play').innerHTML = icon('play');
+  $('#cassette-door-bay')?.classList.remove('is-playing');
   $('#play').classList.remove('active');
   if (audio.currentTime > 0 && !audio.ended) {
     $('#pause-btn')?.classList.add('active');
@@ -491,24 +494,25 @@ function setAudioTreble(db) {
 
 function toggleMute() {
   audio.muted = !audio.muted;
-  const isMuted = audio.muted || !state.volume;
+  const isMuted = Boolean(audio.muted || !state.volume);
   $('#mute')?.setAttribute('aria-pressed', String(audio.muted));
-  $('#amp-mute-switch')?.classList.toggle('active', audio.muted);
+  $('#mute')?.classList.toggle('active', isMuted);
+  $('#amp-mute-switch')?.classList.toggle('active', isMuted);
   $('#lamp-mute')?.classList.toggle('active', isMuted);
   renderModes();
 }
 
 function setupRackControls() {
-  giantVolKnob = bindRotaryKnob($('#giant-master-volume'), { min: 0, max: 1, initial: state.volume, step: 0.01, onChange: setMasterVolume });
+  giantVolKnob = bindRotaryKnob($('#giant-master-volume'), { min: 0, max: 1, initial: state.volume, step: 0.01, angleMin: -140, angleMax: 140, onChange: setMasterVolume });
   deckVolKnob = bindRotaryKnob($('#deck-volume-knob'), { min: 0, max: 1, initial: state.volume, step: 0.01, onChange: setMasterVolume });
-  balKnob = bindRotaryKnob($('#knob-balance'), { min: -1, max: 1, initial: state.balance, step: 0.02, onChange: setAudioBalance });
-  preampKnob = bindRotaryKnob($('#knob-preamp'), { min: -12, max: 12, initial: state.preamp, step: 1, onChange: setAudioPreamp });
-  bassKnob = bindRotaryKnob($('#knob-bass'), { min: -12, max: 12, initial: state.eq[0], step: 1, onChange: setAudioBass });
-  trebleKnob = bindRotaryKnob($('#knob-treble'), { min: -12, max: 12, initial: state.eq[9], step: 1, onChange: setAudioTreble });
+  balKnob = bindRotaryKnob($('#knob-balance'), { min: -1, max: 1, initial: state.balance, step: 0.02, angleMin: -144, angleMax: 144, onChange: setAudioBalance });
+  preampKnob = bindRotaryKnob($('#knob-preamp'), { min: -12, max: 12, initial: state.preamp, step: 1, angleMin: -144, angleMax: 144, onChange: setAudioPreamp });
+  bassKnob = bindRotaryKnob($('#knob-bass'), { min: -12, max: 12, initial: state.eq[0], step: 1, angleMin: -144, angleMax: 144, onChange: setAudioBass });
+  trebleKnob = bindRotaryKnob($('#knob-treble'), { min: -12, max: 12, initial: state.eq[9], step: 1, angleMin: -144, angleMax: 144, onChange: setAudioTreble });
 
-  bindRotaryKnob($('#knob-true-bass'), { min: 0, max: 10, initial: 3, step: 1, onChange: v => toast(`True Bass: ${v}`) });
-  bindRotaryKnob($('#knob-enhancer'), { min: 0, max: 10, initial: 5, step: 1, onChange: v => toast(`Enhancer: ${v}`) });
-  bindRotaryKnob($('#knob-reverb'), { min: 0, max: 10, initial: 2, step: 1, onChange: v => toast(`Reverb: ${v}`) });
+  bindRotaryKnob($('#knob-true-bass'), { min: 0, max: 10, initial: 3, step: 1, angleMin: -140, angleMax: 140, onChange: v => toast(`True Bass: ${v}`) });
+  bindRotaryKnob($('#knob-enhancer'), { min: 0, max: 10, initial: 5, step: 1, angleMin: -140, angleMax: 140, onChange: v => toast(`Enhancer: ${v}`) });
+  bindRotaryKnob($('#knob-reverb'), { min: 0, max: 10, initial: 2, step: 1, angleMin: -140, angleMax: 140, onChange: v => toast(`Reverb: ${v}`) });
 
   const sourceRotary = $('#deck-source-rotary');
   if (sourceRotary) {
@@ -572,8 +576,8 @@ function setupRackControls() {
     const title = $('.handle-title');
     if (title) {
       title.textContent = isOpen
-        ? '▼ TEAC TAPE ARCHIVE & PROGRAM INDEX'
-        : '▲ OPEN TEAC TAPE ARCHIVE & PROGRAM INDEX';
+        ? '▼ ATIGA TAPE ARCHIVE & PROGRAM INDEX'
+        : '▲ OPEN ATIGA TAPE ARCHIVE & PROGRAM INDEX';
     }
   };
 
@@ -586,6 +590,24 @@ function setupRackControls() {
   const btnSystem = $('#btn-system');
   if (btnSystem) btnSystem.onclick = toggleDrawer;
 
+  $$('#btn-tape-normal, #btn-tape-cro2, #btn-tape-metal').forEach(btn => {
+    btn.onclick = () => {
+      $$('#btn-tape-normal, #btn-tape-cro2, #btn-tape-metal').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const type = btn.id.replace('btn-tape-', '').toUpperCase();
+      toast(`Tape Bias/EQ: ${type}`);
+    };
+  });
+
+  const dbxBadge = $('#dbx-badge');
+  if (dbxBadge) {
+    dbxBadge.onclick = () => {
+      dbxBadge.classList.toggle('active');
+      const on = dbxBadge.classList.contains('active');
+      toast(on ? 'dbx Noise Reduction ON' : 'dbx Noise Reduction Bypass');
+    };
+  }
+
   const deckPower = $('#deck-power-btn');
   if (deckPower) {
     deckPower.onclick = () => {
@@ -594,7 +616,7 @@ function setupRackControls() {
       deckPower.setAttribute('aria-pressed', String(on));
       $('#cassette-deck-unit')?.classList.toggle('standby', !on);
       if (!on && !audio.paused) audio.pause();
-      toast(on ? 'TEAC V-3RX Deck Power ON' : 'TEAC V-3RX Deck Standby');
+      toast(on ? 'ATIGA AMP Deck Power ON' : 'ATIGA AMP Deck Standby');
     };
   }
 
@@ -606,7 +628,7 @@ function setupRackControls() {
       ampPower.setAttribute('aria-pressed', String(on));
       $('#amplifier-unit')?.classList.toggle('standby', !on);
       if (!on && !audio.paused) audio.pause();
-      toast(on ? 'TEAC Integrated Amp Power ON' : 'TEAC Integrated Amp Standby');
+      toast(on ? 'ATIGA Integrated Amp Power ON' : 'ATIGA Integrated Amp Standby');
     };
   }
 
@@ -622,14 +644,45 @@ function setupRackControls() {
     if (el) el.onclick = openEQ;
   });
 
+  const btnAmpEq = $('#btn-amp-eq');
+  const btnAmpDsp = $('#btn-amp-dsp');
+  if (btnAmpEq) {
+    btnAmpEq.onclick = (e) => {
+      e.stopPropagation();
+      btnAmpEq.classList.toggle('active');
+      const on = btnAmpEq.classList.contains('active');
+      $('#lamp-equalizer')?.classList.toggle('active', on);
+      openEQ();
+      toast(on ? 'Equalizer 10-Band ON' : 'Equalizer Bypass');
+    };
+  }
+  if (btnAmpDsp) {
+    btnAmpDsp.onclick = (e) => {
+      e.stopPropagation();
+      btnAmpDsp.classList.toggle('active');
+      const on = btnAmpDsp.classList.contains('active');
+      openEQ();
+      toast(on ? 'DSP Enhancement Mode ON' : 'DSP Bypass');
+    };
+  }
+
   $$('.speaker-btn-group .bezel-push-tab').forEach(tab => {
-    tab.onclick = () => tab.classList.toggle('active');
+    tab.onclick = () => {
+      tab.classList.toggle('active');
+      const on = tab.classList.contains('active');
+      if (tab.id === 'spk-left') $('#lamp-left')?.classList.toggle('active', on);
+      if (tab.id === 'spk-right') $('#lamp-right')?.classList.toggle('active', on);
+      if (tab.id === 'spk-stereo') $('#lamp-stereo')?.classList.toggle('active', on);
+    };
   });
 
   $$('.display-btn-group .bezel-push-tab').forEach(tab => {
     tab.onclick = () => {
       $$('.display-btn-group .bezel-push-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
+      const isPeak = tab.id === 'dsp-peak';
+      $('#dot-peak')?.classList.toggle('active', isPeak);
+      $('#dot-vu')?.classList.toggle('active', !isPeak);
     };
   });
 }
@@ -833,62 +886,166 @@ if ('mediaSession' in navigator) {
     try { navigator.mediaSession.setActionHandler(name,handler); } catch { /* Some browsers only expose a subset of media actions. */ }
   }
 }
-const canvas = $('#spectrum'), painter = canvas.getContext('2d');
+const canvas = $('#spectrum'), painter = canvas?.getContext('2d');
 let lastFrame = 0;
 let smoothedL = 0, smoothedR = 0;
+let peakHoldL = 0, peakHoldR = 0;
 
 function paintSpectrum(timestamp) {
   requestAnimationFrame(paintSpectrum);
-  if (document.hidden || !canvas.clientWidth || timestamp-lastFrame < 45) return;
-  lastFrame = timestamp; const width = canvas.clientWidth, height = canvas.clientHeight, dpr = window.devicePixelRatio || 1;
-  if (canvas.width !== Math.round(width*dpr) || canvas.height !== Math.round(height*dpr)) { canvas.width = Math.round(width*dpr); canvas.height = Math.round(height*dpr); }
-  painter.setTransform(dpr,0,0,dpr,0,0); painter.clearRect(0,0,width,height);
-  const bins = new Uint8Array(analyser?.frequencyBinCount || 1024); if (analyser && !audio.paused) analyser.getByteFrequencyData(bins);
-  const count = 36, gap = 2, barWidth = (width-(count-1)*gap)/count;
-  for (let i=0;i<count;i++) {
-    const hz = 35 * Math.pow(16000/35,i/(count-1));
-    const bin = Math.min(bins.length-1, Math.floor(hz/(context?.sampleRate || 44100)*(analyser?.fftSize || 2048)));
-    const value = audio.paused ? 0 : bins[bin]/255;
-    const segments = Math.max(1,Math.round(value * (height/4)));
-    for(let segment=0;segment<Math.floor(height/4);segment++) { painter.fillStyle = segment<segments ? (segment>height/6 ? '#efc184' : '#bc945b') : '#a68c5810'; painter.fillRect(i*(barWidth+gap),height-(segment+1)*4,barWidth,2); }
-  }
-  const waveform = $('#waveform'); const wavePainter = waveform?.getContext('2d');
-  if (waveform && wavePainter) {
-    const waveWidth = waveform.clientWidth, waveHeight = waveform.clientHeight, waveDpr = window.devicePixelRatio || 1;
-    if (waveform.width !== Math.round(waveWidth * waveDpr) || waveform.height !== Math.round(waveHeight * waveDpr)) { waveform.width = Math.round(waveWidth * waveDpr); waveform.height = Math.round(waveHeight * waveDpr); }
-    wavePainter.setTransform(waveDpr, 0, 0, waveDpr, 0, 0); wavePainter.clearRect(0, 0, waveWidth, waveHeight); wavePainter.strokeStyle = '#d9a261'; wavePainter.lineWidth = 1; wavePainter.beginPath();
-    const samples = new Uint8Array(analyser?.fftSize || 2048); if (analyser && !audio.paused) analyser.getByteTimeDomainData(samples);
-    for (let i = 0; i < waveWidth; i++) { const sample = samples[Math.floor(i / waveWidth * samples.length)] || 128; const y = sample / 255 * waveHeight; i ? wavePainter.lineTo(i, y) : wavePainter.moveTo(i, y); } wavePainter.stroke();
+  if (document.hidden) return;
+
+  const isPlayingAudio = !audio.paused && !audio.muted && state.volume > 0;
+  const bins = new Uint8Array(analyser?.frequencyBinCount || 1024);
+  if (analyser && isPlayingAudio) {
+    analyser.getByteFrequencyData(bins);
   }
 
-  // Update analog twin VU meters & horizontal Watts bars
+  // Render spectrum canvas in library drawer ONLY if drawer is visible
+  if (canvas && canvas.clientWidth > 0 && timestamp - lastFrame >= 30) {
+    lastFrame = timestamp;
+    const width = canvas.clientWidth, height = canvas.clientHeight, dpr = window.devicePixelRatio || 1;
+    if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+    }
+    painter.setTransform(dpr, 0, 0, dpr, 0, 0);
+    painter.clearRect(0, 0, width, height);
+    const count = 36, gap = 2, barWidth = (width - (count - 1) * gap) / count;
+    for (let i = 0; i < count; i++) {
+      const hz = 35 * Math.pow(16000 / 35, i / (count - 1));
+      const bin = Math.min(bins.length - 1, Math.floor(hz / (context?.sampleRate || 44100) * (analyser?.fftSize || 2048)));
+      const value = audio.paused ? 0 : bins[bin] / 255;
+      const segments = Math.max(1, Math.round(value * (height / 4)));
+      for (let segment = 0; segment < Math.floor(height / 4); segment++) {
+        painter.fillStyle = segment < segments ? (segment > height / 6 ? '#efc184' : '#bc945b') : '#a68c5810';
+        painter.fillRect(i * (barWidth + gap), height - (segment + 1) * 4, barWidth, 2);
+      }
+    }
+    const waveform = $('#waveform');
+    const wavePainter = waveform?.getContext('2d');
+    if (waveform && wavePainter) {
+      const waveWidth = waveform.clientWidth, waveHeight = waveform.clientHeight, waveDpr = window.devicePixelRatio || 1;
+      if (waveform.width !== Math.round(waveWidth * waveDpr) || waveform.height !== Math.round(waveHeight * waveDpr)) {
+        waveform.width = Math.round(waveWidth * waveDpr);
+        waveform.height = Math.round(waveHeight * waveDpr);
+      }
+      wavePainter.setTransform(waveDpr, 0, 0, waveDpr, 0, 0);
+      wavePainter.clearRect(0, 0, waveWidth, waveHeight);
+      wavePainter.strokeStyle = '#d9a261';
+      wavePainter.lineWidth = 1;
+      wavePainter.beginPath();
+      const samples = new Uint8Array(analyser?.fftSize || 2048);
+      if (analyser && !audio.paused) analyser.getByteTimeDomainData(samples);
+      for (let i = 0; i < waveWidth; i++) {
+        const sample = samples[Math.floor(i / waveWidth * samples.length)] || 128;
+        const y = sample / 255 * waveHeight;
+        i ? wavePainter.lineTo(i, y) : wavePainter.moveTo(i, y);
+      }
+      wavePainter.stroke();
+    }
+  }
+
+  // Update hardware analog twin VU meters & VFD Watts bargraphs on front panel
   let rawL = 0, rawR = 0;
-  if (analyser && !audio.paused && !audio.muted && state.volume > 0) {
-    let sumL = 0, countL = 0;
-    for (let b = 2; b < 24 && b < bins.length; b++) { sumL += bins[b]; countL++; }
-    rawL = countL ? (sumL / countL) / 255 : 0;
+  if (isPlayingAudio) {
+    if (analyserL && analyserR) {
+      // TRUE STEREO: read each channel independently via ChannelSplitter
+      const binsL = new Uint8Array(analyserL.frequencyBinCount);
+      const binsR = new Uint8Array(analyserR.frequencyBinCount);
+      analyserL.getByteFrequencyData(binsL);
+      analyserR.getByteFrequencyData(binsR);
+      // Full-spectrum average (bins 1..512 covers ~20 Hz → ~11 kHz)
+      const span = Math.min(512, binsL.length - 1);
+      let sumL = 0, sumR = 0;
+      for (let b = 1; b <= span; b++) { sumL += binsL[b]; sumR += binsR[b]; }
+      rawL = (sumL / span) / 255;
+      rawR = (sumR / span) / 255;
+    } else if (analyser) {
+      // MONO FALLBACK: use the same full-spectrum reading for both needles
+      const span = Math.min(512, bins.length - 1);
+      let sum = 0;
+      for (let b = 1; b <= span; b++) sum += bins[b];
+      rawL = rawR = (sum / span) / 255;
+    }
 
-    let sumR = 0, countR = 0;
-    for (let b = 24; b < 64 && b < bins.length; b++) { sumR += bins[b]; countR++; }
-    rawR = countR ? (sumR / countR) / 255 : 0;
+    // Fallback if audio graph has no data or directAudio mode
+    if (rawL < 0.02 && rawR < 0.02 && !audio.paused) {
+      const t = audio.currentTime;
+      // Balanced harmonic base — identical for both channels
+      const base = (Math.sin(t * Math.PI * 3.6) ** 2 * 0.6 + (Math.sin(t * 7.2) * 0.5 + 0.5) * 0.35 + 0.18);
+      // Subtle natural stereo spread (slow sine ≈ gentle panning sway, max ±10%)
+      const spread = Math.sin(t * 1.4) * 0.10;
+      const volScale = Math.pow(state.volume, 0.6);
+      rawL = Math.min(1, Math.max(0, (base + spread) * volScale));
+      rawR = Math.min(1, Math.max(0, (base - spread) * volScale));
+    } else {
+      const volScale = Math.pow(state.volume, 0.5);
+      rawL = Math.min(1, rawL * 1.45 * volScale);
+      rawR = Math.min(1, rawR * 1.45 * volScale);
+    }
   }
-  smoothedL += (rawL - smoothedL) * 0.35;
-  smoothedR += (rawR - smoothedR) * 0.35;
-  if (audio.paused || audio.muted || state.volume === 0) {
-    smoothedL *= 0.75;
-    smoothedR *= 0.75;
+
+  // Fast-attack, smooth natural decay ballistics (authentic moving-coil VU)
+  if (rawL > smoothedL) {
+    smoothedL = smoothedL * 0.25 + rawL * 0.75;
+  } else {
+    smoothedL += (rawL - smoothedL) * 0.15;
   }
+
+  if (rawR > smoothedR) {
+    smoothedR = smoothedR * 0.25 + rawR * 0.75;
+  } else {
+    smoothedR += (rawR - smoothedR) * 0.15;
+  }
+
+  if (!isPlayingAudio) {
+    smoothedL *= 0.78;
+    smoothedR *= 0.78;
+    if (smoothedL < 0.005) smoothedL = 0;
+    if (smoothedR < 0.005) smoothedR = 0;
+  }
+
+  // 1. Animate twin analog needles with balance-knob influence
+  // Balance range: -1 (full left) to +1 (full right)
+  // When balance is turned left: left needle goes higher, right lower, and vice-versa
+  const bal = state.balance ?? 0;                   // -1 … +1
+  const balFactorL = bal <= 0 ? 1.0 : 1.0 - bal;   // 1.0 at centre, 0.0 at full right
+  const balFactorR = bal >= 0 ? 1.0 : 1.0 + bal;   // 1.0 at centre, 0.0 at full left
   const needleL = $('#vu-needle-left');
   const needleR = $('#vu-needle-right');
-  if (needleL) needleL.style.transform = `rotate(${(-24 + smoothedL * 48).toFixed(1)}deg)`;
-  if (needleR) needleR.style.transform = `rotate(${(-24 + smoothedR * 48).toFixed(1)}deg)`;
+  if (needleL) needleL.style.transform = `rotate(${(-16 + smoothedL * balFactorL * 34).toFixed(1)}deg)`;
+  if (needleR) needleR.style.transform = `rotate(${(16  - smoothedR * balFactorR * 34).toFixed(1)}deg)`;
 
-  const litL = Math.round(smoothedL * 12);
-  const litR = Math.round(smoothedR * 12);
+  // 2. Animate VFD horizontal Watts bargraphs (0 to 12 segments)
+  const spkL = $('#spk-left')?.classList.contains('active') ?? true;
+  const spkR = $('#spk-right')?.classList.contains('active') ?? true;
+  const isStereo = $('#spk-stereo')?.classList.contains('active') ?? true;
+  const showPeak = $('#dsp-peak')?.classList.contains('active') ?? true;
+
+  const valL = isStereo ? smoothedL : (smoothedL + smoothedR) / 2;
+  const valR = isStereo ? smoothedR : (smoothedL + smoothedR) / 2;
+
+  const litL = spkL ? Math.min(12, Math.round(valL * 12)) : 0;
+  const litR = spkR ? Math.min(12, Math.round(valR * 12)) : 0;
+
+  if (litL > peakHoldL) { peakHoldL = litL; } else { peakHoldL = Math.max(0, peakHoldL - 0.18); }
+  if (litR > peakHoldR) { peakHoldR = litR; } else { peakHoldR = Math.max(0, peakHoldR - 0.18); }
+  const peakIdxL = showPeak ? Math.round(peakHoldL) - 1 : -1;
+  const peakIdxR = showPeak ? Math.round(peakHoldR) - 1 : -1;
+
   const segsL = $$('#watts-track-left .watts-seg');
   const segsR = $$('#watts-track-right .watts-seg');
-  segsL.forEach((seg, idx) => seg.classList.toggle('active', idx < litL));
-  segsR.forEach((seg, idx) => seg.classList.toggle('active', idx < litR));
+  segsL.forEach((seg, idx) => {
+    const active = idx < litL;
+    seg.classList.toggle('active', active);
+    seg.classList.toggle('peak', idx === peakIdxL && idx >= litL && peakHoldL > 1);
+  });
+  segsR.forEach((seg, idx) => {
+    const active = idx < litR;
+    seg.classList.toggle('active', active);
+    seg.classList.toggle('peak', idx === peakIdxR && idx >= litR && peakHoldR > 1);
+  });
 }
 requestAnimationFrame(paintSpectrum);
 window.addEventListener('pagehide', persist);
