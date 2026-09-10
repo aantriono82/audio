@@ -1,4 +1,5 @@
 import { esc, formatTime, demoBlob, baseTracks, visibleTracks } from './library.js';
+import { isAudioFile, metadataFromFilename, readEmbeddedMetadata } from './import.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -99,7 +100,7 @@ const state = {
 };
 const audio = $('#audio');
 state.playlists = state.playlists.filter(playlist => !['after-hours', 'slow-living'].includes(playlist.id));
-let context, analyser, filters = [], compressor, masterGain, panner, db, loadedId, playbackToken = 0, lastSavedSecond = -1;
+let context, analyser, filters = [], compressor, masterGain, panner, db, loadedId, playbackToken = 0, lastSavedSecond = -1, directAudio = false;
 let crossfadeTimer, crossfadeStarted = false;
 const urls = new Map();
 const artUrls = new Map();
@@ -135,17 +136,24 @@ function dbAction(mode, action) {
 }
 const frequencies = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
 function setupAudio() {
-  if (context) return;
-  context = new AudioContext();
-  const source = context.createMediaElementSource(audio);
-  filters = frequencies.map((frequency, i) => { const filter = context.createBiquadFilter(); filter.type = 'peaking'; filter.frequency.value = frequency; filter.Q.value = 1.2; filter.gain.value = state.eq[i]; return filter; });
-  analyser = context.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = .8;
-  compressor = context.createDynamicsCompressor(); compressor.threshold.value = -3; compressor.knee.value = 3; compressor.ratio.value = 12;
-  masterGain = context.createGain(); panner = context.createStereoPanner();
-  let previous = source;
-  for (const filter of filters) { previous.connect(filter); previous = filter; }
-  previous.connect(compressor); compressor.connect(masterGain); masterGain.connect(panner); panner.connect(analyser); analyser.connect(context.destination);
-  applyAudioSettings();
+  if (context || directAudio) return;
+  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextCtor) { directAudio = true; return; }
+  try {
+    context = new AudioContextCtor();
+    const source = context.createMediaElementSource(audio);
+    filters = frequencies.map((frequency, i) => { const filter = context.createBiquadFilter(); filter.type = 'peaking'; filter.frequency.value = frequency; filter.Q.value = 1.2; filter.gain.value = state.eq[i]; return filter; });
+    analyser = context.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = .8;
+    compressor = context.createDynamicsCompressor(); compressor.threshold.value = -3; compressor.knee.value = 3; compressor.ratio.value = 12;
+    masterGain = context.createGain(); panner = context.createStereoPanner();
+    let previous = source;
+    for (const filter of filters) { previous.connect(filter); previous = filter; }
+    previous.connect(compressor); compressor.connect(masterGain); masterGain.connect(panner); panner.connect(analyser); analyser.connect(context.destination);
+    applyAudioSettings();
+  } catch (error) {
+    console.warn('Web Audio tidak tersedia; memakai pemutaran audio langsung.', error);
+    context = null; filters = []; analyser = null; compressor = null; masterGain = null; panner = null; directAudio = true;
+  }
 }
 function applyAudioSettings() {
   if (panner) panner.pan.setTargetAtTime(state.balance, context.currentTime, .03);
@@ -243,17 +251,23 @@ function translateMenuLabels() {
   });
 }
 function render() { renderNav(); renderGrouping(); renderTracks(); renderCurrent(); renderModes(); translateMenuLabels(); }
-async function selectTrack(id, autoplay = true, position = 0) {
+async function selectTrack(id, autoplay = true) {
   const track = findTrack(id); if (!track) return;
   const token = ++playbackToken; audio.pause(); clearTimeout(crossfadeTimer); crossfadeStarted = false; state.currentId = id; loadedId = id;
   state.playCounts[id] = (state.playCounts[id] || 0) + (autoplay ? 1 : 0);
   try {
     const url = await sourceURL(track);
     if (token !== playbackToken) return;
+    const startPosition = 0;
+    audio.pause(); audio.removeAttribute('src'); audio.load();
     audio.src = url; audio.preload = state.gapless ? 'auto' : 'metadata';
-    audio.currentTime = Math.max(0, Math.min(position, track.duration || 0));
+    const resetStart = () => { if (token === playbackToken) audio.currentTime = startPosition; };
+    audio.addEventListener('loadedmetadata', resetStart, { once: true });
+    audio.addEventListener('canplay', resetStart, { once: true });
+    audio.load();
+    resetStart();
     renderCurrent(); renderTracks(); updateProgress();
-    if (autoplay) { setupAudio(); applyAudioSettings(); await context.resume(); if (token !== playbackToken) return; await audio.play(); }
+    if (autoplay) { setupAudio(); applyAudioSettings(); if (context) await context.resume(); if (token !== playbackToken) return; await audio.play(); }
   } catch (error) { if (token === playbackToken && error.name !== 'AbortError') toast('Audio belum dapat diputar. Coba file MP3, WAV, atau OGG yang valid.'); }
 }
 function maybeCrossfade() {
@@ -268,7 +282,7 @@ function maybeCrossfade() {
 async function togglePlay() {
   if (!loadedId) return selectTrack(state.currentId);
   if (!audio.paused) { audio.pause(); return; }
-  try { setupAudio(); await context.resume(); await audio.play(); }
+  try { setupAudio(); if (context) await context.resume(); await audio.play(); }
   catch { toast('Audio belum dapat diputar. Coba pilih lagu atau impor file lain.'); }
 }
 function advance(direction = 1, automatic = false) {
@@ -379,43 +393,30 @@ $('#eq-reset').onclick = () => { state.eq = Array(10).fill(0); state.preset = 'F
 $$('#eq-toggle, #player-eq').forEach(el => el.onclick = () => { $('#eq-dialog').showModal(); $('#eq-toggle').setAttribute('aria-expanded','true'); });
 $('#eq-dialog').addEventListener('close', () => $('#eq-toggle').setAttribute('aria-expanded','false'));
 $('#import').onclick = () => $('#file-input').click(); $('#import-folder').onclick = chooseFolder;
-function decodeText(bytes, encoding = 3) {
-  try { return new TextDecoder(encoding === 1 ? 'utf-16' : encoding === 2 ? 'utf-16be' : 'utf-8').decode(bytes).replace(/^\uFEFF/, '').replace(/\0+$/, '').trim(); }
-  catch { return new TextDecoder().decode(bytes).replace(/\0+$/, '').trim(); }
-}
-function synchsafe(bytes) { return ((bytes[0] & 0x7f) << 21) | ((bytes[1] & 0x7f) << 14) | ((bytes[2] & 0x7f) << 7) | (bytes[3] & 0x7f); }
-async function readEmbeddedMetadata(file) {
-  const result = {};
-  const buffer = await file.arrayBuffer(); const bytes = new Uint8Array(buffer);
-  if (bytes[0] !== 0x49 || bytes[1] !== 0x44 || bytes[2] !== 0x33) return result;
-  const version = bytes[3]; const flags = bytes[5]; const tagSize = synchsafe(bytes.slice(6, 10));
-  let offset = 10; const end = Math.min(bytes.length, offset + tagSize);
-  if (flags & 0x40) { const ext = version >= 4 ? synchsafe(bytes.slice(offset, offset + 4)) : 4; offset += ext; }
-  while (offset + 10 <= end) {
-    const id = new TextDecoder().decode(bytes.slice(offset, offset + 4)); if (!/^[A-Z0-9]{4}$/.test(id)) break;
-    const size = version >= 4 ? synchsafe(bytes.slice(offset + 4, offset + 8)) : new DataView(buffer).getUint32(offset + 4);
-    if (!size || offset + 10 + size > end) break;
-    const body = bytes.slice(offset + 10, offset + 10 + size); const encoding = body[0];
-    if (['TIT2','TT2'].includes(id)) result.title = decodeText(body.slice(1), encoding);
-    if (['TPE1','TP1'].includes(id)) result.artist = decodeText(body.slice(1), encoding);
-    if (['TALB','TAL'].includes(id)) result.album = decodeText(body.slice(1), encoding);
-    if (['TCON','TCO'].includes(id)) result.genre = decodeText(body.slice(1), encoding).replace(/^\(\d+\)/, '');
-    if (id === 'TXXX') { const text = decodeText(body.slice(1), encoding); if (/replaygain_track_gain/i.test(text)) { const match = text.match(/([+-]?\d+(?:\.\d+)?)\s*dB/i); if (match) result.replayGain = Number(match[1]); } }
-    if (id === 'APIC' || id === 'PIC') {
-      let cursor = id === 'PIC' ? 5 : 1; const mimeStart = cursor; while (cursor < body.length && body[cursor]) cursor++; const mime = id === 'PIC' ? `image/${new TextDecoder().decode(body.slice(mimeStart, mimeStart + 3)).toLowerCase()}` : new TextDecoder().decode(body.slice(mimeStart, cursor)); cursor += 1; cursor += 1; while (cursor < body.length && body[cursor]) cursor++; cursor += encoding === 0 || encoding === 3 ? 1 : 2;
-      if (cursor < body.length) result.cover = new Blob([body.slice(cursor)], { type: mime || 'image/jpeg' });
-    }
-    offset += 10 + size;
-  }
-  return result;
-}
 async function readDuration(file) {
-  return new Promise(resolve => { const probe = new Audio(), url = URL.createObjectURL(file); let finished = false; const finish = value => { if (finished) return; finished = true; clearTimeout(timer); probe.removeAttribute('src'); probe.load(); URL.revokeObjectURL(url); resolve(value); }; const timer = setTimeout(() => finish(0), 5000); probe.onloadedmetadata = () => finish(Number.isFinite(probe.duration) ? probe.duration : 0); probe.onerror = () => finish(0); probe.src = url; });
+  return new Promise(resolve => {
+    let probe, url, finished = false;
+    const finish = value => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      if (probe) { probe.removeAttribute('src'); probe.load(); }
+      if (url) URL.revokeObjectURL(url);
+      resolve(value);
+    };
+    const timer = setTimeout(() => finish(0), 8000);
+    try {
+      probe = new Audio(); probe.preload = 'metadata'; url = URL.createObjectURL(file);
+      probe.onloadedmetadata = () => finish(Number.isFinite(probe.duration) ? probe.duration : 0);
+      probe.onerror = () => finish(0);
+      probe.src = url; probe.load();
+    } catch { finish(0); }
+  });
 }
 let importing = false;
 async function importFiles(files) {
   if (importing) { toast('Tunggu impor yang sedang berjalan selesai.'); return; }
-  const accepted = [...files].filter(f => f.type.startsWith('audio/') || /\.(mp3|wav|ogg|flac|m4a|aac|opus|aiff|webm)$/i.test(f.name));
+  const accepted = [...files].filter(isAudioFile);
   if (!accepted.length) { toast('Tidak ada file audio yang ditemukan.'); return; }
   importing = true; let added = 0, duplicates = 0, unsupported = 0, unsaved = 0;
   toast(`Mengimpor ${accepted.length} file musik…`);
@@ -424,22 +425,70 @@ async function importFiles(files) {
       const fingerprint = `${file.name}:${file.size}:${file.lastModified}`;
       if (state.tracks.some(t => t.fingerprint === fingerprint)) { duplicates++; continue; }
       const duration = await readDuration(file); if (!duration) { unsupported++; continue; }
-      const name = file.name.replace(/\.[^.]+$/, ''), parts = name.split(' - '), metadata = await readEmbeddedMetadata(file);
-      const track = { id: crypto.randomUUID(), fingerprint, title: metadata.title || (parts.length>1 ? parts.slice(1).join(' - ') : name), artist: metadata.artist || (parts.length>1 ? parts[0] : 'Artis tidak diketahui'), album: metadata.album || file.webkitRelativePath?.split('/').slice(-2,-1)[0] || 'Koleksi lokal', genre: metadata.genre || 'Tidak diketahui', replayGain: metadata.replayGain || 0, cover: metadata.cover, art: added % 6, duration, format: file.name.split('.').pop().toUpperCase(), file };
+      const fallback = metadataFromFilename(file), metadata = await readEmbeddedMetadata(file);
+      const track = { id: crypto.randomUUID(), fingerprint, title: metadata.title || fallback.title, artist: metadata.artist || fallback.artist, album: metadata.album || fallback.album, genre: metadata.genre || 'Tidak diketahui', replayGain: metadata.replayGain || 0, cover: metadata.cover, art: added % 6, duration, format: file.name.split('.').pop().toUpperCase(), file };
       if (db) { try { await dbAction('readwrite', store => store.put(track)); } catch { unsaved++; } } else unsaved++;
       state.tracks.push(track); added++;
       const playlist = state.playlists.find(p => p.id === state.view); if (playlist) playlist.ids.push(track.id);
     }
     state.search = ''; $('#search').value = ''; state.queueView = false; if (['favorites','recent'].includes(state.view)) state.view = 'all';
-    render(); persist(); toast(`${added} lagu ditambahkan.${duplicates ? ` ${duplicates} duplikat dilewati.` : ''}${unsupported ? ` ${unsupported} file tidak didukung.` : ''}${unsaved ? ` ${unsaved} lagu hanya tersedia selama sesi ini; penyimpanan penuh/tidak tersedia.` : ''}`);
+    render(); persist();
+    const summary = added ? `${added} lagu ditambahkan.` : 'Tidak ada lagu baru.';
+    const duplicateNote = duplicates ? ` ${duplicates} duplikat dilewati.` : '';
+    toast(`${summary}${duplicateNote}${unsupported ? ` ${unsupported} file tidak didukung.` : ''}${unsaved ? ` ${unsaved} lagu hanya tersedia selama sesi ini; penyimpanan penuh/tidak tersedia.` : ''}`);
+  } catch (error) {
+    console.error('Atiga Amp import failed', error);
+    toast(`Impor gagal: ${error instanceof Error ? error.message : 'file tidak dapat diproses.'}`);
   } finally { importing = false; $('#file-input').value = ''; $('#folder-input').value = ''; }
 }
 $$('#file-input, #folder-input').forEach(input => input.onchange = event => importFiles(event.target.files));
 let dragDepth = 0;
-window.addEventListener('dragenter', event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); dragDepth++; $('#drop-overlay').hidden = false; } });
-window.addEventListener('dragover', event => { if (event.dataTransfer.types.includes('Files')) event.preventDefault(); });
-window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; $('#drop-overlay').hidden = true; } });
-window.addEventListener('drop', event => { $('#drop-overlay').hidden = true; dragDepth = 0; if (event.dataTransfer.files.length) { event.preventDefault(); importFiles(event.dataTransfer.files); } });
+function carriesFiles(dataTransfer) {
+  if (!dataTransfer) return false;
+  if (dataTransfer.files?.length) return true;
+  const types = dataTransfer.types;
+  if (types?.contains?.('Files')) return true;
+  return [...(types || [])].some(type => type === 'Files' || type === 'application/x-moz-file');
+}
+function preventFileDrop(event) {
+  if (!carriesFiles(event.dataTransfer)) return false;
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+  return true;
+}
+document.addEventListener('dragenter', event => { if (preventFileDrop(event)) { dragDepth++; $('#drop-overlay').hidden = false; } });
+document.addEventListener('dragover', event => { preventFileDrop(event); });
+document.addEventListener('dragleave', event => { if (!carriesFiles(event.dataTransfer)) return; if (--dragDepth <= 0) { dragDepth = 0; $('#drop-overlay').hidden = true; } });
+document.addEventListener('drop', event => { if (!preventFileDrop(event)) return; $('#drop-overlay').hidden = true; dragDepth = 0; if (event.dataTransfer.files.length) importFiles(event.dataTransfer.files); });
+async function initTauriFileDrop() {
+  try {
+    const [{ getCurrentWebview }, { invoke }] = await Promise.all([import('@tauri-apps/api/webview'), import('@tauri-apps/api/core')]);
+    await getCurrentWebview().onDragDropEvent(async event => {
+      if (event.payload.type === 'enter' || event.payload.type === 'over') {
+        $('#drop-overlay').hidden = false;
+        return;
+      }
+      if (event.payload.type === 'leave') {
+        $('#drop-overlay').hidden = true;
+        return;
+      }
+      $('#drop-overlay').hidden = true;
+      try {
+        const files = await Promise.all(event.payload.paths.map(async path => {
+          const bytes = await invoke('read_audio_file', { path });
+          const name = path.split(/[\\/]/).pop() || 'audio';
+          const extension = name.split('.').pop()?.toLowerCase();
+          const mime = { mp3: 'audio/mpeg', flac: 'audio/flac', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', aac: 'audio/aac', opus: 'audio/ogg', aiff: 'audio/aiff', webm: 'audio/webm' }[extension] || 'application/octet-stream';
+          return new File([new Uint8Array(bytes)], name, { type: mime, lastModified: Date.now() });
+        }));
+        if (files.length) await importFiles(files);
+      } catch { toast('File yang dilepas tidak dapat dibaca oleh aplikasi.'); }
+    });
+  } catch (error) {
+    console.error('Tauri native file drop unavailable', error);
+    // Running in a regular browser, where the DOM drop handler is used instead.
+  }
+}
 window.addEventListener('keydown', event => {
   if (event.target.closest('input,select,textarea,button') || $('dialog[open]')) return;
   if (event.code === 'Space') { event.preventDefault(); togglePlay(); }
@@ -488,8 +537,8 @@ async function init() {
   state.playlists.forEach(playlist => { playlist.ids = playlist.ids.filter(findTrack); });
   if (!findTrack(state.currentId)) state.currentId = null;
   state.queue = state.queue.filter(findTrack); state.recent = state.recent.filter(findTrack);
-  const position = Number.isFinite(saved.position) ? saved.position : 0;
   render(); $('#eq-preset').value = state.preset; $('#preset-label').textContent = presetLabels[state.preset] || state.preset;
-  if (state.currentId) await selectTrack(state.currentId,false,position);
+  if (state.currentId) await selectTrack(state.currentId,false,0);
 }
+initTauriFileDrop();
 init();

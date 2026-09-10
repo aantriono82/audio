@@ -2,7 +2,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 export default [
-  { ignores: ['coverage/**', 'dist/**', '.agents/**', '.codex/**'] },
+  { ignores: ['coverage/**', 'dist/**', 'src-tauri/target/**', '.agents/**', '.codex/**'] },
   js.configs.recommended,
   {
     files: ['**/*.{js,mjs}'],
