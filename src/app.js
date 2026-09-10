@@ -79,7 +79,16 @@ function addAdvancedUI() {
   [$('.sidebar'), $('.library'), $('.now-panel')].forEach(panel => { panel.draggable = true; panel.dataset.panel = panel.classList.contains('sidebar') ? 'sidebar' : panel.classList.contains('library') ? 'library' : 'now'; panel.addEventListener('dragstart', event => { event.dataTransfer.setData('text/panel', panel.dataset.panel); }); panel.addEventListener('dragover', event => event.preventDefault()); panel.addEventListener('drop', event => { event.preventDefault(); const from = event.dataTransfer.getData('text/panel'); const to = panel.dataset.panel; if (!from || from === to) return; const a = state.panelOrder.indexOf(from), b = state.panelOrder.indexOf(to); [state.panelOrder[a], state.panelOrder[b]] = [state.panelOrder[b], state.panelOrder[a]]; applyPanelOrder(); persist(); }); });
   $('#format-support').innerHTML = ['mp3','wav','ogg','flac','m4a','aac','opus','aiff','webm'].map(ext => `<span>${ext.toUpperCase()} ${audio.canPlayType(`audio/${ext}`) ? '✓' : '?'}</span>`).join('');
 }
-function syncSettings() { const set = (id, value) => { const el = $(`#${id}`); if (!el) return; if (el.type === 'checkbox') el.checked = value; else el.value = value; }; set('crossfade', state.crossfade); set('preamp', state.preamp); set('balance', state.balance); set('gapless', state.gapless); set('replay-gain', state.replayGain); set('glow', state.glow); set('notifications', state.notifications); set('output-device', state.outputDevice); applyTheme(); $('#crossfade-value').textContent = `${state.crossfade}s`; $('#preamp-value').textContent = `${state.preamp > 0 ? '+' : ''}${state.preamp} dB`; $('#balance-value').textContent = state.balance === 0 ? 'Tengah' : state.balance < 0 ? `${Math.round(-state.balance * 100)}% K` : `${Math.round(state.balance * 100)}% N`; }
+function syncSettings() {
+  const set = (id, value) => { const el = $(`#${id}`); if (!el) return; if (el.type === 'checkbox') el.checked = value; else el.value = value; };
+  set('crossfade', state.crossfade); set('preamp', state.preamp); set('balance', state.balance); set('gapless', state.gapless); set('replay-gain', state.replayGain); set('glow', state.glow); set('notifications', state.notifications); set('output-device', state.outputDevice);
+  applyTheme();
+  $('#crossfade-value').textContent = `${state.crossfade}s`;
+  $('#preamp-value').textContent = `${state.preamp > 0 ? '+' : ''}${state.preamp} dB`;
+  $('#balance-value').textContent = state.balance === 0 ? 'Tengah' : state.balance < 0 ? `${Math.round(-state.balance * 100)}% K` : `${Math.round(state.balance * 100)}% N`;
+  preampKnob?.setVal(state.preamp, false);
+  balKnob?.setVal(state.balance, false);
+}
 function groupOptions(type) { return [...new Set(state.tracks.map(track => String(track[type] || 'Tidak diketahui')))].sort(); }
 function renderGrouping() { const select = $('#group-by'); if (!select) return; const labels = { artist: 'Artis', album: 'Album', genre: 'Genre' }; const values = [['', 'Semua lagu'], ...['artist','album','genre'].flatMap(type => groupOptions(type).map(value => [`${type}:${value}`, `${labels[type]} · ${value}`]))]; select.innerHTML = values.map(([value, label]) => `<option value="${esc(value)}">${esc(label)}</option>`).join(''); select.value = state.view.includes(':') ? state.view : ''; }
 async function refreshOutputDevices() { const select = $('#output-device'); if (!select || !navigator.mediaDevices?.enumerateDevices) return; const devices = await navigator.mediaDevices.enumerateDevices(); const outputs = devices.filter(device => device.kind === 'audiooutput'); select.innerHTML = '<option value="default">Keluaran bawaan peramban</option>' + outputs.map(device => `<option value="${esc(device.deviceId)}">${esc(device.label || `Keluaran ${device.deviceId.slice(0, 5)}`)}</option>`).join(''); select.value = state.outputDevice; select.onchange = async event => { state.outputDevice = event.target.value; if (typeof audio.setSinkId === 'function') { try { await audio.setSinkId(state.outputDevice); } catch { toast('Perangkat keluaran tidak dapat dipilih oleh peramban.'); } } persist(); }; }
@@ -107,6 +116,7 @@ const state = {
 const audio = $('#audio');
 state.playlists = state.playlists.filter(playlist => !['after-hours', 'slow-living'].includes(playlist.id));
 let context, analyser, filters = [], compressor, masterGain, panner, db, loadedId, playbackToken = 0, lastSavedSecond = -1, directAudio = false;
+let giantVolKnob, deckVolKnob, balKnob, preampKnob, bassKnob, trebleKnob;
 let crossfadeTimer, crossfadeStarted = false;
 const urls = new Map();
 const artUrls = new Map();
@@ -215,8 +225,29 @@ function nextTrack() {
   const list = baseTracks(state); const index = list.findIndex(t => t.id === state.currentId);
   return list[(index + 1) % list.length];
 }
+function updateTapeCounter() {
+  const elapsed = Math.floor(audio.currentTime || 0);
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  const m1 = $('#counter-m1'), m2 = $('#counter-m2'), s1 = $('#counter-s1'), s2 = $('#counter-s2');
+  if (m1) m1.textContent = String(Math.floor((mins % 100) / 10));
+  if (m2) m2.textContent = String(mins % 10);
+  if (s1) s1.textContent = String(Math.floor(secs / 10));
+  if (s2) s2.textContent = String(secs % 10);
+
+  const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : (current()?.duration || 1);
+  const ratio = Math.max(0, Math.min(1, (audio.currentTime || 0) / duration));
+  const packLeft = $('#tape-pack-left');
+  const packRight = $('#tape-pack-right');
+  if (packLeft && packRight) {
+    packLeft.style.flex = String(Math.max(0.15, 1 - ratio * 0.8));
+    packRight.style.flex = String(Math.max(0.15, 0.2 + ratio * 0.8));
+  }
+}
 function renderCurrent() {
   const track = current();
+  const cassTitle = $('#cassette-current-title');
+  if (cassTitle) cassTitle.textContent = track ? track.title : 'NO TAPE LOADED';
   if (!track) {
     $('#now-title').textContent = $('#player-title').textContent = 'Belum ada lagu';
     $('#now-artist').textContent = $('#player-artist').textContent = 'Tambahkan musik untuk mulai mendengarkan';
@@ -224,6 +255,7 @@ function renderCurrent() {
     $('#now-art .art-title').innerHTML = 'BELUM ADA LAGU<span>Tambahkan musik</span>';
     $('#duration').textContent = '00:00';
     $('#next-track').innerHTML = '<p class="dialog-note">Tambahkan lagu untuk mengisi antrean.</p>';
+    updateTapeCounter();
     return;
   }
   $('#now-title').textContent = $('#player-title').textContent = track.title;
@@ -239,13 +271,26 @@ function renderCurrent() {
   $('#next-track').innerHTML = upcoming ? `<div class="mini-art" data-art="${upcoming.art}"><span>AA</span></div><div><strong>${esc(upcoming.title)}</strong><p>${esc(upcoming.artist)}</p></div><span>${formatTime(upcoming.duration)}</span>` : '<p class="dialog-note">Belum ada lagu berikutnya.</p>';
   if (upcoming) applyArt($('#next-track .mini-art'), upcoming);
   if ('mediaSession' in navigator && 'MediaMetadata' in window) navigator.mediaSession.metadata = new MediaMetadata({ title: track.title, artist: track.artist, album: track.album });
+  updateTapeCounter();
 }
 function renderModes() {
   $('#shuffle').classList.toggle('active',state.shuffle); $('#shuffle').setAttribute('aria-pressed',state.shuffle);
-  $('#repeat').classList.toggle('active',state.repeat > 0); $('#repeat').setAttribute('aria-label',`Ulangi: ${['mati','semua','satu lagu'][state.repeat]}`); $('#repeat').title = $('#repeat').getAttribute('aria-label');
-  $('#repeat').innerHTML = icon('repeat') + (state.repeat === 2 ? '<small>1</small>' : '');
+  const repeatBtn = $('#repeat');
+  if (repeatBtn) {
+    repeatBtn.classList.toggle('active', state.repeat > 0);
+    repeatBtn.setAttribute('aria-label', `Ulangi: ${['mati', 'semua lagu', 'satu lagu'][state.repeat]}`);
+    repeatBtn.title = repeatBtn.getAttribute('aria-label');
+    const label = repeatBtn.querySelector('.piano-label');
+    if (!label) {
+      repeatBtn.innerHTML = icon('repeat') + (state.repeat === 2 ? '<small>1</small>' : '');
+    }
+  }
   $('#volume').value = state.volume; audio.volume = state.volume; $('#volume').style.setProperty('--fill',`${state.volume * 100}%`);
   $('#mute').innerHTML = icon(audio.muted || !state.volume ? 'muted' : 'volume');
+  $('#amp-mute-switch')?.classList.toggle('active', Boolean(audio.muted));
+  $('#lamp-mute')?.classList.toggle('active', Boolean(audio.muted || !state.volume));
+  giantVolKnob?.setVal(state.volume, false);
+  deckVolKnob?.setVal(state.volume, false);
 }
 function translateMenuLabels() {
   const replacements = {
@@ -307,25 +352,292 @@ function updateProgress() {
   const duration = Number.isFinite(audio.duration) ? audio.duration : current()?.duration || 0;
   $('#elapsed').textContent = formatTime(audio.currentTime); $('#duration').textContent = formatTime(duration);
   const percent = duration ? audio.currentTime / duration * 100 : 0; $('#seek').value = percent; $('#seek').style.setProperty('--fill',`${percent}%`);
+  updateTapeCounter();
 }
 audio.addEventListener('timeupdate', () => { updateProgress(); maybeCrossfade(); const second = Math.floor(audio.currentTime); if (second % 5 === 0 && second !== lastSavedSecond) { lastSavedSecond = second; persist(); } });
 audio.addEventListener('loadedmetadata', () => { if (Number.isFinite(audio.duration)) current().duration = audio.duration; updateProgress(); renderTracks(); });
 audio.addEventListener('play', () => {
-  $('#app').classList.add('is-playing'); $('#play').innerHTML = icon('pause'); $('#play').setAttribute('aria-label','Jeda'); $('#spectrum-status').textContent = 'LIVE';
+  $('#app').classList.add('is-playing');
+  const playSym = $('#play .piano-symbol');
+  if (playSym) playSym.textContent = '❚❚';
+  else $('#play').innerHTML = icon('pause');
+  $('#play').classList.add('active');
+  $('#pause-btn')?.classList.remove('active');
+  $('#play').setAttribute('aria-label','Jeda');
+  $('#spectrum-status').textContent = 'LIVE';
   state.recent = [state.currentId, ...state.recent.filter(id => id !== state.currentId)].slice(0,100); persist();
   notifyTrack(current());
   if (state.view === 'recent') renderTracks(); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
 });
-audio.addEventListener('pause', () => { $('#app').classList.remove('is-playing'); $('#play').innerHTML = icon('play'); $('#play').setAttribute('aria-label','Putar'); $('#spectrum-status').textContent = 'STANDBY'; persist(); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
-audio.addEventListener('ended', () => advance(1,true));
+audio.addEventListener('pause', () => {
+  $('#app').classList.remove('is-playing');
+  const playSym = $('#play .piano-symbol');
+  if (playSym) playSym.textContent = '►';
+  else $('#play').innerHTML = icon('play');
+  $('#play').classList.remove('active');
+  if (audio.currentTime > 0 && !audio.ended) {
+    $('#pause-btn')?.classList.add('active');
+  }
+  $('#play').setAttribute('aria-label','Putar');
+  $('#spectrum-status').textContent = 'STANDBY';
+  persist();
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+});
+audio.addEventListener('ended', () => {
+  $('#pause-btn')?.classList.remove('active');
+  advance(1, true);
+});
 audio.addEventListener('error', () => { if (audio.src) toast('Format audio tidak didukung atau file rusak. Silakan coba file lain.'); });
-$('#play').onclick = togglePlay; $('#previous').onclick = () => advance(-1); $('#next').onclick = () => advance();
-$$('[data-deck-control]').forEach(button => { button.onclick = () => { const target = button.dataset.deckControl === 'stop' ? audio : $(`#${button.dataset.deckControl}`); if (button.dataset.deckControl === 'stop') { audio.pause(); audio.currentTime = 0; updateProgress(); } else target?.click(); }; });
+
+function bindRotaryKnob(element, { min, max, initial, step = 1, angleMin = -135, angleMax = 135, onChange }) {
+  if (!element) return { setVal: () => {}, getVal: () => initial };
+  let currentVal = initial;
+
+  function updateAngle(v) {
+    const fraction = (v - min) / (max - min);
+    const angle = angleMin + fraction * (angleMax - angleMin);
+    element.style.transform = `rotate(${angle.toFixed(1)}deg)`;
+  }
+
+  function setVal(v, notify = true) {
+    const clamped = Math.max(min, Math.min(max, v));
+    currentVal = clamped;
+    updateAngle(currentVal);
+    if (notify && onChange) onChange(currentVal);
+  }
+
+  setVal(initial, false);
+
+  let startY = 0;
+  let startVal = 0;
+
+  function onPointerMove(e) {
+    const dy = startY - e.clientY;
+    const range = max - min;
+    const delta = (dy / 140) * range;
+    const stepped = Math.round((startVal + delta) / step) * step;
+    setVal(stepped);
+  }
+
+  function onPointerUp() {
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+  }
+
+  element.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    startY = e.clientY;
+    startVal = currentVal;
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  });
+
+  element.addEventListener('wheel', e => {
+    e.preventDefault();
+    const dir = e.deltaY < 0 ? 1 : -1;
+    const delta = dir * step * (e.shiftKey ? 3 : 1);
+    setVal(Math.round((currentVal + delta) / step) * step);
+  }, { passive: false });
+
+  return { setVal, getVal: () => currentVal };
+}
+
+function setMasterVolume(v) {
+  state.volume = Math.max(0, Math.min(1, v));
+  audio.volume = state.volume;
+  if (audio.muted && state.volume > 0) audio.muted = false;
+  const volEl = $('#volume');
+  if (volEl) {
+    volEl.value = state.volume;
+    volEl.style.setProperty('--fill', `${state.volume * 100}%`);
+  }
+  giantVolKnob?.setVal(state.volume, false);
+  deckVolKnob?.setVal(state.volume, false);
+  renderModes();
+  persist();
+}
+
+function setAudioBalance(b) {
+  state.balance = Math.max(-1, Math.min(1, b));
+  applyAudioSettings();
+  syncSettings();
+  balKnob?.setVal(state.balance, false);
+  persist();
+}
+
+function setAudioPreamp(p) {
+  state.preamp = Math.max(-12, Math.min(12, p));
+  applyAudioSettings();
+  syncSettings();
+  preampKnob?.setVal(state.preamp, false);
+  persist();
+}
+
+function setAudioBass(db) {
+  state.eq[0] = db;
+  state.eq[1] = Math.round(db * 0.8);
+  state.preset = 'Custom';
+  syncEQ();
+  bassKnob?.setVal(db, false);
+}
+
+function setAudioTreble(db) {
+  state.eq[8] = Math.round(db * 0.8);
+  state.eq[9] = db;
+  state.preset = 'Custom';
+  syncEQ();
+  trebleKnob?.setVal(db, false);
+}
+
+function toggleMute() {
+  audio.muted = !audio.muted;
+  const isMuted = audio.muted || !state.volume;
+  $('#mute')?.setAttribute('aria-pressed', String(audio.muted));
+  $('#amp-mute-switch')?.classList.toggle('active', audio.muted);
+  $('#lamp-mute')?.classList.toggle('active', isMuted);
+  renderModes();
+}
+
+function setupRackControls() {
+  giantVolKnob = bindRotaryKnob($('#giant-master-volume'), { min: 0, max: 1, initial: state.volume, step: 0.01, onChange: setMasterVolume });
+  deckVolKnob = bindRotaryKnob($('#deck-volume-knob'), { min: 0, max: 1, initial: state.volume, step: 0.01, onChange: setMasterVolume });
+  balKnob = bindRotaryKnob($('#knob-balance'), { min: -1, max: 1, initial: state.balance, step: 0.02, onChange: setAudioBalance });
+  preampKnob = bindRotaryKnob($('#knob-preamp'), { min: -12, max: 12, initial: state.preamp, step: 1, onChange: setAudioPreamp });
+  bassKnob = bindRotaryKnob($('#knob-bass'), { min: -12, max: 12, initial: state.eq[0], step: 1, onChange: setAudioBass });
+  trebleKnob = bindRotaryKnob($('#knob-treble'), { min: -12, max: 12, initial: state.eq[9], step: 1, onChange: setAudioTreble });
+
+  bindRotaryKnob($('#knob-true-bass'), { min: 0, max: 10, initial: 3, step: 1, onChange: v => toast(`True Bass: ${v}`) });
+  bindRotaryKnob($('#knob-enhancer'), { min: 0, max: 10, initial: 5, step: 1, onChange: v => toast(`Enhancer: ${v}`) });
+  bindRotaryKnob($('#knob-reverb'), { min: 0, max: 10, initial: 2, step: 1, onChange: v => toast(`Reverb: ${v}`) });
+
+  const sourceRotary = $('#deck-source-rotary');
+  if (sourceRotary) {
+    const knob = sourceRotary.querySelector('.rotary-knob');
+    let pos = 0;
+    sourceRotary.onclick = () => {
+      pos = (pos + 1) % 3;
+      if (knob) {
+        knob.dataset.pos = String(pos);
+        knob.style.transform = `rotate(${(pos - 1) * 45}deg)`;
+      }
+      toast(`Source Channel: ${['A', 'B', 'C'][pos]}`);
+    };
+  }
+
+  $('#play').onclick = togglePlay;
+  $('#previous').onclick = () => advance(-1);
+  $('#next').onclick = () => advance(1);
+
+  const stopBtn = $('#stop-btn');
+  if (stopBtn) {
+    stopBtn.onclick = () => {
+      audio.pause();
+      audio.currentTime = 0;
+      updateProgress();
+      toast('Cassette playback stopped.');
+    };
+  }
+
+  const pauseBtn = $('#pause-btn');
+  if (pauseBtn) {
+    pauseBtn.onclick = () => {
+      if (!audio.paused) {
+        audio.pause();
+      } else if (loadedId) {
+        audio.play();
+      }
+    };
+  }
+
+  const recBtn = $('#rec-btn');
+  if (recBtn) recBtn.onclick = () => $('#file-input').click();
+
+  const ejectBtn = $('#deck-eject-btn');
+  if (ejectBtn) ejectBtn.onclick = () => $('#file-input').click();
+
+  const resetBtn = $('#counter-reset-btn');
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      audio.currentTime = 0;
+      updateProgress();
+      toast('Tape counter reset.');
+    };
+  }
+
+  const toggleDrawer = () => {
+    const drawer = $('#tape-drawer');
+    if (!drawer) return;
+    drawer.classList.toggle('open');
+    const isOpen = drawer.classList.contains('open');
+    const title = $('.handle-title');
+    if (title) {
+      title.textContent = isOpen
+        ? '▼ TEAC TAPE ARCHIVE & PROGRAM INDEX'
+        : '▲ OPEN TEAC TAPE ARCHIVE & PROGRAM INDEX';
+    }
+  };
+
+  const handleBar = $('#drawer-toggle-handle');
+  if (handleBar) handleBar.onclick = toggleDrawer;
+  const topToggle = $('#toggle-drawer-top');
+  if (topToggle) topToggle.onclick = toggleDrawer;
+  const btnMenu = $('#btn-menu');
+  if (btnMenu) btnMenu.onclick = toggleDrawer;
+  const btnSystem = $('#btn-system');
+  if (btnSystem) btnSystem.onclick = toggleDrawer;
+
+  const deckPower = $('#deck-power-btn');
+  if (deckPower) {
+    deckPower.onclick = () => {
+      deckPower.classList.toggle('active');
+      const on = deckPower.classList.contains('active');
+      deckPower.setAttribute('aria-pressed', String(on));
+      $('#cassette-deck-unit')?.classList.toggle('standby', !on);
+      if (!on && !audio.paused) audio.pause();
+      toast(on ? 'TEAC V-3RX Deck Power ON' : 'TEAC V-3RX Deck Standby');
+    };
+  }
+
+  const ampPower = $('#amp-power-btn');
+  if (ampPower) {
+    ampPower.onclick = () => {
+      ampPower.classList.toggle('active');
+      const on = ampPower.classList.contains('active');
+      ampPower.setAttribute('aria-pressed', String(on));
+      $('#amplifier-unit')?.classList.toggle('standby', !on);
+      if (!on && !audio.paused) audio.pause();
+      toast(on ? 'TEAC Integrated Amp Power ON' : 'TEAC Integrated Amp Standby');
+    };
+  }
+
+  $('#mute').onclick = toggleMute;
+  const ampMute = $('#amp-mute-switch');
+  if (ampMute) ampMute.onclick = toggleMute;
+
+  const openEQ = () => {
+    $('#eq-dialog').showModal();
+    $('#eq-toggle').setAttribute('aria-expanded', 'true');
+  };
+  $$('#switch-eq-dsp, #btn-dsp, #btn-amplifier, #eq-toggle, #player-eq').forEach(el => {
+    if (el) el.onclick = openEQ;
+  });
+
+  $$('.speaker-btn-group .bezel-push-tab').forEach(tab => {
+    tab.onclick = () => tab.classList.toggle('active');
+  });
+
+  $$('.display-btn-group .bezel-push-tab').forEach(tab => {
+    tab.onclick = () => {
+      $$('.display-btn-group .bezel-push-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    };
+  });
+}
+
 $('#play-session').textContent = 'Tambah musik';
 $('#play-session').onclick = () => $('#file-input').click();
 $('#seek').oninput = event => { if (loadedId && Number.isFinite(audio.duration)) { audio.currentTime = Number(event.target.value) / 100 * audio.duration; updateProgress(); } };
-$('#volume').oninput = event => { state.volume = Number(event.target.value); audio.muted = false; renderModes(); persist(); };
-$('#mute').onclick = () => { audio.muted = !audio.muted; $('#mute').setAttribute('aria-label',audio.muted ? 'Aktifkan suara' : 'Bisukan'); renderModes(); };
+$('#volume').oninput = event => setMasterVolume(Number(event.target.value));
 $('#shuffle').onclick = () => { state.shuffle = !state.shuffle; renderModes(); persist(); toast(state.shuffle ? 'Pemutaran acak aktif.' : 'Pemutaran acak dimatikan.'); };
 $('#repeat').onclick = () => { state.repeat = (state.repeat + 1) % 3; renderModes(); persist(); toast(`Ulangi: ${['mati','semua lagu','satu lagu'][state.repeat]}.`); };
 $$('#now-favorite, #player-favorite').forEach(el => el.onclick = () => favorite(state.currentId));
@@ -393,7 +705,20 @@ $('#help').onclick = () => $('#help-dialog').showModal();
 const presets = { Flat: Array(10).fill(0), Warm: [3,3,2,1,0,-1,-1,-2,-2,-3], 'Bass Boost': [6,5,4,2,0,0,0,0,0,0], Vocal: [-2,-2,-1,1,3,4,3,1,0,-1], Bright: [-2,-1,0,0,1,2,3,4,4,3] };
 const presetLabels = { Flat: 'Datar', Warm: 'Hangat', 'Bass Boost': 'Penguat bas', Vocal: 'Vokal', Bright: 'Cerah', Custom: 'Kustom' };
 $('#eq-bands').innerHTML = frequencies.map((frequency,i) => `<label class="eq-band"><output id="gain-${i}">${state.eq[i]>0?'+':''}${state.eq[i]}</output><input type="range" min="-12" max="12" step="1" value="${state.eq[i]}" data-band="${i}" aria-label="Gain ${frequency} Hz" /><span>${frequency>=1000 ? frequency/1000+'K' : frequency}</span></label>`).join('');
-function syncEQ() { $$('#eq-bands input').forEach((input,i) => { input.value = state.eq[i]; $(`#gain-${i}`).textContent = `${state.eq[i]>0?'+':''}${state.eq[i]}`; if (filters[i]) filters[i].gain.setTargetAtTime(state.eq[i], context.currentTime,.03); }); $('#eq-preset').value = state.preset; $('#preset-label').textContent = presetLabels[state.preset] || state.preset; persist(); }
+function syncEQ() {
+  $$('#eq-bands input').forEach((input,i) => {
+    input.value = state.eq[i];
+    $(`#gain-${i}`).textContent = `${state.eq[i]>0?'+':''}${state.eq[i]}`;
+    if (filters[i]) filters[i].gain.setTargetAtTime(state.eq[i], context.currentTime,.03);
+  });
+  $('#eq-preset').value = state.preset;
+  $('#preset-label').textContent = presetLabels[state.preset] || state.preset;
+  bassKnob?.setVal(state.eq[0], false);
+  trebleKnob?.setVal(state.eq[9], false);
+  const eqActive = state.eq.some(val => val !== 0);
+  $('#lamp-equalizer')?.classList.toggle('active', eqActive);
+  persist();
+}
 $('#eq-bands').oninput = event => { const i = Number(event.target.dataset.band); if (!Number.isInteger(i)) return; state.eq[i] = Number(event.target.value); state.preset = 'Custom'; syncEQ(); };
 $('#eq-preset').onchange = event => { const preset = event.target.value; if (presets[preset]) state.eq = [...presets[preset]]; state.preset = preset; syncEQ(); };
 $('#eq-reset').onclick = () => { state.eq = Array(10).fill(0); state.preset = 'Flat'; syncEQ(); };
@@ -510,6 +835,8 @@ if ('mediaSession' in navigator) {
 }
 const canvas = $('#spectrum'), painter = canvas.getContext('2d');
 let lastFrame = 0;
+let smoothedL = 0, smoothedR = 0;
+
 function paintSpectrum(timestamp) {
   requestAnimationFrame(paintSpectrum);
   if (document.hidden || !canvas.clientWidth || timestamp-lastFrame < 45) return;
@@ -533,11 +860,41 @@ function paintSpectrum(timestamp) {
     const samples = new Uint8Array(analyser?.fftSize || 2048); if (analyser && !audio.paused) analyser.getByteTimeDomainData(samples);
     for (let i = 0; i < waveWidth; i++) { const sample = samples[Math.floor(i / waveWidth * samples.length)] || 128; const y = sample / 255 * waveHeight; i ? wavePainter.lineTo(i, y) : wavePainter.moveTo(i, y); } wavePainter.stroke();
   }
+
+  // Update analog twin VU meters & horizontal Watts bars
+  let rawL = 0, rawR = 0;
+  if (analyser && !audio.paused && !audio.muted && state.volume > 0) {
+    let sumL = 0, countL = 0;
+    for (let b = 2; b < 24 && b < bins.length; b++) { sumL += bins[b]; countL++; }
+    rawL = countL ? (sumL / countL) / 255 : 0;
+
+    let sumR = 0, countR = 0;
+    for (let b = 24; b < 64 && b < bins.length; b++) { sumR += bins[b]; countR++; }
+    rawR = countR ? (sumR / countR) / 255 : 0;
+  }
+  smoothedL += (rawL - smoothedL) * 0.35;
+  smoothedR += (rawR - smoothedR) * 0.35;
+  if (audio.paused || audio.muted || state.volume === 0) {
+    smoothedL *= 0.75;
+    smoothedR *= 0.75;
+  }
+  const needleL = $('#vu-needle-left');
+  const needleR = $('#vu-needle-right');
+  if (needleL) needleL.style.transform = `rotate(${(-24 + smoothedL * 48).toFixed(1)}deg)`;
+  if (needleR) needleR.style.transform = `rotate(${(-24 + smoothedR * 48).toFixed(1)}deg)`;
+
+  const litL = Math.round(smoothedL * 12);
+  const litR = Math.round(smoothedR * 12);
+  const segsL = $$('#watts-track-left .watts-seg');
+  const segsR = $$('#watts-track-right .watts-seg');
+  segsL.forEach((seg, idx) => seg.classList.toggle('active', idx < litL));
+  segsR.forEach((seg, idx) => seg.classList.toggle('active', idx < litR));
 }
 requestAnimationFrame(paintSpectrum);
 window.addEventListener('pagehide', persist);
 async function init() {
   addAdvancedUI(); applyTheme(); applyPanelOrder();
+  setupRackControls();
   render();
   try { db = await openDB(); const stored = await dbAction('readonly', store => store.getAll()); state.tracks.push(...stored.filter(t => t?.id && t.file instanceof Blob)); const directory = await directoryAction('readonly', store => store.get('music-root')); if (directory?.handle && (await directory.handle.queryPermission({ mode: 'read' })) === 'granted') { const files = await filesFromDirectory(directory.handle); await importFiles(files); } }
   catch { toast('Penyimpanan lokal tidak tersedia. Musik impor hanya tersimpan untuk sesi ini.'); }
