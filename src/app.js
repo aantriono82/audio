@@ -986,24 +986,25 @@ function paintSpectrum(timestamp) {
     }
   }
 
-  // Fast-attack, smooth natural decay ballistics (authentic moving-coil VU)
+  // Moving-coil VU ballistics: moderate attack, long resonant decay
+  // Attack: ~55% new sample — CSS cubic-bezier handles the remaining visual smoothing
   if (rawL > smoothedL) {
-    smoothedL = smoothedL * 0.25 + rawL * 0.75;
+    smoothedL = smoothedL * 0.45 + rawL * 0.55;
   } else {
-    smoothedL += (rawL - smoothedL) * 0.15;
+    smoothedL += (rawL - smoothedL) * 0.08;   // slow decay ≈ long coil inertia
   }
 
   if (rawR > smoothedR) {
-    smoothedR = smoothedR * 0.25 + rawR * 0.75;
+    smoothedR = smoothedR * 0.45 + rawR * 0.55;
   } else {
-    smoothedR += (rawR - smoothedR) * 0.15;
+    smoothedR += (rawR - smoothedR) * 0.08;
   }
 
   if (!isPlayingAudio) {
-    smoothedL *= 0.78;
-    smoothedR *= 0.78;
-    if (smoothedL < 0.005) smoothedL = 0;
-    if (smoothedR < 0.005) smoothedR = 0;
+    smoothedL *= 0.92;   // graceful fall to rest when stopped
+    smoothedR *= 0.92;
+    if (smoothedL < 0.004) smoothedL = 0;
+    if (smoothedR < 0.004) smoothedR = 0;
   }
 
   // 1. Animate twin analog needles with balance-knob influence
