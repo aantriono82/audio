@@ -2485,7 +2485,7 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
   height: 26px;
   background: #ffffff;
   border: 1px solid #111214;
-  left: calc(50% - 2px);
+  left: calc(50% - 1.25px);
   top: 5px;
   border-radius: 2px;
   box-shadow: 0 0 3px rgba(255, 255, 255, 0.9), 1px 1px 3px rgba(0, 0, 0, 0.6);
@@ -3907,7 +3907,8 @@ body {
 /* High-contrast volume knob indicator */
 .deck-right-controls .concentric-dial-scale {
   border-width: 2.5px;
-  border-color: #15181b;
+  background: radial-gradient(circle, #c9ced0 0%, #9ba2a6 58%, #737b80 100%);
+  border-color: #303438;
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.6),
     inset 0 1.5px 2px rgba(255, 255, 255, 0.7),
@@ -3916,13 +3917,43 @@ body {
 
 .deck-right-controls .scale-tick {
   color: #080a0c;
-  font-size: 8.5px;
+  font-size: 7.5px;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
+/* Keep the complete 0–10 scale visible on the outer collar. */
+.deck-right-controls .sn0  { left: 21.2px; top: 92.8px; }
+.deck-right-controls .sn1  { left:  7.0px; top: 73.2px; }
+.deck-right-controls .sn2  { left:  5.6px; top: 48.2px; }
+.deck-right-controls .sn3  { left: 13.3px; top: 24.8px; }
+.deck-right-controls .sn4  { left: 32.4px; top:  8.5px; }
+.deck-right-controls .sn5  { left: 57.0px; top: 15.0px; }
+.deck-right-controls .sn6  { left: 79.7px; top: 11.6px; }
+.deck-right-controls .sn7  { left: 97.4px; top: 27.6px; }
+.deck-right-controls .sn8  { left:104.8px; top: 49.7px; }
+.deck-right-controls .sn9  { left:102.6px; top: 71.9px; }
+.deck-right-controls .sn10 { left: 92.4px; top: 89.6px; }
+
 .deck-right-controls .d-tick {
   width: 1.5px;
-  background: #111418;
+  height: 4px;
+  background: #24282b;
+}
+
+.deck-right-controls .balance-index-tab {
+  width: 4px;
+  height: 14px;
+  left: calc(50% - 2px);
+  top: 5px;
+  transform: none;
+  background: #d71920;
+  border: 1px solid #8e1015;
+  border-radius: 1px;
+  box-shadow: 0 0 2px rgba(215, 25, 32, 0.75);
+}
+
+.deck-right-controls .balance-red-line {
+  display: none;
 }
 
 .deck-right-controls .knob-metal-body {
@@ -3943,20 +3974,14 @@ body {
 }
 
 .deck-right-controls .knob-face-wedge {
-  width: 4.5px;
-  height: 38px;
-  left: 20.5px;
-  top: 29px;
-  background: linear-gradient(90deg, #171a1e 0%, #4b535a 52%, #0d0f12 100%);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.75);
-  opacity: 1;
+  display: none;
 }
 
 .deck-right-controls .knob-indicator-notch {
-  width: 4px;
-  height: 15px;
-  left: calc(50% - 2px);
+  display: block;
+  width: 2.5px;
+  height: 10px;
+  left: calc(50% - 1.25px);
   top: 3px;
   background: linear-gradient(90deg, #15181b 0%, #4c555d 50%, #0b0d10 100%);
   border: 1px solid #080a0c;
@@ -3979,8 +4004,8 @@ body {
 
 .deck-right-controls .knob-concentric-housing,
 .deck-right-controls .knob-metal-body {
-  width: 110px;
-  height: 110px;
+  width: 104px;
+  height: 104px;
 }
 
 .deck-right-controls .deck-mute-module { top: 118px; }
