@@ -60,7 +60,7 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
 
 /* TOP TITLEBAR */
 .rack-titlebar {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: space-between;
   padding: 6px 22px;
@@ -98,7 +98,7 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
   border: 1px solid #3c3e42;
   border-radius: 2px;
 }
-.title-motto { font: 8.5px var(--mono); letter-spacing: 2px; color: #777; }
+.title-motto { display: none; }
 .title-actions { display: flex; align-items: center; gap: 8px; }
 .local-indicator {
   font: 8.5px var(--mono);
@@ -2700,20 +2700,23 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
   max-height: 290px;
   overflow-y: auto;
   background: transparent;
+  scrollbar-color: #a47d35 rgba(40, 37, 30, 0.16);
+  scrollbar-width: thin;
 }
 
 .track-table-wrap::-webkit-scrollbar {
   width: 8px;
 }
 .track-table-wrap::-webkit-scrollbar-track {
-  background: #101114;
+  background: rgba(40, 37, 30, 0.12);
 }
 .track-table-wrap::-webkit-scrollbar-thumb {
-  background: #2e3137;
-  border-radius: 4px;
+  background: linear-gradient(180deg, #c09a52, #8f6828);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 5px;
 }
 .track-table-wrap::-webkit-scrollbar-thumb:hover {
-  background: #42464f;
+  background: #d0aa5e;
 }
 
 .track-table {
@@ -3626,12 +3629,28 @@ dialog.aimp-dsp-dialog::backdrop {
 }
 
 .track-row.current {
-  background: linear-gradient(90deg, rgba(0, 230, 118, 0.2), rgba(0, 230, 118, 0.06)) !important;
-  box-shadow: inset 3px 0 0 #00e676, inset 0 1px 0 rgba(0, 230, 118, 0.22), inset 0 -1px 0 rgba(0, 230, 118, 0.18);
+  background: linear-gradient(90deg, rgba(216, 184, 109, 0.34), rgba(216, 184, 109, 0.1)) !important;
+  box-shadow: inset 3px 0 0 #b89345, inset 0 1px 0 rgba(184, 147, 69, 0.34), inset 0 -1px 0 rgba(184, 147, 69, 0.24);
 }
 
 .track-row.current .track-name {
-  text-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+  color: #6f501d !important;
+  text-shadow: 0 0 8px rgba(184, 147, 69, 0.22);
+}
+
+.track-row.current .track-artist {
+  color: #856b3e;
+}
+
+.track-row.current .format-tag,
+.track-row.current .equal-bars i {
+  color: #8c6827;
+  background-color: #b89345;
+}
+
+.track-row.current .format-tag {
+  background: rgba(184, 147, 69, 0.13);
+  border-color: rgba(184, 147, 69, 0.42);
 }
 
 .track-row:active { transform: scale(0.998); }
