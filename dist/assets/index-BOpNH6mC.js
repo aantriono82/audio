@@ -25,7 +25,7 @@ Error generating stack: `+e.message+`
     <!-- ========================================================= -->
     <!-- UNIT 1: TEAC V-3RX STEREO CASSETTE DECK                   -->
     <!-- ========================================================= -->
-    <section class="teac-unit teac-cassette-deck" id="cassette-deck-unit" aria-label="ATIGA AMP Stereo Cassette Deck">
+    <section class="teac-unit teac-cassette-deck" id="cassette-deck-unit" aria-label="ATIGA AMP - 4FM Stereo Cassette Deck">
       <!-- Chassis Screws -->
       <div class="unit-screw screw-tl"></div>
       <div class="unit-screw screw-tr"></div>
@@ -36,7 +36,7 @@ Error generating stack: `+e.message+`
       <div class="deck-header-row">
         <div class="teac-logo-block">
           <span class="teac-brand-text">ATIGA</span>
-          <span class="teac-model-text">AMP</span>
+          <span class="teac-model-text">AMP - 4FM</span>
           <span class="teac-sub-text">Stereo Cassette Deck</span>
         </div>
       </div>
@@ -947,7 +947,7 @@ Error generating stack: `+e.message+`
   <!-- Status Bar -->
   <div class="statusbar">
     <span><i></i> POWER ON <span class="status-separator">/</span> ATIGA DC SERVO DRIVE</span>
-    <span>ATIGA AMP STEREO CASSETTE DECK <span class="status-separator">·</span> PRECISION AUDIO</span>
+    <span>ATIGA AMP - 4FM STEREO CASSETTE DECK <span class="status-separator">·</span> PRECISION AUDIO</span>
   </div>
 </div>
 
@@ -1297,4 +1297,4 @@ Error generating stack: `+e.message+`
 
 <div role="status" id="toast" class="toast" hidden></div>
 <audio id="audio" preload="auto"></audio>
-`,f=e((e=>{var t=Symbol.for(`react.transitional.element`);function n(e,n,r){var i=null;if(r!==void 0&&(i=``+r),n.key!==void 0&&(i=``+n.key),`key`in n)for(var a in r={},n)a!==`key`&&(r[a]=n[a]);else r=n;return n=r.ref,{$$typeof:t,type:e,key:i,ref:n===void 0?null:n,props:r}}e.jsx=n})),p=e(((e,t)=>{t.exports=f()}))(),m=`modulepreload`,h=function(e){return`/`+e},g={},_=function(e,t,n){let r=Promise.resolve();if(t&&t.length>0){let e=document.getElementsByTagName(`link`),i=document.querySelector(`meta[property=csp-nonce]`),a=i?.nonce||i?.getAttribute(`nonce`);function o(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}function s(e){return import.meta.resolve?import.meta.resolve(e):new URL(e,import.meta.url).href}r=o(t.map(t=>{if(t=h(t,n),t=s(t),t in g)return;g[t]=!0;let r=t.endsWith(`.css`);for(let n=e.length-1;n>=0;n--){let i=e[n];if(i.href===t&&(!r||i.rel===`stylesheet`))return}let i=document.createElement(`link`);if(i.rel=r?`stylesheet`:m,r||(i.as=`script`),i.crossOrigin=``,i.href=t,a&&i.setAttribute(`nonce`,a),document.head.appendChild(i),r)return new Promise((e,n)=>{i.addEventListener(`load`,e),i.addEventListener(`error`,()=>n(Error(`Unable to preload CSS for ${t}`)))})}))}function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})};function v(){return(0,l.useEffect)(()=>{_(()=>import(`./app-CNcy1GAG.js`),[])},[]),(0,p.jsx)(`div`,{dangerouslySetInnerHTML:{__html:d}})}var y=document.getElementById(`root`);if(!y)throw Error(`Elemen root React tidak ditemukan.`);(0,u.createRoot)(y).render((0,p.jsx)(v,{}));export{_ as t};
+`,f=e((e=>{var t=Symbol.for(`react.transitional.element`);function n(e,n,r){var i=null;if(r!==void 0&&(i=``+r),n.key!==void 0&&(i=``+n.key),`key`in n)for(var a in r={},n)a!==`key`&&(r[a]=n[a]);else r=n;return n=r.ref,{$$typeof:t,type:e,key:i,ref:n===void 0?null:n,props:r}}e.jsx=n})),p=e(((e,t)=>{t.exports=f()}))(),m=`modulepreload`,h=function(e){return`/`+e},g={},_=function(e,t,n){let r=Promise.resolve();if(t&&t.length>0){let e=document.getElementsByTagName(`link`),i=document.querySelector(`meta[property=csp-nonce]`),a=i?.nonce||i?.getAttribute(`nonce`);function o(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}function s(e){return import.meta.resolve?import.meta.resolve(e):new URL(e,import.meta.url).href}r=o(t.map(t=>{if(t=h(t,n),t=s(t),t in g)return;g[t]=!0;let r=t.endsWith(`.css`);for(let n=e.length-1;n>=0;n--){let i=e[n];if(i.href===t&&(!r||i.rel===`stylesheet`))return}let i=document.createElement(`link`);if(i.rel=r?`stylesheet`:m,r||(i.as=`script`),i.crossOrigin=``,i.href=t,a&&i.setAttribute(`nonce`,a),document.head.appendChild(i),r)return new Promise((e,n)=>{i.addEventListener(`load`,e),i.addEventListener(`error`,()=>n(Error(`Unable to preload CSS for ${t}`)))})}))}function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})};function v(){return(0,l.useEffect)(()=>{_(()=>import(`./app-C7v0T9x3.js`),[])},[]),(0,p.jsx)(`div`,{dangerouslySetInnerHTML:{__html:d}})}var y=document.getElementById(`root`);if(!y)throw Error(`Elemen root React tidak ditemukan.`);(0,u.createRoot)(y).render((0,p.jsx)(v,{}));export{_ as t};

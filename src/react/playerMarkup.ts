@@ -17,7 +17,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
     <!-- ========================================================= -->
     <!-- UNIT 1: TEAC V-3RX STEREO CASSETTE DECK                   -->
     <!-- ========================================================= -->
-    <section class="teac-unit teac-cassette-deck" id="cassette-deck-unit" aria-label="ATIGA AMP Stereo Cassette Deck">
+    <section class="teac-unit teac-cassette-deck" id="cassette-deck-unit" aria-label="ATIGA AMP - 4FM Stereo Cassette Deck">
       <!-- Chassis Screws -->
       <div class="unit-screw screw-tl"></div>
       <div class="unit-screw screw-tr"></div>
@@ -28,7 +28,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
       <div class="deck-header-row">
         <div class="teac-logo-block">
           <span class="teac-brand-text">ATIGA</span>
-          <span class="teac-model-text">AMP</span>
+          <span class="teac-model-text">AMP - 4FM</span>
           <span class="teac-sub-text">Stereo Cassette Deck</span>
         </div>
       </div>
@@ -939,7 +939,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
   <!-- Status Bar -->
   <div class="statusbar">
     <span><i></i> POWER ON <span class="status-separator">/</span> ATIGA DC SERVO DRIVE</span>
-    <span>ATIGA AMP STEREO CASSETTE DECK <span class="status-separator">·</span> PRECISION AUDIO</span>
+    <span>ATIGA AMP - 4FM STEREO CASSETTE DECK <span class="status-separator">·</span> PRECISION AUDIO</span>
   </div>
 </div>
 
