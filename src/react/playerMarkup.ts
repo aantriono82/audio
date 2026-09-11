@@ -143,10 +143,10 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
             <div class="matrix-btn-row matrix-btn-row-top">
               <div class="matrix-spacer"></div>
               <div class="matrix-btn-cell">
-                <button class="matrix-btn" id="btn-menu" aria-label="Menu" title="Menu"></button>
+                <button class="matrix-btn active" id="btn-menu" aria-label="Menu" title="Menu"></button>
               </div>
               <div class="matrix-btn-cell">
-                <button class="matrix-btn" id="btn-amplifier" aria-label="Amplifier" title="Amplifier"></button>
+                <button class="matrix-btn active" id="btn-amplifier" aria-label="Amplifier" title="Amplifier"></button>
               </div>
               <div class="matrix-btn-cell">
                 <button class="matrix-btn" id="btn-dsp" aria-label="DSP" title="DSP"></button>
@@ -157,15 +157,15 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
             <div class="matrix-chart-card">
               <div class="chart-row chart-row-top">
                 <div class="chart-col-head">SYSTEM</div>
-                <div class="chart-col-cell">MENU</div>
-                <div class="chart-col-cell">AMPLIFIER</div>
-                <div class="chart-col-cell">DSP</div>
+                <div class="chart-col-cell" id="matrix-lbl-menu" role="button" tabindex="0" title="Buka / Tutup Daftar Lagu">MENU</div>
+                <div class="chart-col-cell" id="matrix-lbl-amplifier" role="button" tabindex="0" title="Tampilkan / Sembunyikan Amplifier">AMPLIFIER</div>
+                <div class="chart-col-cell" id="matrix-lbl-dsp" role="button" tabindex="0" title="Buka AIMP Sound Effects DSP">DSP</div>
               </div>
               <div class="chart-row chart-row-bottom">
                 <div class="chart-col-head">TAPE (BIAS/EQ)</div>
-                <div class="chart-col-cell">NORMAL</div>
-                <div class="chart-col-cell">Co (CrO₂)</div>
-                <div class="chart-col-cell">METAL</div>
+                <div class="chart-col-cell" id="matrix-lbl-normal" role="button" tabindex="0" title="Pilih Tape Normal">NORMAL</div>
+                <div class="chart-col-cell" id="matrix-lbl-cro2" role="button" tabindex="0" title="Pilih Tape CrO₂">Co (CrO₂)</div>
+                <div class="chart-col-cell" id="matrix-lbl-metal" role="button" tabindex="0" title="Pilih Tape Metal">METAL</div>
               </div>
             </div>
 
@@ -805,153 +805,110 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
       <div class="chassis-foot foot-right"></div>
     </section>
 
-  </div>
+    <!-- ========================================================= -->
+    <!-- UNIT 3: TEAC / ATIGA INTEGRATED HI-FI PLAYLIST DECK       -->
+    <!-- (Placed directly below Integrated DC Servo Amplifier)     -->
+    <!-- ========================================================= -->
+    <section class="teac-unit-playlist open" id="tape-drawer" aria-label="Daftar Lagu dan Antrean">
+      <!-- Top Toolbar: Tabs, Search, Dropdown Category, Sort, Add -->
+      <div class="playlist-deck-header">
+        <div class="playlist-deck-tabs">
+          <button type="button" class="pl-tab-btn active" id="track-tab">
+            <span>Daftar lagu</span>
+            <span class="pl-tab-badge" id="track-count">6</span>
+          </button>
+          <button type="button" class="pl-tab-btn" id="queue-tab">
+            <span>Antrean</span>
+            <span class="pl-tab-badge" id="queue-count">0</span>
+          </button>
+        </div>
 
-  <!-- ========================================================= -->
-  <!-- INTEGRATED HI-FI TAPE ARCHIVE / MUSIC LIBRARY DRAWER     -->
-  <!-- ========================================================= -->
-  <div class="tape-archive-drawer" id="tape-drawer">
-    <!-- Drawer Header & Handle -->
-    <div class="drawer-handle-bar" id="drawer-toggle-handle">
-      <div class="handle-grip"><span></span><span></span><span></span></div>
-      <span class="handle-title">▲ OPEN ATIGA TAPE ARCHIVE &amp; PROGRAM INDEX</span>
-      <div class="handle-actions">
-        <span class="drawer-status-led"><i></i> ARCHIVE READY</span>
+        <div class="playlist-deck-tools">
+          <label class="pl-search-box">
+            <span data-icon="search"></span>
+            <input id="search" placeholder="Cari lagu atau artis…" aria-label="Cari lagu atau artis" autocomplete="off" />
+            <kbd>/</kbd>
+          </label>
+
+          <div class="pl-select-wrap">
+            <select id="view-select" aria-label="Pilih kategori lagu" class="pl-view-select">
+              <option value="all">Semua lagu</option>
+              <option value="favorites">Favorit</option>
+              <option value="recent">Terakhir diputar</option>
+              <option value="smart:frequent">Sering diputar</option>
+              <option value="smart:unplayed">Belum diputar</option>
+            </select>
+            <span class="pl-select-arrow" data-icon="chevron"></span>
+          </div>
+
+          <button type="button" class="icon-button pl-tool-btn" id="sort" aria-label="Urutkan lagu berdasarkan judul" title="Urutkan berdasarkan judul" data-icon="sort"></button>
+          <button type="button" class="icon-button pl-tool-btn" id="play-session" aria-label="Tambah musik" title="Tambah musik" data-icon="plus"></button>
+        </div>
       </div>
-    </div>
 
-    <!-- Drawer Content Panel -->
-    <div class="drawer-content-wrap">
-      <!-- Sidebar / Source Navigator -->
-      <aside class="sidebar rack-sidebar">
-        <div class="side-brand">
-          <span>ATIGA</span><strong>TAPE INDEX</strong><small>LOCAL AUDIO ARCHIVE</small>
+      <!-- Main Horizontal Track Table -->
+      <div class="track-table-wrap">
+        <table class="track-table">
+          <thead>
+            <tr>
+              <th class="number-col">#</th>
+              <th class="title-col">JUDUL LAGU</th>
+              <th class="album-col">ALBUM</th>
+              <th class="format-col">FORMAT</th>
+              <th class="duration-col"><span data-icon="clock" aria-label="Durasi"></span></th>
+              <th class="actions-col"></th>
+            </tr>
+          </thead>
+          <tbody id="tracks"></tbody>
+        </table>
+        <div class="empty-state" id="empty" hidden>
+          <span data-icon="music"></span>
+          <h3>Daftar lagu kosong.</h3>
+          <p>Tarik file audio ke sini atau klik Tambah Musik untuk memuat kaset.</p>
         </div>
-        <div class="sidebar-heading">SOURCE SELECTOR</div>
-        <nav aria-label="Koleksi musik">
-          <button class="nav-item active" data-view="all"><span data-icon="library"></span>Semua musik<span class="nav-count" id="all-count">6</span></button>
-          <button class="nav-item" data-view="favorites"><span data-icon="heart"></span>Favorit<span class="nav-count" id="favorite-count">0</span></button>
-          <button class="nav-item" data-view="recent"><span data-icon="history"></span>Terakhir diputar</button>
-        </nav>
-        <div class="sidebar-heading playlist-heading">DAFTAR PUTAR <button class="icon-button small" id="new-playlist" title="Buat daftar putar" aria-label="Buat daftar putar" data-icon="plus"></button></div>
-        <nav id="playlist-nav" aria-label="Daftar putar"></nav>
-        <div class="sidebar-footer">
-          <div class="collection-icon" data-icon="folder"></div>
-          <strong>LOCAL STORAGE</strong>
-          <p>Koleksi lagu tetap tersimpan<br>di peramban Anda.</p>
-          <button class="folder-button" id="import-folder"><span data-icon="folder-plus"></span> PILIH FOLDER</button>
-          <button class="folder-button mt-6" id="import"><span data-icon="plus"></span> LOAD TAPE FILE</button>
+      </div>
+
+      <!-- Footer Info and Drop Prompt -->
+      <div class="playlist-deck-footer">
+        <div class="pl-footer-left">
+          <span id="library-total">6 lagu · 18 menit</span>
         </div>
-      </aside>
-
-      <!-- Main Library Table -->
-      <main class="library rack-library">
-        <div class="page-heading">
-          <div>
-            <div class="eyebrow"><span></span> CASSETTE BAY / SIDE 1</div>
-            <h1 id="view-title">Semua musik<span>.</span></h1>
-            <p id="collection-summary">Koleksi pribadi dengan sentuhan hi-fi klasik.</p>
-          </div>
-          <button class="primary-button" id="play-session"><span data-icon="plus"></span> TAMBAH MUSIK</button>
+        <div class="pl-footer-center">
+          <button type="button" class="pl-drop-prompt" id="import-prompt" title="Tarik atau klik untuk memuat file audio">
+            <span data-icon="upload"></span>
+            <span>Tarik file musik ke sini untuk menambah koleksi &nbsp;·&nbsp; MP3 &nbsp;·&nbsp; WAV &nbsp;·&nbsp; OGG &nbsp;·&nbsp; FLAC</span>
+          </button>
         </div>
-
-        <div class="library-toolbar">
-          <div class="track-tabs">
-            <button class="track-tab active" id="track-tab">TAPE INDEX <span id="track-count">6</span></button>
-            <button class="track-tab" id="queue-tab">PLAY QUEUE <span id="queue-count">0</span></button>
-          </div>
-          <div class="table-actions">
-            <label class="search">
-              <span data-icon="search"></span>
-              <input id="search" placeholder="Cari judul lagu atau artis…" aria-label="Cari lagu atau artis" autocomplete="off" />
-              <kbd>/</kbd>
-            </label>
-            <button class="icon-button" id="sort" aria-label="Urutkan lagu berdasarkan judul" title="Urutkan berdasarkan judul" data-icon="sort"></button>
-          </div>
+        <div class="pl-footer-right">
+          <span class="pl-ready-indicator"><i></i> Siap untuk didengarkan</span>
         </div>
+      </div>
 
-        <div class="track-table-wrap">
-          <table class="track-table">
-            <thead>
-              <tr>
-                <th class="number-col">#</th>
-                <th>PROGRAM / TITLE</th>
-                <th class="album-col">ALBUM</th>
-                <th class="format-col">TAPE</th>
-                <th class="duration-col"><span data-icon="clock" aria-label="Durasi"></span></th>
-                <th class="actions-col"></th>
-              </tr>
-            </thead>
-            <tbody id="tracks"></tbody>
-          </table>
-          <div class="empty-state" id="empty" hidden>
-            <span data-icon="music"></span>
-            <h3>Tape bay kosong.</h3>
-            <p>Tambahkan file atau folder musik untuk mulai memutar.</p>
-          </div>
-        </div>
+      <!-- Hidden interop container for secondary bindings -->
+      <div class="legacy-bindings" hidden style="display:none !important;" aria-hidden="true">
+        <span id="all-count">0</span>
+        <span id="favorite-count">0</span>
+        <span id="view-title">Semua musik</span>
+        <span id="collection-summary"></span>
+        <nav id="playlist-nav"></nav>
+        <div id="now-art" data-art="0"><span class="art-title"></span></div>
+        <span id="now-title"></span>
+        <span id="now-artist"></span>
+        <span id="now-quality"></span>
+        <span id="now-format"></span>
+        <button id="now-favorite"></button>
+        <span id="duration"></span>
+        <div id="next-track"></div>
+        <canvas id="spectrum"></canvas>
+        <button id="eq-toggle"></button>
+        <span id="preset-label"></span>
+        <button id="import-folder"></button>
+        <button id="import"></button>
+        <button id="new-playlist"></button>
+        <span id="spectrum-status"></span>
+      </div>
+    </section>
 
-        <div class="library-bottom">
-          <span id="library-total">6 lagu demo</span>
-          <span><i></i> CASSETTE DECK READY</span>
-        </div>
-      </main>
-
-      <!-- Now Playing & Frequency Spectrum Panel -->
-      <aside class="now-panel rack-now-panel">
-        <div class="panel-heading">PROGRAM MONITOR <span class="tiny-bars"><i></i><i></i><i></i></span></div>
-
-        <!-- Album Art Card -->
-        <div class="album-art large-art" id="now-art" data-art="0">
-          <div class="art-grid"></div>
-          <span class="art-label">NOW PLAYING<br><small>ATIGA PRECISION HI-FI</small></span>
-          <div class="art-sun"></div>
-          <div class="art-horizon"></div>
-          <span class="art-title">AFTER HOURS<span>ATIGA SESSIONS</span></span>
-          <span class="art-corner">A</span>
-        </div>
-
-        <div class="now-track">
-          <div>
-            <small>PROGRAM / TITLE</small>
-            <h2 id="now-title">Amber Skies</h2>
-            <p id="now-artist">Atiga Sessions</p>
-          </div>
-          <button class="icon-button" id="now-favorite" aria-label="Tambahkan ke favorit" data-icon="heart"></button>
-        </div>
-
-        <div class="audio-tags">
-          <span id="now-format">WAV</span>
-          <span id="now-quality">HIGH BIAS</span>
-          <span>STEREO</span>
-        </div>
-
-        <!-- Real-time Audio Spectrum Box -->
-        <section class="spectrum-box">
-          <div class="instrument-heading">
-            <span>SPECTRUM ANALYZER</span>
-            <span class="live-label" id="spectrum-status">STANDBY</span>
-          </div>
-          <canvas id="spectrum" aria-label="Spektrum frekuensi audio"></canvas>
-          <div class="frequency-labels">
-            <span>60</span><span>250</span><span>1K</span><span>4K</span><span>16K</span>
-          </div>
-        </section>
-
-        <!-- DSP & Next Program Info -->
-        <button class="eq-toggle" id="eq-toggle" aria-expanded="false">
-          <span data-icon="sliders"></span>
-          <span>DSP MANAGER <small id="preset-label">Datar</small></span>
-          <span class="eq-status">10 BAND</span>
-          <span data-icon="chevron"></span>
-        </button>
-
-        <div class="next-up">
-          <div class="panel-heading">NEXT PROGRAM <button class="text-button" id="show-queue">QUEUE <span>↗</span></button></div>
-          <div class="next-track" id="next-track"></div>
-        </div>
-      </aside>
-    </div>
   </div>
 
   <!-- Standard Hidden Controls for App Engine Interop -->

@@ -47,11 +47,16 @@ function applyTheme() {
   });
 }
 function applyPanelOrder() {
-  const app = $('#app'); const panels = { sidebar: $('.sidebar'), library: $('.library'), now: $('.now-panel') };
+  const app = $('#app');
+  if (!app) return;
+  const panels = { sidebar: $('.sidebar'), library: $('.library'), now: $('.now-panel') };
   if (app.classList.contains('full-deck')) {
     app.style.gridTemplateAreas = `'library now' 'player player'`;
     app.style.gridTemplateRows = '1fr 112px';
     app.dataset.panelOrder = 'full-deck';
+    return;
+  }
+  if (app.classList.contains('teac-rack-app')) {
     return;
   }
   state.panelOrder.forEach((name, index) => { if (panels[name]) panels[name].style.gridArea = `slot${index + 1}`; });
@@ -60,32 +65,128 @@ function applyPanelOrder() {
 }
 function addAdvancedUI() {
   const actions = $('.title-actions');
-  const settingsButton = document.createElement('button'); settingsButton.className = 'icon-button'; settingsButton.id = 'settings'; settingsButton.title = 'Pengaturan audio dan tampilan'; settingsButton.ariaLabel = settingsButton.title; settingsButton.textContent = '⚙'; actions.insertBefore(settingsButton, $('#help'));
-  const group = document.createElement('select'); group.id = 'group-by'; group.title = 'Kelompokkan koleksi'; group.ariaLabel = 'Kelompokkan koleksi'; group.innerHTML = '<option value="">Semua lagu</option><option value="artist">Artis</option><option value="album">Album</option><option value="genre">Genre</option>'; $('.table-actions').insertBefore(group, $('#sort'));
-  const waveform = document.createElement('canvas'); waveform.id = 'waveform'; waveform.setAttribute('aria-label', 'Gelombang audio'); $('.spectrum-box').append(waveform);
-  const dialog = document.createElement('dialog'); dialog.id = 'settings-dialog'; dialog.innerHTML = `<form method="dialog" class="dialog-heading"><div><div class="eyebrow">ATIGA AMP / RUANG KENDALI</div><h2>Pengaturan<span>.</span></h2></div><button class="icon-button" aria-label="Tutup">×</button></form><section class="theme-section" aria-labelledby="theme-heading"><div class="settings-section-heading"><span id="theme-heading">Pilih tampilan</span><small>Perubahan langsung diterapkan</small></div><div class="theme-picker" role="radiogroup" aria-label="Pilih tema"><button type="button" class="theme-skin skin-ember" data-theme="ember" role="radio" aria-label="Bara"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Bara</strong><small>Studio hangat</small></button><button type="button" class="theme-skin skin-neon" data-theme="neon" role="radio" aria-label="Neon"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Neon</strong><small>Klub malam</small></button><button type="button" class="theme-skin skin-ocean" data-theme="ocean" role="radio" aria-label="Samudra"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Samudra</strong><small>Biru dalam</small></button><button type="button" class="theme-skin skin-violet" data-theme="violet" role="radio" aria-label="Violet"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Violet</strong><small>Nuansa tengah malam</small></button><button type="button" class="theme-skin skin-mono" data-theme="mono" role="radio" aria-label="Monokrom"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Monokrom</strong><small>Kontras murni</small></button></div></section><div class="settings-grid"><label>Pudar silang <output id="crossfade-value"></output><input id="crossfade" type="range" min="0" max="12" step="1"></label><label>Penguat awal <output id="preamp-value"></output><input id="preamp" type="range" min="-12" max="12" step="1"></label><label>Keseimbangan <output id="balance-value"></output><input id="balance" type="range" min="-1" max="1" step=".01"></label><label>Keluaran<select id="output-device"><option value="default">Keluaran bawaan peramban</option></select></label></div><label class="setting-check"><input id="gapless" type="checkbox"> Tanpa jeda / siapkan lagu berikutnya</label><label class="setting-check"><input id="replay-gain" type="checkbox"> ReplayGain jika tag tersedia</label><label class="setting-check"><input id="glow" type="checkbox"> Efek CRT / cahaya</label><label class="setting-check"><input id="notifications" type="checkbox"> Beri tahu lagu berikutnya</label><div class="settings-actions"><button type="button" class="text-button" id="scan-folder">Pindai ulang folder</button><button type="button" class="text-button" id="request-notifications">Izinkan notifikasi</button><span class="dialog-note">Panel dapat dipindahkan dengan seret dan lepas.</span></div><div class="format-support" id="format-support"></div>`; document.body.append(dialog);
-  $('#settings').onclick = () => { syncSettings(); dialog.showModal(); refreshOutputDevices(); };
-  group.onchange = event => { const value = event.target.value; state.groupBy = value ? value.split(':')[0] : ''; if (value) state.view = value; else state.view = 'all'; render(); persist(); };
-  dialog.querySelectorAll('.theme-skin').forEach(button => { button.onclick = () => { state.theme = button.dataset.theme; applyTheme(); persist(); }; });
-  dialog.querySelector('#crossfade').oninput = event => { state.crossfade = Number(event.target.value); syncSettings(); persist(); };
-  dialog.querySelector('#preamp').oninput = event => { state.preamp = Number(event.target.value); applyAudioSettings(); syncSettings(); persist(); };
-  dialog.querySelector('#balance').oninput = event => { state.balance = Number(event.target.value); applyAudioSettings(); syncSettings(); persist(); };
-  dialog.querySelector('#gapless').onchange = event => { state.gapless = event.target.checked; audio.preload = state.gapless ? 'auto' : 'metadata'; persist(); };
-  dialog.querySelector('#replay-gain').onchange = event => { state.replayGain = event.target.checked; applyAudioSettings(); persist(); };
-  dialog.querySelector('#glow').onchange = event => { state.glow = event.target.checked; applyTheme(); persist(); };
-  dialog.querySelector('#notifications').onchange = event => { state.notifications = event.target.checked; persist(); };
-  dialog.querySelector('#request-notifications').onclick = async () => { if ('Notification' in window) { const permission = await Notification.requestPermission(); state.notifications = permission === 'granted'; syncSettings(); persist(); } };
-  dialog.querySelector('#scan-folder').onclick = chooseFolder;
-  [$('.sidebar'), $('.library'), $('.now-panel')].forEach(panel => { panel.draggable = true; panel.dataset.panel = panel.classList.contains('sidebar') ? 'sidebar' : panel.classList.contains('library') ? 'library' : 'now'; panel.addEventListener('dragstart', event => { event.dataTransfer.setData('text/panel', panel.dataset.panel); }); panel.addEventListener('dragover', event => event.preventDefault()); panel.addEventListener('drop', event => { event.preventDefault(); const from = event.dataTransfer.getData('text/panel'); const to = panel.dataset.panel; if (!from || from === to) return; const a = state.panelOrder.indexOf(from), b = state.panelOrder.indexOf(to); [state.panelOrder[a], state.panelOrder[b]] = [state.panelOrder[b], state.panelOrder[a]]; applyPanelOrder(); persist(); }); });
-  $('#format-support').innerHTML = ['mp3','wav','ogg','flac','m4a','aac','opus','aiff','webm'].map(ext => `<span>${ext.toUpperCase()} ${audio.canPlayType(`audio/${ext}`) ? '✓' : '?'}</span>`).join('');
+  if (actions && !$('#settings')) {
+    const settingsButton = document.createElement('button');
+    settingsButton.className = 'icon-button';
+    settingsButton.id = 'settings';
+    settingsButton.title = 'Pengaturan audio dan tampilan';
+    settingsButton.ariaLabel = settingsButton.title;
+    settingsButton.textContent = '⚙';
+    const helpBtn = $('#help');
+    if (helpBtn && helpBtn.parentElement === actions) {
+      actions.insertBefore(settingsButton, helpBtn);
+    } else {
+      actions.append(settingsButton);
+    }
+  }
+
+  if (!$('#group-by')) {
+    const group = document.createElement('select');
+    group.id = 'group-by';
+    group.title = 'Kelompokkan koleksi';
+    group.ariaLabel = 'Kelompokkan koleksi';
+    group.innerHTML = '<option value="">Semua lagu</option><option value="artist">Artis</option><option value="album">Album</option><option value="genre">Genre</option>';
+    const tableActions = $('.table-actions');
+    const sortBtn = $('#sort');
+    if (tableActions) {
+      if (sortBtn && sortBtn.parentElement === tableActions) {
+        tableActions.insertBefore(group, sortBtn);
+      } else {
+        tableActions.append(group);
+      }
+    } else {
+      group.style.display = 'none';
+      ($('#app') || document.body).append(group);
+    }
+    group.onchange = event => {
+      const value = event.target.value;
+      state.groupBy = value ? value.split(':')[0] : '';
+      if (value) state.view = value; else state.view = 'all';
+      render();
+      persist();
+    };
+  }
+
+  if (!$('#waveform')) {
+    const waveform = document.createElement('canvas');
+    waveform.id = 'waveform';
+    waveform.setAttribute('aria-label', 'Gelombang audio');
+    const spectrumBox = $('.spectrum-box');
+    if (spectrumBox) {
+      spectrumBox.append(waveform);
+    } else {
+      waveform.style.display = 'none';
+      ($('#app') || document.body).append(waveform);
+    }
+  }
+
+  let dialog = $('#settings-dialog');
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'settings-dialog';
+    dialog.innerHTML = `<form method="dialog" class="dialog-heading"><div><div class="eyebrow">ATIGA AMP / RUANG KENDALI</div><h2>Pengaturan<span>.</span></h2></div><button class="icon-button" aria-label="Tutup">×</button></form><section class="theme-section" aria-labelledby="theme-heading"><div class="settings-section-heading"><span id="theme-heading">Pilih tampilan</span><small>Perubahan langsung diterapkan</small></div><div class="theme-picker" role="radiogroup" aria-label="Pilih tema"><button type="button" class="theme-skin skin-ember" data-theme="ember" role="radio" aria-label="Bara"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Bara</strong><small>Studio hangat</small></button><button type="button" class="theme-skin skin-neon" data-theme="neon" role="radio" aria-label="Neon"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Neon</strong><small>Klub malam</small></button><button type="button" class="theme-skin skin-ocean" data-theme="ocean" role="radio" aria-label="Samudra"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Samudra</strong><small>Biru dalam</small></button><button type="button" class="theme-skin skin-violet" data-theme="violet" role="radio" aria-label="Violet"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Violet</strong><small>Nuansa tengah malam</small></button><button type="button" class="theme-skin skin-mono" data-theme="mono" role="radio" aria-label="Monokrom"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Monokrom</strong><small>Kontras murni</small></button></div></section><div class="settings-grid"><label>Pudar silang <output id="crossfade-value"></output><input id="crossfade" type="range" min="0" max="12" step="1"></label><label>Penguat awal <output id="preamp-value"></output><input id="preamp" type="range" min="-12" max="12" step="1"></label><label>Keseimbangan <output id="balance-value"></output><input id="balance" type="range" min="-1" max="1" step=".01"></label><label>Keluaran<select id="output-device"><option value="default">Keluaran bawaan peramban</option></select></label></div><label class="setting-check"><input id="gapless" type="checkbox"> Tanpa jeda / siapkan lagu berikutnya</label><label class="setting-check"><input id="replay-gain" type="checkbox"> ReplayGain jika tag tersedia</label><label class="setting-check"><input id="glow" type="checkbox"> Efek CRT / cahaya</label><label class="setting-check"><input id="notifications" type="checkbox"> Beri tahu lagu berikutnya</label><div class="settings-actions"><button type="button" class="text-button" id="scan-folder">Pindai ulang folder</button><button type="button" class="text-button" id="request-notifications">Izinkan notifikasi</button><span class="dialog-note">Panel dapat dipindahkan dengan seret dan lepas.</span></div><div class="format-support" id="format-support"></div>`;
+    document.body.append(dialog);
+  }
+
+  const settingsBtn = $('#settings');
+  if (settingsBtn) {
+    settingsBtn.onclick = () => { syncSettings(); dialog.showModal(); refreshOutputDevices(); };
+  }
+
+  dialog.querySelectorAll('.theme-skin').forEach(button => {
+    button.onclick = () => { state.theme = button.dataset.theme; applyTheme(); persist(); };
+  });
+  const crossfadeInput = dialog.querySelector('#crossfade');
+  if (crossfadeInput) crossfadeInput.oninput = event => { state.crossfade = Number(event.target.value); syncSettings(); persist(); };
+  const preampInput = dialog.querySelector('#preamp');
+  if (preampInput) preampInput.oninput = event => { state.preamp = Number(event.target.value); applyAudioSettings(); syncSettings(); persist(); };
+  const balanceInput = dialog.querySelector('#balance');
+  if (balanceInput) balanceInput.oninput = event => { state.balance = Number(event.target.value); applyAudioSettings(); syncSettings(); persist(); };
+  const gaplessInput = dialog.querySelector('#gapless');
+  if (gaplessInput) gaplessInput.onchange = event => { state.gapless = event.target.checked; audio.preload = state.gapless ? 'auto' : 'metadata'; persist(); };
+  const replayGainInput = dialog.querySelector('#replay-gain');
+  if (replayGainInput) replayGainInput.onchange = event => { state.replayGain = event.target.checked; applyAudioSettings(); persist(); };
+  const glowInput = dialog.querySelector('#glow');
+  if (glowInput) glowInput.onchange = event => { state.glow = event.target.checked; applyTheme(); persist(); };
+  const notifInput = dialog.querySelector('#notifications');
+  if (notifInput) notifInput.onchange = event => { state.notifications = event.target.checked; persist(); };
+  const reqNotif = dialog.querySelector('#request-notifications');
+  if (reqNotif) reqNotif.onclick = async () => { if ('Notification' in window) { const permission = await Notification.requestPermission(); state.notifications = permission === 'granted'; syncSettings(); persist(); } };
+  const scanBtn = dialog.querySelector('#scan-folder');
+  if (scanBtn) scanBtn.onclick = chooseFolder;
+
+  [$('.sidebar'), $('.library'), $('.now-panel')].filter(Boolean).forEach(panel => {
+    panel.draggable = true;
+    panel.dataset.panel = panel.classList.contains('sidebar') ? 'sidebar' : panel.classList.contains('library') ? 'library' : 'now';
+    panel.addEventListener('dragstart', event => { event.dataTransfer.setData('text/panel', panel.dataset.panel); });
+    panel.addEventListener('dragover', event => event.preventDefault());
+    panel.addEventListener('drop', event => {
+      event.preventDefault();
+      const from = event.dataTransfer.getData('text/panel');
+      const to = panel.dataset.panel;
+      if (!from || from === to) return;
+      const a = state.panelOrder.indexOf(from), b = state.panelOrder.indexOf(to);
+      [state.panelOrder[a], state.panelOrder[b]] = [state.panelOrder[b], state.panelOrder[a]];
+      applyPanelOrder();
+      persist();
+    });
+  });
+
+  const formatSupport = $('#format-support');
+  if (formatSupport) {
+    formatSupport.innerHTML = ['mp3','wav','ogg','flac','m4a','aac','opus','aiff','webm'].map(ext => `<span>${ext.toUpperCase()} ${audio.canPlayType(`audio/${ext}`) ? '✓' : '?'}</span>`).join('');
+  }
 }
 function syncSettings() {
   const set = (id, value) => { const el = $(`#${id}`); if (!el) return; if (el.type === 'checkbox') el.checked = value; else el.value = value; };
   set('crossfade', state.crossfade); set('preamp', state.preamp); set('balance', state.balance); set('gapless', state.gapless); set('replay-gain', state.replayGain); set('glow', state.glow); set('notifications', state.notifications); set('output-device', state.outputDevice);
   applyTheme();
-  $('#crossfade-value').textContent = `${state.crossfade}s`;
-  $('#preamp-value').textContent = `${state.preamp > 0 ? '+' : ''}${state.preamp} dB`;
-  $('#balance-value').textContent = state.balance === 0 ? 'Tengah' : state.balance < 0 ? `${Math.round(-state.balance * 100)}% K` : `${Math.round(state.balance * 100)}% N`;
+  const crossfadeVal = $('#crossfade-value');
+  if (crossfadeVal) crossfadeVal.textContent = `${state.crossfade}s`;
+  const preampVal = $('#preamp-value');
+  if (preampVal) preampVal.textContent = `${state.preamp > 0 ? '+' : ''}${state.preamp} dB`;
+  const balanceVal = $('#balance-value');
+  if (balanceVal) balanceVal.textContent = state.balance === 0 ? 'Tengah' : state.balance < 0 ? `${Math.round(-state.balance * 100)}% K` : `${Math.round(state.balance * 100)}% N`;
   preampKnob?.setVal(state.preamp, false);
   balKnob?.setVal(state.balance, false);
 }
@@ -371,13 +472,34 @@ function renderTracks() {
 }
 function renderNav() {
   const smart = `<button class="nav-item${state.view === 'smart:frequent' ? ' active' : ''}" data-view="smart:frequent"><span class="playlist-icon">${icon('history')}</span><span class="playlist-name">Sering diputar</span></button><button class="nav-item${state.view === 'smart:unplayed' ? ' active' : ''}" data-view="smart:unplayed"><span class="playlist-icon">${icon('music')}</span><span class="playlist-name">Belum diputar</span></button>`;
-  $('#playlist-nav').innerHTML = state.playlists.map(p => `<button class="nav-item${state.view === p.id ? ' active' : ''}" data-view="${esc(p.id)}"><span class="playlist-icon">${icon('music')}</span><span class="playlist-name">${esc(p.name)}</span><span class="nav-count">${p.ids.length}</span></button>`).join('') + smart;
+  const nav = $('#playlist-nav');
+  if (nav) {
+    nav.innerHTML = state.playlists.map(p => `<button class="nav-item${state.view === p.id ? ' active' : ''}" data-view="${esc(p.id)}"><span class="playlist-icon">${icon('music')}</span><span class="playlist-name">${esc(p.name)}</span><span class="nav-count">${p.ids.length}</span></button>`).join('') + smart;
+  }
   $$('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
-  $('#all-count').textContent = state.tracks.length; $('#favorite-count').textContent = state.tracks.filter(t => state.favorites.has(t.id)).length;
+  const allCount = $('#all-count'); if (allCount) allCount.textContent = state.tracks.length;
+  const favCount = $('#favorite-count'); if (favCount) favCount.textContent = state.tracks.filter(t => state.favorites.has(t.id)).length;
   const grouped = state.view.match(/^(artist|album|genre):(.*)$/);
-  const title = ({ all: 'Semua musik', favorites: 'Favorit', recent: 'Terakhir diputar', 'smart:frequent': 'Sering diputar', 'smart:unplayed': 'Belum diputar' })[state.view] || (grouped ? `${grouped[1][0].toUpperCase() + grouped[1].slice(1)} · ${grouped[2]}` : state.playlists.find(p => p.id === state.view)?.name || 'Semua musik');
-  $('#view-title').innerHTML = `${esc(title)}<span>.</span>`;
-  $('#collection-summary').textContent = state.view === 'all' ? 'Koleksi pribadi, dengan sentuhan klasik.' : `${baseTracks(state).length} lagu untuk menemani harimu.`;
+  const title = ({ all: 'Semua lagu', favorites: 'Favorit', recent: 'Terakhir diputar', 'smart:frequent': 'Sering diputar', 'smart:unplayed': 'Belum diputar' })[state.view] || (grouped ? `${grouped[1][0].toUpperCase() + grouped[1].slice(1)} · ${grouped[2]}` : state.playlists.find(p => p.id === state.view)?.name || 'Semua lagu');
+  const viewTitle = $('#view-title'); if (viewTitle) viewTitle.innerHTML = `${esc(title)}<span>.</span>`;
+  const collectionSum = $('#collection-summary'); if (collectionSum) collectionSum.textContent = state.view === 'all' ? 'Koleksi pribadi, dengan sentuhan klasik.' : `${baseTracks(state).length} lagu untuk menemani harimu.`;
+
+  const viewSelect = $('#view-select');
+  if (viewSelect) {
+    const baseOptions = [
+      { id: 'all', name: 'Semua lagu' },
+      { id: 'favorites', name: 'Favorit' },
+      { id: 'recent', name: 'Terakhir diputar' },
+      { id: 'smart:frequent', name: 'Sering diputar' },
+      { id: 'smart:unplayed', name: 'Belum diputar' },
+    ];
+    const playlistOptions = state.playlists.map(p => ({ id: p.id, name: p.name }));
+    const allOptions = [...baseOptions, ...playlistOptions];
+    viewSelect.innerHTML = allOptions.map(opt =>
+      `<option value="${esc(opt.id)}"${state.view === opt.id ? ' selected' : ''}>${esc(opt.name)}</option>`
+    ).join('');
+    viewSelect.value = state.view;
+  }
 }
 function nextTrack() {
   if (state.queue.length) return findTrack(state.queue[0]);
@@ -408,27 +530,38 @@ function renderCurrent() {
   const cassTitle = $('#cassette-current-title');
   if (cassTitle) cassTitle.textContent = track ? track.title : 'NO TAPE LOADED';
   if (!track) {
-    $('#now-title').textContent = $('#player-title').textContent = 'Belum ada lagu';
-    $('#now-artist').textContent = $('#player-artist').textContent = 'Tambahkan musik untuk mulai mendengarkan';
-    $('#now-quality').textContent = 'BELUM ADA AUDIO';
-    $('#now-art .art-title').innerHTML = 'BELUM ADA LAGU<span>Tambahkan musik</span>';
-    $('#duration').textContent = '00:00';
-    $('#next-track').innerHTML = '<p class="dialog-note">Tambahkan lagu untuk mengisi antrean.</p>';
+    const nowTitle = $('#now-title'), playerTitle = $('#player-title');
+    if (nowTitle) nowTitle.textContent = 'Belum ada lagu';
+    if (playerTitle) playerTitle.textContent = 'Belum ada lagu';
+    const nowArtist = $('#now-artist'), playerArtist = $('#player-artist');
+    if (nowArtist) nowArtist.textContent = 'Tambahkan musik untuk mulai mendengarkan';
+    if (playerArtist) playerArtist.textContent = 'Tambahkan musik untuk mulai mendengarkan';
+    const nowQuality = $('#now-quality'); if (nowQuality) nowQuality.textContent = 'BELUM ADA AUDIO';
+    const nowArt = $('#now-art'); if (nowArt) { const artTitle = nowArt.querySelector('.art-title'); if (artTitle) artTitle.innerHTML = 'BELUM ADA LAGU<span>Tambahkan musik</span>'; }
+    const durationEl = $('#duration'); if (durationEl) durationEl.textContent = '00:00';
+    const nextTr = $('#next-track'); if (nextTr) nextTr.innerHTML = '<p class="dialog-note">Tambahkan lagu untuk mengisi antrean.</p>';
     updateTapeCounter();
     return;
   }
-  $('#now-title').textContent = $('#player-title').textContent = track.title;
-  $('#now-artist').textContent = track.artist;
-  $('#player-artist').textContent = `${track.artist}${track.demo ? ' · Demo' : ''}`;
-  $('#now-format').textContent = track.format; $('#now-quality').textContent = track.demo ? 'AUDIO DEMO' : 'FILE LOKAL';
-  $('#now-art').dataset.art = $('#player-art').dataset.art = track.art;
-  applyArt($('#now-art'), track); applyArt($('#player-art'), track);
-  $('#now-art .art-title').innerHTML = `${esc(track.title)}<span>${esc(track.artist)}</span>`;
-  $$('#now-favorite, #player-favorite').forEach(el => { el.classList.toggle('active',state.favorites.has(track.id)); el.setAttribute('aria-pressed', state.favorites.has(track.id)); el.setAttribute('aria-label', state.favorites.has(track.id) ? 'Hapus dari favorit' : 'Tambahkan ke favorit'); });
-  $('#duration').textContent = formatTime(track.duration);
+  const nowTitle = $('#now-title'), playerTitle = $('#player-title');
+  if (nowTitle) nowTitle.textContent = track.title;
+  if (playerTitle) playerTitle.textContent = track.title;
+  const nowArtist = $('#now-artist'), playerArtist = $('#player-artist');
+  if (nowArtist) nowArtist.textContent = track.artist;
+  if (playerArtist) playerArtist.textContent = `${track.artist}${track.demo ? ' · Demo' : ''}`;
+  const nowFormat = $('#now-format'); if (nowFormat) nowFormat.textContent = track.format;
+  const nowQuality = $('#now-quality'); if (nowQuality) nowQuality.textContent = track.demo ? 'AUDIO DEMO' : 'FILE LOKAL';
+  const nowArt = $('#now-art'), playerArt = $('#player-art');
+  if (nowArt) { nowArt.dataset.art = String(track.art); applyArt(nowArt, track); const artTitle = nowArt.querySelector('.art-title'); if (artTitle) artTitle.innerHTML = `${esc(track.title)}<span>${esc(track.artist)}</span>`; }
+  if (playerArt) { playerArt.dataset.art = String(track.art); applyArt(playerArt, track); }
+  $$('#now-favorite, #player-favorite').forEach(el => { el.classList.toggle('active',state.favorites.has(track.id)); el.setAttribute('aria-pressed', String(state.favorites.has(track.id))); el.setAttribute('aria-label', state.favorites.has(track.id) ? 'Hapus dari favorit' : 'Tambahkan ke favorit'); });
+  const durationEl = $('#duration'); if (durationEl) durationEl.textContent = formatTime(track.duration);
   const upcoming = nextTrack();
-  $('#next-track').innerHTML = upcoming ? `<div class="mini-art" data-art="${upcoming.art}"><span>AA</span></div><div><strong>${esc(upcoming.title)}</strong><p>${esc(upcoming.artist)}</p></div><span>${formatTime(upcoming.duration)}</span>` : '<p class="dialog-note">Belum ada lagu berikutnya.</p>';
-  if (upcoming) applyArt($('#next-track .mini-art'), upcoming);
+  const nextTr = $('#next-track');
+  if (nextTr) {
+    nextTr.innerHTML = upcoming ? `<div class="mini-art" data-art="${upcoming.art}"><span>AA</span></div><div><strong>${esc(upcoming.title)}</strong><p>${esc(upcoming.artist)}</p></div><span>${formatTime(upcoming.duration)}</span>` : '<p class="dialog-note">Belum ada lagu berikutnya.</p>';
+    if (upcoming) applyArt($('#next-track .mini-art'), upcoming);
+  }
   if ('mediaSession' in navigator && 'MediaMetadata' in window) navigator.mediaSession.metadata = new MediaMetadata({ title: track.title, artist: track.artist, album: track.album });
   updateTapeCounter();
 }
@@ -534,25 +667,27 @@ function updateProgress() {
 audio.addEventListener('timeupdate', () => { updateProgress(); maybeCrossfade(); const second = Math.floor(audio.currentTime); if (second % 5 === 0 && second !== lastSavedSecond) { lastSavedSecond = second; persist(); } });
 audio.addEventListener('loadedmetadata', () => { if (Number.isFinite(audio.duration)) current().duration = audio.duration; updateProgress(); renderTracks(); });
 audio.addEventListener('play', () => {
-  $('#app').classList.add('is-playing');
+  $('#app')?.classList.add('is-playing');
   $('#cassette-door-bay')?.classList.add('is-playing');
-  $('#play').classList.add('active');
+  $('#play')?.classList.add('active');
   $('#pause-btn')?.classList.remove('active');
-  $('#play').setAttribute('aria-label','Jeda');
-  $('#spectrum-status').textContent = 'LIVE';
+  $('#play')?.setAttribute('aria-label','Jeda');
+  const spectrumStatus = $('#spectrum-status');
+  if (spectrumStatus) spectrumStatus.textContent = 'LIVE';
   state.recent = [state.currentId, ...state.recent.filter(id => id !== state.currentId)].slice(0,100); persist();
   notifyTrack(current());
   if (state.view === 'recent') renderTracks(); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
 });
 audio.addEventListener('pause', () => {
-  $('#app').classList.remove('is-playing');
+  $('#app')?.classList.remove('is-playing');
   $('#cassette-door-bay')?.classList.remove('is-playing');
-  $('#play').classList.remove('active');
+  $('#play')?.classList.remove('active');
   if (audio.currentTime > 0 && !audio.ended) {
     $('#pause-btn')?.classList.add('active');
   }
-  $('#play').setAttribute('aria-label','Putar');
-  $('#spectrum-status').textContent = 'STANDBY';
+  $('#play')?.setAttribute('aria-label','Putar');
+  const spectrumStatus = $('#spectrum-status');
+  if (spectrumStatus) spectrumStatus.textContent = 'STANDBY';
   persist();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
 });
@@ -672,6 +807,32 @@ function toggleMute() {
   renderModes();
 }
 
+function toggleDrawer(forceState) {
+  const drawer = $('#tape-drawer');
+  if (!drawer) return;
+  const isCurrentlyOpen = drawer.classList.contains('open');
+  const shouldOpen = typeof forceState === 'boolean' ? forceState : !isCurrentlyOpen;
+  drawer.classList.toggle('open', shouldOpen);
+  const isOpen = drawer.classList.contains('open');
+
+  const btnMenu = $('#btn-menu');
+  if (btnMenu) {
+    btnMenu.classList.toggle('active', isOpen);
+    btnMenu.setAttribute('aria-pressed', String(isOpen));
+  }
+
+  const topToggle = $('#toggle-drawer-top');
+  if (topToggle) {
+    topToggle.classList.toggle('active', isOpen);
+    topToggle.setAttribute('aria-pressed', String(isOpen));
+  }
+
+  if (isOpen) {
+    renderTracks();
+  }
+  toast(isOpen ? 'Daftar lagu ditampilkan.' : 'Daftar lagu disembunyikan.');
+}
+
 function setupRackControls() {
   giantVolKnob = bindRotaryKnob($('#giant-master-volume'), { min: 0, max: 1, initial: state.volume, step: 0.01, angleMin: -140, angleMax: 140, onChange: setMasterVolume });
   deckVolKnob = bindRotaryKnob($('#deck-volume-knob'), { min: 0, max: 1, initial: state.volume, step: 0.01, onChange: setMasterVolume });
@@ -698,9 +859,12 @@ function setupRackControls() {
     };
   }
 
-  $('#play').onclick = togglePlay;
-  $('#previous').onclick = () => advance(-1);
-  $('#next').onclick = () => advance(1);
+  const playBtn = $('#play');
+  if (playBtn) playBtn.onclick = togglePlay;
+  const prevBtn = $('#previous');
+  if (prevBtn) prevBtn.onclick = () => advance(-1);
+  const nextBtn = $('#next');
+  if (nextBtn) nextBtn.onclick = () => advance(1);
 
   const stopBtn = $('#stop-btn');
   if (stopBtn) {
@@ -724,10 +888,10 @@ function setupRackControls() {
   }
 
   const recBtn = $('#rec-btn');
-  if (recBtn) recBtn.onclick = () => $('#file-input').click();
+  if (recBtn) recBtn.onclick = () => $('#file-input')?.click();
 
   const ejectBtn = $('#deck-eject-btn');
-  if (ejectBtn) ejectBtn.onclick = () => $('#file-input').click();
+  if (ejectBtn) ejectBtn.onclick = () => $('#file-input')?.click();
 
   const resetBtn = $('#counter-reset-btn');
   if (resetBtn) {
@@ -738,27 +902,33 @@ function setupRackControls() {
     };
   }
 
-  const toggleDrawer = () => {
-    const drawer = $('#tape-drawer');
-    if (!drawer) return;
-    drawer.classList.toggle('open');
-    const isOpen = drawer.classList.contains('open');
-    const title = $('.handle-title');
-    if (title) {
-      title.textContent = isOpen
-        ? '▼ ATIGA TAPE ARCHIVE & PROGRAM INDEX'
-        : '▲ OPEN ATIGA TAPE ARCHIVE & PROGRAM INDEX';
-    }
-  };
+  const isDrawerOpen = $('#tape-drawer')?.classList.contains('open') ?? false;
 
-  const handleBar = $('#drawer-toggle-handle');
-  if (handleBar) handleBar.onclick = toggleDrawer;
   const topToggle = $('#toggle-drawer-top');
-  if (topToggle) topToggle.onclick = toggleDrawer;
+  if (topToggle) {
+    topToggle.classList.toggle('active', isDrawerOpen);
+    topToggle.setAttribute('aria-pressed', String(isDrawerOpen));
+    topToggle.onclick = (e) => {
+      e?.stopPropagation?.();
+      toggleDrawer();
+    };
+  }
   const btnMenu = $('#btn-menu');
-  if (btnMenu) btnMenu.onclick = toggleDrawer;
+  if (btnMenu) {
+    btnMenu.classList.toggle('active', isDrawerOpen);
+    btnMenu.setAttribute('aria-pressed', String(isDrawerOpen));
+    btnMenu.onclick = (e) => {
+      e?.stopPropagation?.();
+      toggleDrawer();
+    };
+  }
   const btnSystem = $('#btn-system');
-  if (btnSystem) btnSystem.onclick = toggleDrawer;
+  if (btnSystem) {
+    btnSystem.onclick = (e) => {
+      e?.stopPropagation?.();
+      toggleDrawer();
+    };
+  }
 
   $$('#btn-tape-normal, #btn-tape-cro2, #btn-tape-metal').forEach(btn => {
     btn.onclick = () => {
@@ -807,13 +977,14 @@ function setupRackControls() {
     };
   }
 
-  $('#mute').onclick = toggleMute;
+  const muteBtn = $('#mute');
+  if (muteBtn) muteBtn.onclick = toggleMute;
   const ampMute = $('#amp-mute-switch');
   if (ampMute) ampMute.onclick = toggleMute;
 
   const openEQ = () => {
-    $('#eq-dialog').showModal();
-    $('#eq-toggle').setAttribute('aria-expanded', 'true');
+    $('#eq-dialog')?.showModal();
+    $('#eq-toggle')?.setAttribute('aria-expanded', 'true');
   };
   $$('#switch-eq-dsp, #eq-toggle, #player-eq').forEach(el => {
     if (el) el.onclick = openEQ;
@@ -826,8 +997,8 @@ function setupRackControls() {
     const updateAmpVisibility = (hidden, notify = true) => {
       ampUnit.classList.toggle('hidden', hidden);
       ampUnit.hidden = hidden;
-      btnAmplifier.classList.toggle('active', hidden);
-      btnAmplifier.setAttribute('aria-pressed', String(hidden));
+      btnAmplifier.classList.toggle('active', !hidden);
+      btnAmplifier.setAttribute('aria-pressed', String(!hidden));
       deckUnit?.classList.toggle('standalone', hidden);
       state.ampHidden = hidden;
       if (notify) {
@@ -835,18 +1006,46 @@ function setupRackControls() {
         persist();
       }
     };
-    if (state.ampHidden) updateAmpVisibility(true, false);
+    updateAmpVisibility(Boolean(state.ampHidden), false);
     btnAmplifier.onclick = (e) => {
       e?.stopPropagation?.();
-      const isCurrentlyHidden = ampUnit.classList.contains('hidden');
+      const isCurrentlyHidden = ampUnit.classList.contains('hidden') || ampUnit.hidden;
       updateAmpVisibility(!isCurrentlyHidden, true);
     };
   }
 
   const btnDsp = $('#btn-dsp');
   if (btnDsp) {
-    btnDsp.onclick = () => openDspDialog('general');
+    btnDsp.onclick = (e) => {
+      e?.stopPropagation?.();
+      openDspDialog('general');
+    };
   }
+
+  // Plaque legend labels click-through
+  [
+    { id: 'matrix-lbl-menu', targetId: 'btn-menu' },
+    { id: 'matrix-lbl-amplifier', targetId: 'btn-amplifier' },
+    { id: 'matrix-lbl-dsp', targetId: 'btn-dsp' },
+    { id: 'matrix-lbl-normal', targetId: 'btn-tape-normal' },
+    { id: 'matrix-lbl-cro2', targetId: 'btn-tape-cro2' },
+    { id: 'matrix-lbl-metal', targetId: 'btn-tape-metal' }
+  ].forEach(({ id, targetId }) => {
+    const lbl = $(`#${id}`);
+    const target = $(`#${targetId}`);
+    if (lbl && target) {
+      lbl.onclick = (e) => {
+        e.stopPropagation();
+        target.click();
+      };
+      lbl.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          target.click();
+        }
+      };
+    }
+  });
 
   const btnAmpEq = $('#btn-amp-eq');
   const btnAmpDsp = $('#btn-amp-dsp');
@@ -892,34 +1091,93 @@ function setupRackControls() {
   });
 }
 
-$('#play-session').textContent = 'Tambah musik';
-$('#play-session').onclick = () => $('#file-input').click();
-$('#seek').oninput = event => { if (loadedId && Number.isFinite(audio.duration)) { audio.currentTime = Number(event.target.value) / 100 * audio.duration; updateProgress(); } };
-$('#volume').oninput = event => setMasterVolume(Number(event.target.value));
-$('#shuffle').onclick = () => { state.shuffle = !state.shuffle; renderModes(); persist(); toast(state.shuffle ? 'Pemutaran acak aktif.' : 'Pemutaran acak dimatikan.'); };
-$('#repeat').onclick = () => { state.repeat = (state.repeat + 1) % 3; renderModes(); persist(); toast(`Ulangi: ${['mati','semua lagu','satu lagu'][state.repeat]}.`); };
+const playSessionBtn = $('#play-session');
+if (playSessionBtn) {
+  playSessionBtn.textContent = 'Tambah musik';
+  playSessionBtn.onclick = () => $('#file-input')?.click();
+}
+const seekRange = $('#seek');
+if (seekRange) {
+  seekRange.oninput = event => { if (loadedId && Number.isFinite(audio.duration)) { audio.currentTime = Number(event.target.value) / 100 * audio.duration; updateProgress(); } };
+}
+const volRange = $('#volume');
+if (volRange) {
+  volRange.oninput = event => setMasterVolume(Number(event.target.value));
+}
+const shuffleBtn = $('#shuffle');
+if (shuffleBtn) {
+  shuffleBtn.onclick = () => { state.shuffle = !state.shuffle; renderModes(); persist(); toast(state.shuffle ? 'Pemutaran acak aktif.' : 'Pemutaran acak dimatikan.'); };
+}
+const repeatBtn = $('#repeat');
+if (repeatBtn) {
+  repeatBtn.onclick = () => { state.repeat = (state.repeat + 1) % 3; renderModes(); persist(); toast(`Ulangi: ${['mati','semua lagu','satu lagu'][state.repeat]}.`); };
+}
 $$('#now-favorite, #player-favorite').forEach(el => el.onclick = () => favorite(state.currentId));
-$('.sidebar').addEventListener('click', event => { const button = event.target.closest('[data-view]'); if (!button) return; state.view = button.dataset.view; state.queueView = false; state.search = ''; $('#search').value = ''; render(); });
-$('#search').oninput = event => { state.search = event.target.value.toLowerCase().trim(); renderTracks(); };
-$('#sort').onclick = () => { if (state.queueView) { toast('Tarik lagu untuk mengurutkan antrean.'); return; } state.sortAsc = !state.sortAsc; $('#sort').classList.toggle('active',state.sortAsc); renderTracks(); };
-function showQueue() { state.queueView = true; renderTracks(); if ($('#app').classList.contains('compact')) $('#app').classList.remove('compact'); $('.library-toolbar').scrollIntoView({block:'nearest'}); }
+$('.sidebar')?.addEventListener('click', event => { const button = event.target.closest('[data-view]'); if (!button) return; state.view = button.dataset.view; state.queueView = false; state.search = ''; if ($('#search')) $('#search').value = ''; render(); });
+
+const viewSelect = $('#view-select');
+if (viewSelect) {
+  viewSelect.onchange = event => {
+    state.view = event.target.value;
+    state.queueView = false;
+    state.search = '';
+    const searchInput = $('#search');
+    if (searchInput) searchInput.value = '';
+    render();
+  };
+}
+
+const importPrompt = $('#import-prompt');
+if (importPrompt) importPrompt.onclick = () => $('#file-input')?.click();
+
+const searchInput = $('#search');
+if (searchInput) {
+  searchInput.oninput = event => { state.search = event.target.value.toLowerCase().trim(); renderTracks(); };
+}
+const sortBtn = $('#sort');
+if (sortBtn) {
+  sortBtn.onclick = () => { if (state.queueView) { toast('Tarik lagu untuk mengurutkan antrean.'); return; } state.sortAsc = !state.sortAsc; sortBtn.classList.toggle('active', state.sortAsc); renderTracks(); };
+}
+function showQueue() { state.queueView = true; renderTracks(); if ($('#app')?.classList.contains('compact')) $('#app')?.classList.remove('compact'); toggleDrawer(true); }
 $$('#queue-tab, #show-queue, #player-queue').forEach(el => el.onclick = showQueue);
-$('#track-tab').onclick = () => { state.queueView = false; renderTracks(); };
-$('#tracks').addEventListener('click', event => { const tr = event.target.closest('[data-id]'); if (!tr) return; const action = event.target.closest('[data-action]')?.dataset.action; if (action === 'favorite') favorite(tr.dataset.id); else if (action === 'more') showTrackOptions(tr.dataset.id, Number(tr.dataset.index)); else selectTrack(tr.dataset.id); });
-$('#tracks').addEventListener('keydown', event => { if (event.target.matches('tr') && event.key === 'Enter') { event.preventDefault(); selectTrack(event.target.dataset.id); } });
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const drawer = $('#tape-drawer');
+    if (drawer && drawer.classList.contains('open')) {
+      const dspDialog = $('#dsp-dialog');
+      const eqDialog = $('#eq-dialog');
+      const trackDialog = $('#track-dialog');
+      const playlistDialog = $('#playlist-dialog');
+      const helpDialog = $('#help-dialog');
+      if (!dspDialog?.open && !eqDialog?.open && !trackDialog?.open && !playlistDialog?.open && !helpDialog?.open) {
+        toggleDrawer(false);
+      }
+    }
+  }
+});
+const trackTab = $('#track-tab');
+if (trackTab) trackTab.onclick = () => { state.queueView = false; renderTracks(); };
+$('#tracks')?.addEventListener('click', event => { const tr = event.target.closest('[data-id]'); if (!tr) return; const action = event.target.closest('[data-action]')?.dataset.action; if (action === 'favorite') favorite(tr.dataset.id); else if (action === 'more') showTrackOptions(tr.dataset.id, Number(tr.dataset.index)); else selectTrack(tr.dataset.id); });
+$('#tracks')?.addEventListener('keydown', event => { if (event.target.matches('tr') && event.key === 'Enter') { event.preventDefault(); selectTrack(event.target.dataset.id); } });
 function showTrackOptions(id, index) {
-  const track = findTrack(id); $('#track-dialog-title').textContent = track.title;
-  const target = $('#track-options'); target.replaceChildren();
-  const addOption = (label, action, danger = false) => { const button = document.createElement('button'); button.textContent = label; if (danger) button.dataset.danger = 'true'; button.onclick = async () => { await action(); $('#track-dialog').close(); render(); persist(); }; target.append(button); };
-  addOption('Putar berikutnya', () => { state.queue.unshift(id); toast('Ditambahkan sebagai lagu berikutnya.'); });
-  addOption('Tambahkan ke antrean', () => { state.queue.push(id); toast('Lagu ditambahkan ke antrean.'); });
-  if (state.queueView) addOption('Hapus dari antrean', () => state.queue.splice(index,1));
-  const playlist = state.playlists.find(p => p.id === state.view);
-  if (playlist && !state.queueView) addOption('Hapus dari playlist ini', () => playlist.ids = playlist.ids.filter(item => item !== id));
-  addOption('Hapus lagu dari koleksi', () => removeTrack(id), true);
-  const label = document.createElement('span'); label.className = 'option-label'; label.textContent = 'TAMBAHKAN KE PLAYLIST'; target.append(label);
-  state.playlists.forEach(p => addOption(p.name, () => { if (!p.ids.includes(id)) { p.ids.push(id); toast(`Ditambahkan ke ${p.name}.`); } else toast('Lagu sudah ada di playlist ini.'); }));
-  $('#track-dialog').showModal();
+  const track = findTrack(id);
+  const trackTitle = $('#track-dialog-title');
+  if (trackTitle) trackTitle.textContent = track.title;
+  const target = $('#track-options');
+  if (target) {
+    target.replaceChildren();
+    const addOption = (label, action, danger = false) => { const button = document.createElement('button'); button.textContent = label; if (danger) button.dataset.danger = 'true'; button.onclick = async () => { await action(); $('#track-dialog')?.close(); render(); persist(); }; target.append(button); };
+    addOption('Putar berikutnya', () => { state.queue.unshift(id); toast('Ditambahkan sebagai lagu berikutnya.'); });
+    addOption('Tambahkan ke antrean', () => { state.queue.push(id); toast('Lagu ditambahkan ke antrean.'); });
+    if (state.queueView) addOption('Hapus dari antrean', () => state.queue.splice(index,1));
+    const playlist = state.playlists.find(p => p.id === state.view);
+    if (playlist && !state.queueView) addOption('Hapus dari playlist ini', () => playlist.ids = playlist.ids.filter(item => item !== id));
+    addOption('Hapus lagu dari koleksi', () => removeTrack(id), true);
+    const label = document.createElement('span'); label.className = 'option-label'; label.textContent = 'TAMBAHKAN KE PLAYLIST'; target.append(label);
+    state.playlists.forEach(p => addOption(p.name, () => { if (!p.ids.includes(id)) { p.ids.push(id); toast(`Ditambahkan ke ${p.name}.`); } else toast('Lagu sudah ada di playlist ini.'); }));
+  }
+  $('#track-dialog')?.showModal();
 }
 async function removeTrack(id) {
   const track = findTrack(id);
@@ -944,10 +1202,10 @@ async function removeTrack(id) {
   toast(`“${track.title}” dihapus dari koleksi.`);
 }
 let draggedId, draggedIndex;
-$('#tracks').addEventListener('dragstart', event => { const tr = event.target.closest('[data-id]'); if (!tr) return; draggedId = tr.dataset.id; draggedIndex = Number(tr.dataset.index); event.dataTransfer.setData('text/plain', draggedId); event.dataTransfer.effectAllowed = 'move'; tr.classList.add('dragging'); });
-$('#tracks').addEventListener('dragend', () => { $$('.dragging').forEach(el => el.classList.remove('dragging')); draggedId = null; });
-$('#tracks').addEventListener('dragover', event => { if (draggedId) event.preventDefault(); });
-$('#tracks').addEventListener('drop', event => {
+$('#tracks')?.addEventListener('dragstart', event => { const tr = event.target.closest('[data-id]'); if (!tr) return; draggedId = tr.dataset.id; draggedIndex = Number(tr.dataset.index); event.dataTransfer.setData('text/plain', draggedId); event.dataTransfer.effectAllowed = 'move'; tr.classList.add('dragging'); });
+$('#tracks')?.addEventListener('dragend', () => { $$('.dragging').forEach(el => el.classList.remove('dragging')); draggedId = null; });
+$('#tracks')?.addEventListener('dragover', event => { if (draggedId) event.preventDefault(); });
+$('#tracks')?.addEventListener('drop', event => {
   const target = event.target.closest('[data-id]'); if (!draggedId || !target) return; event.preventDefault();
   if (state.search || state.sortAsc) { toast('Kosongkan pencarian dan matikan urutan judul untuk memindahkan lagu.'); return; }
   const playlist = state.playlists.find(p => p.id === state.view);
@@ -955,34 +1213,87 @@ $('#tracks').addEventListener('drop', event => {
   if (!ids) { toast('Urutan manual tersedia di playlist dan antrean.'); return; }
   const targetIndex = Number(target.dataset.index); const [id] = ids.splice(draggedIndex,1); ids.splice(targetIndex,0,id); render(); persist();
 });
-$('#new-playlist').onclick = () => { $('#playlist-dialog').showModal(); $('#playlist-name').focus(); };
-$('#close-playlist').onclick = () => $('#playlist-dialog').close();
-$('#playlist-form').onsubmit = event => { event.preventDefault(); const name = $('#playlist-name').value.trim(); if (!name) return; const playlist = { id: crypto.randomUUID(), name, ids: [] }; state.playlists.push(playlist); state.view = playlist.id; state.queueView = false; state.search = ''; $('#search').value = ''; $('#playlist-name').value = ''; $('#playlist-dialog').close(); persist(); render(); toast('Playlist dibuat. Gunakan menu ⋯ pada lagu untuk menambahkannya.'); };
-$('#compact').onclick = () => { const compact = $('#app').classList.toggle('compact'); $('#compact').setAttribute('aria-pressed',compact); $('#compact').title = compact ? 'Kembali ke tampilan penuh' : 'Mode compact'; };
-$('#help').onclick = () => $('#help-dialog').showModal();
+const newPlaylistBtn = $('#new-playlist');
+if (newPlaylistBtn) {
+  newPlaylistBtn.onclick = () => { $('#playlist-dialog')?.showModal(); $('#playlist-name')?.focus(); };
+}
+const closePlaylistBtn = $('#close-playlist');
+if (closePlaylistBtn) {
+  closePlaylistBtn.onclick = () => $('#playlist-dialog')?.close();
+}
+const playlistForm = $('#playlist-form');
+if (playlistForm) {
+  playlistForm.onsubmit = event => {
+    event.preventDefault();
+    const name = $('#playlist-name')?.value?.trim();
+    if (!name) return;
+    const playlist = { id: crypto.randomUUID(), name, ids: [] };
+    state.playlists.push(playlist);
+    state.view = playlist.id;
+    state.queueView = false;
+    state.search = '';
+    const searchInput = $('#search');
+    if (searchInput) searchInput.value = '';
+    const plNameInput = $('#playlist-name');
+    if (plNameInput) plNameInput.value = '';
+    $('#playlist-dialog')?.close();
+    persist();
+    render();
+    toast('Playlist dibuat. Gunakan menu ⋯ pada lagu untuk menambahkannya.');
+  };
+}
+const compactBtn = $('#compact');
+if (compactBtn) {
+  compactBtn.onclick = () => {
+    const compact = $('#app')?.classList.toggle('compact');
+    compactBtn.setAttribute('aria-pressed', compact);
+    compactBtn.title = compact ? 'Kembali ke tampilan penuh' : 'Mode compact';
+  };
+}
+const helpBtn = $('#help');
+if (helpBtn) {
+  helpBtn.onclick = () => $('#help-dialog')?.showModal();
+}
 const presets = { Flat: Array(10).fill(0), Warm: [3,3,2,1,0,-1,-1,-2,-2,-3], 'Bass Boost': [6,5,4,2,0,0,0,0,0,0], Vocal: [-2,-2,-1,1,3,4,3,1,0,-1], Bright: [-2,-1,0,0,1,2,3,4,4,3] };
 const presetLabels = { Flat: 'Datar', Warm: 'Hangat', 'Bass Boost': 'Penguat bas', Vocal: 'Vokal', Bright: 'Cerah', Custom: 'Kustom' };
-$('#eq-bands').innerHTML = frequencies.map((frequency,i) => `<label class="eq-band"><output id="gain-${i}">${state.eq[i]>0?'+':''}${state.eq[i]}</output><input type="range" min="-12" max="12" step="1" value="${state.eq[i]}" data-band="${i}" aria-label="Gain ${frequency} Hz" /><span>${frequency>=1000 ? frequency/1000+'K' : frequency}</span></label>`).join('');
+const eqBandsEl = $('#eq-bands');
+if (eqBandsEl) {
+  eqBandsEl.innerHTML = frequencies.map((frequency,i) => `<label class="eq-band"><output id="gain-${i}">${state.eq[i]>0?'+':''}${state.eq[i]}</output><input type="range" min="-12" max="12" step="1" value="${state.eq[i]}" data-band="${i}" aria-label="Gain ${frequency} Hz" /><span>${frequency>=1000 ? frequency/1000+'K' : frequency}</span></label>`).join('');
+  eqBandsEl.oninput = event => { const i = Number(event.target.dataset.band); if (!Number.isInteger(i)) return; state.eq[i] = Number(event.target.value); state.preset = 'Custom'; syncEQ(); };
+}
 function syncEQ() {
   $$('#eq-bands input').forEach((input,i) => {
     input.value = state.eq[i];
-    $(`#gain-${i}`).textContent = `${state.eq[i]>0?'+':''}${state.eq[i]}`;
+    const gainEl = $(`#gain-${i}`);
+    if (gainEl) gainEl.textContent = `${state.eq[i]>0?'+':''}${state.eq[i]}`;
     if (filters[i]) filters[i].gain.setTargetAtTime(state.eq[i], context.currentTime,.03);
   });
-  $('#eq-preset').value = state.preset;
-  $('#preset-label').textContent = presetLabels[state.preset] || state.preset;
+  const eqPresetSelect = $('#eq-preset');
+  if (eqPresetSelect) eqPresetSelect.value = state.preset;
+  const presetLabelEl = $('#preset-label');
+  if (presetLabelEl) presetLabelEl.textContent = presetLabels[state.preset] || state.preset;
   bassKnob?.setVal(state.eq[0], false);
   trebleKnob?.setVal(state.eq[9], false);
   const eqActive = state.eq.some(val => val !== 0);
   $('#lamp-equalizer')?.classList.toggle('active', eqActive);
   persist();
 }
-$('#eq-bands').oninput = event => { const i = Number(event.target.dataset.band); if (!Number.isInteger(i)) return; state.eq[i] = Number(event.target.value); state.preset = 'Custom'; syncEQ(); };
-$('#eq-preset').onchange = event => { const preset = event.target.value; if (presets[preset]) state.eq = [...presets[preset]]; state.preset = preset; syncEQ(); };
-$('#eq-reset').onclick = () => { state.eq = Array(10).fill(0); state.preset = 'Flat'; syncEQ(); };
-$$('#eq-toggle, #player-eq').forEach(el => el.onclick = () => { $('#eq-dialog').showModal(); $('#eq-toggle').setAttribute('aria-expanded','true'); });
-$('#eq-dialog').addEventListener('close', () => $('#eq-toggle').setAttribute('aria-expanded','false'));
-$('#import').onclick = () => $('#file-input').click(); $('#import-folder').onclick = chooseFolder;
+const eqPresetSelect = $('#eq-preset');
+if (eqPresetSelect) {
+  eqPresetSelect.onchange = event => { const preset = event.target.value; if (presets[preset]) state.eq = [...presets[preset]]; state.preset = preset; syncEQ(); };
+}
+const eqResetBtn = $('#eq-reset');
+if (eqResetBtn) {
+  eqResetBtn.onclick = () => { state.eq = Array(10).fill(0); state.preset = 'Flat'; syncEQ(); };
+}
+$$('#eq-toggle, #player-eq').forEach(el => {
+  if (el) el.onclick = () => { $('#eq-dialog')?.showModal(); $('#eq-toggle')?.setAttribute('aria-expanded','true'); };
+});
+$('#eq-dialog')?.addEventListener('close', () => $('#eq-toggle')?.setAttribute('aria-expanded','false'));
+const importBtn = $('#import');
+if (importBtn) importBtn.onclick = () => $('#file-input')?.click();
+const importFolderBtn = $('#import-folder');
+if (importFolderBtn) importFolderBtn.onclick = chooseFolder;
 async function readDuration(file) {
   return new Promise(resolve => {
     let probe, url, finished = false;
@@ -1046,23 +1357,24 @@ function preventFileDrop(event) {
   if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
   return true;
 }
-document.addEventListener('dragenter', event => { if (preventFileDrop(event)) { dragDepth++; $('#drop-overlay').hidden = false; } });
+document.addEventListener('dragenter', event => { if (preventFileDrop(event)) { dragDepth++; const overlay = $('#drop-overlay'); if (overlay) overlay.hidden = false; } });
 document.addEventListener('dragover', event => { preventFileDrop(event); });
-document.addEventListener('dragleave', event => { if (!carriesFiles(event.dataTransfer)) return; if (--dragDepth <= 0) { dragDepth = 0; $('#drop-overlay').hidden = true; } });
-document.addEventListener('drop', event => { if (!preventFileDrop(event)) return; $('#drop-overlay').hidden = true; dragDepth = 0; if (event.dataTransfer.files.length) importFiles(event.dataTransfer.files); });
+document.addEventListener('dragleave', event => { if (!carriesFiles(event.dataTransfer)) return; if (--dragDepth <= 0) { dragDepth = 0; const overlay = $('#drop-overlay'); if (overlay) overlay.hidden = true; } });
+document.addEventListener('drop', event => { if (!preventFileDrop(event)) return; const overlay = $('#drop-overlay'); if (overlay) overlay.hidden = true; dragDepth = 0; if (event.dataTransfer.files.length) importFiles(event.dataTransfer.files); });
 async function initTauriFileDrop() {
   try {
     const [{ getCurrentWebview }, { invoke }] = await Promise.all([import('@tauri-apps/api/webview'), import('@tauri-apps/api/core')]);
     await getCurrentWebview().onDragDropEvent(async event => {
+      const overlay = $('#drop-overlay');
       if (event.payload.type === 'enter' || event.payload.type === 'over') {
-        $('#drop-overlay').hidden = false;
+        if (overlay) overlay.hidden = false;
         return;
       }
       if (event.payload.type === 'leave') {
-        $('#drop-overlay').hidden = true;
+        if (overlay) overlay.hidden = true;
         return;
       }
-      $('#drop-overlay').hidden = true;
+      if (overlay) overlay.hidden = true;
       try {
         const files = await Promise.all(event.payload.paths.map(async path => {
           const bytes = await invoke('read_audio_file', { path });
@@ -1631,7 +1943,9 @@ async function init() {
   state.playlists.forEach(playlist => { playlist.ids = playlist.ids.filter(findTrack); });
   if (!findTrack(state.currentId)) state.currentId = null;
   state.queue = state.queue.filter(findTrack); state.recent = state.recent.filter(findTrack);
-  render(); $('#eq-preset').value = state.preset; $('#preset-label').textContent = presetLabels[state.preset] || state.preset;
+  render();
+  if ($('#eq-preset')) $('#eq-preset').value = state.preset;
+  if ($('#preset-label')) $('#preset-label').textContent = presetLabels[state.preset] || state.preset;
   if (state.currentId) await selectTrack(state.currentId,false,0);
 }
 initTauriFileDrop();
