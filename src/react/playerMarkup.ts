@@ -31,6 +31,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           <span class="teac-model-text">AMP - 4FM</span>
           <span class="teac-sub-text">Stereo Cassette Deck</span>
         </div>
+        <span class="maker-credit">MADE WITH <span class="maker-heart" aria-label="love">♥</span> BY AAN TRIONO</span>
       </div>
 
       <!-- Deck Main Body Layout -->

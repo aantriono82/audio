@@ -1413,6 +1413,8 @@ if ('mediaSession' in navigator) {
 const canvas = $('#spectrum'), painter = canvas?.getContext('2d');
 let lastFrame = 0;
 let smoothedL = 0, smoothedR = 0;
+let needleAngleL = -45, needleAngleR = 45;
+let lastMeterTimestamp = 0;
 let peakHoldL = 0, peakHoldR = 0;
 
 function paintSpectrum(timestamp) {
@@ -1510,37 +1512,42 @@ function paintSpectrum(timestamp) {
     }
   }
 
-  // Moving-coil VU ballistics: moderate attack, long resonant decay
-  // Attack: ~55% new sample — CSS cubic-bezier handles the remaining visual smoothing
+  // Moving-coil VU ballistics: time-based attack and long, stable decay.
+  // Time-based coefficients keep the motion consistent across different frame rates.
+  const meterDt = lastMeterTimestamp ? Math.min(0.05, Math.max(0.001, (timestamp - lastMeterTimestamp) / 1000)) : 1 / 60;
+  lastMeterTimestamp = timestamp;
+  const attackAlpha = 1 - Math.exp(-meterDt / 0.24);
+  const releaseAlpha = 1 - Math.exp(-meterDt / 0.8);
   if (rawL > smoothedL) {
-    smoothedL = smoothedL * 0.45 + rawL * 0.55;
+    smoothedL += (rawL - smoothedL) * attackAlpha;
   } else {
-    smoothedL += (rawL - smoothedL) * 0.08;   // slow decay ≈ long coil inertia
+    smoothedL += (rawL - smoothedL) * releaseAlpha;
   }
 
   if (rawR > smoothedR) {
-    smoothedR = smoothedR * 0.45 + rawR * 0.55;
+    smoothedR += (rawR - smoothedR) * attackAlpha;
   } else {
-    smoothedR += (rawR - smoothedR) * 0.08;
+    smoothedR += (rawR - smoothedR) * releaseAlpha;
   }
 
   if (!isPlayingAudio) {
-    smoothedL *= 0.92;   // graceful fall to rest when stopped
-    smoothedR *= 0.92;
+    // The release filter above handles the return to rest when playback stops.
     if (smoothedL < 0.004) smoothedL = 0;
     if (smoothedR < 0.004) smoothedR = 0;
   }
 
-  // 1. Animate twin analog needles with balance-knob influence
-  // Balance range: -1 (full left) to +1 (full right)
-  // When balance is turned left: left needle goes higher, right lower, and vice-versa
-  const bal = state.balance ?? 0;                   // -1 … +1
-  const balFactorL = bal <= 0 ? 1.0 : 1.0 - bal;   // 1.0 at centre, 0.0 at full right
-  const balFactorR = bal >= 0 ? 1.0 : 1.0 + bal;   // 1.0 at centre, 0.0 at full left
+  // 1. Animate both analog needles from one shared stereo level.
+  // This keeps the left and right indicators synchronized and mirrored.
   const needleL = $('#vu-needle-left');
   const needleR = $('#vu-needle-right');
-  if (needleL) needleL.style.transform = `rotate(${(-16 + smoothedL * balFactorL * 34).toFixed(1)}deg)`;
-  if (needleR) needleR.style.transform = `rotate(${(16  - smoothedR * balFactorR * 34).toFixed(1)}deg)`;
+  const syncLevel = Math.min(1, (smoothedL + smoothedR) * 0.5);
+  const targetAngleL = -45 - syncLevel * 90;
+  const targetAngleR = 45 + syncLevel * 90;
+  const needleAlpha = 1 - Math.exp(-meterDt / 0.22);
+  needleAngleL += (targetAngleL - needleAngleL) * needleAlpha;
+  needleAngleR += (targetAngleR - needleAngleR) * needleAlpha;
+  if (needleL) needleL.style.transform = `rotate(${needleAngleL.toFixed(2)}deg)`;
+  if (needleR) needleR.style.transform = `rotate(${needleAngleR.toFixed(2)}deg)`;
 
   // 2. Animate VFD horizontal Watts bargraphs (0 to 12 segments)
   const spkL = $('#spk-left')?.classList.contains('active') ?? true;
