@@ -173,13 +173,13 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
             <div class="matrix-btn-row matrix-btn-row-bottom">
               <div class="matrix-spacer"></div>
               <div class="matrix-btn-cell">
-                <button class="matrix-btn active" id="btn-tape-normal" aria-label="Tape Normal" title="Normal Bias/EQ"></button>
+                <button class="matrix-btn active" id="btn-tape-normal" aria-label="Tape Normal" aria-pressed="true" title="Normal Bias/EQ"></button>
               </div>
               <div class="matrix-btn-cell">
-                <button class="matrix-btn" id="btn-tape-cro2" aria-label="Tape CrO2" title="CrO2 Bias/EQ"></button>
+                <button class="matrix-btn" id="btn-tape-cro2" aria-label="Tape CrO2" aria-pressed="false" title="CrO2 Bias/EQ"></button>
               </div>
               <div class="matrix-btn-cell">
-                <button class="matrix-btn" id="btn-tape-metal" aria-label="Tape Metal" title="Metal Bias/EQ"></button>
+                <button class="matrix-btn" id="btn-tape-metal" aria-label="Tape Metal" aria-pressed="false" title="Metal Bias/EQ"></button>
               </div>
             </div>
           </div>
@@ -379,7 +379,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
                   </button>
                 </div>
                 <span class="switch-title">MUTE</span>
-                <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
+                <div class="rocker-sublabel"><span>ON</span><span class="sym-box">■</span><span class="sym-box">■</span><span>OFF</span></div>
               </div>
             </div>
           </div>

@@ -181,13 +181,13 @@ Error generating stack: `+e.message+`
             <div class="matrix-btn-row matrix-btn-row-bottom">
               <div class="matrix-spacer"></div>
               <div class="matrix-btn-cell">
-                <button class="matrix-btn active" id="btn-tape-normal" aria-label="Tape Normal" title="Normal Bias/EQ"></button>
+                <button class="matrix-btn active" id="btn-tape-normal" aria-label="Tape Normal" aria-pressed="true" title="Normal Bias/EQ"></button>
               </div>
               <div class="matrix-btn-cell">
-                <button class="matrix-btn" id="btn-tape-cro2" aria-label="Tape CrO2" title="CrO2 Bias/EQ"></button>
+                <button class="matrix-btn" id="btn-tape-cro2" aria-label="Tape CrO2" aria-pressed="false" title="CrO2 Bias/EQ"></button>
               </div>
               <div class="matrix-btn-cell">
-                <button class="matrix-btn" id="btn-tape-metal" aria-label="Tape Metal" title="Metal Bias/EQ"></button>
+                <button class="matrix-btn" id="btn-tape-metal" aria-label="Tape Metal" aria-pressed="false" title="Metal Bias/EQ"></button>
               </div>
             </div>
           </div>
@@ -387,7 +387,7 @@ Error generating stack: `+e.message+`
                   </button>
                 </div>
                 <span class="switch-title">MUTE</span>
-                <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
+                <div class="rocker-sublabel"><span>ON</span><span class="sym-box">■</span><span class="sym-box">■</span><span>OFF</span></div>
               </div>
             </div>
           </div>
@@ -1297,4 +1297,4 @@ Error generating stack: `+e.message+`
 
 <div role="status" id="toast" class="toast" hidden></div>
 <audio id="audio" preload="auto"></audio>
-`,f=e((e=>{var t=Symbol.for(`react.transitional.element`);function n(e,n,r){var i=null;if(r!==void 0&&(i=``+r),n.key!==void 0&&(i=``+n.key),`key`in n)for(var a in r={},n)a!==`key`&&(r[a]=n[a]);else r=n;return n=r.ref,{$$typeof:t,type:e,key:i,ref:n===void 0?null:n,props:r}}e.jsx=n})),p=e(((e,t)=>{t.exports=f()}))(),m=`modulepreload`,h=function(e){return`/`+e},g={},_=function(e,t,n){let r=Promise.resolve();if(t&&t.length>0){let e=document.getElementsByTagName(`link`),i=document.querySelector(`meta[property=csp-nonce]`),a=i?.nonce||i?.getAttribute(`nonce`);function o(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}function s(e){return import.meta.resolve?import.meta.resolve(e):new URL(e,import.meta.url).href}r=o(t.map(t=>{if(t=h(t,n),t=s(t),t in g)return;g[t]=!0;let r=t.endsWith(`.css`);for(let n=e.length-1;n>=0;n--){let i=e[n];if(i.href===t&&(!r||i.rel===`stylesheet`))return}let i=document.createElement(`link`);if(i.rel=r?`stylesheet`:m,r||(i.as=`script`),i.crossOrigin=``,i.href=t,a&&i.setAttribute(`nonce`,a),document.head.appendChild(i),r)return new Promise((e,n)=>{i.addEventListener(`load`,e),i.addEventListener(`error`,()=>n(Error(`Unable to preload CSS for ${t}`)))})}))}function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})};function v(){return(0,l.useEffect)(()=>{_(()=>import(`./app-B7JE_19S.js`),[])},[]),(0,p.jsx)(`div`,{dangerouslySetInnerHTML:{__html:d}})}var y=document.getElementById(`root`);if(!y)throw Error(`Elemen root React tidak ditemukan.`);(0,u.createRoot)(y).render((0,p.jsx)(v,{}));export{_ as t};
+`,f=e((e=>{var t=Symbol.for(`react.transitional.element`);function n(e,n,r){var i=null;if(r!==void 0&&(i=``+r),n.key!==void 0&&(i=``+n.key),`key`in n)for(var a in r={},n)a!==`key`&&(r[a]=n[a]);else r=n;return n=r.ref,{$$typeof:t,type:e,key:i,ref:n===void 0?null:n,props:r}}e.jsx=n})),p=e(((e,t)=>{t.exports=f()}))(),m=`modulepreload`,h=function(e){return`/`+e},g={},_=function(e,t,n){let r=Promise.resolve();if(t&&t.length>0){let e=document.getElementsByTagName(`link`),i=document.querySelector(`meta[property=csp-nonce]`),a=i?.nonce||i?.getAttribute(`nonce`);function o(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}function s(e){return import.meta.resolve?import.meta.resolve(e):new URL(e,import.meta.url).href}r=o(t.map(t=>{if(t=h(t,n),t=s(t),t in g)return;g[t]=!0;let r=t.endsWith(`.css`);for(let n=e.length-1;n>=0;n--){let i=e[n];if(i.href===t&&(!r||i.rel===`stylesheet`))return}let i=document.createElement(`link`);if(i.rel=r?`stylesheet`:m,r||(i.as=`script`),i.crossOrigin=``,i.href=t,a&&i.setAttribute(`nonce`,a),document.head.appendChild(i),r)return new Promise((e,n)=>{i.addEventListener(`load`,e),i.addEventListener(`error`,()=>n(Error(`Unable to preload CSS for ${t}`)))})}))}function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})};function v(){return(0,l.useEffect)(()=>{_(()=>import(`./app-CNcy1GAG.js`),[])},[]),(0,p.jsx)(`div`,{dangerouslySetInnerHTML:{__html:d}})}var y=document.getElementById(`root`);if(!y)throw Error(`Elemen root React tidak ditemukan.`);(0,u.createRoot)(y).render((0,p.jsx)(v,{}));export{_ as t};

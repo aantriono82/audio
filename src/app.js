@@ -935,6 +935,13 @@ function setupRackControls() {
       $$('#btn-tape-normal, #btn-tape-cro2, #btn-tape-metal').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const type = btn.id.replace('btn-tape-', '').toUpperCase();
+      const deckUnit = $('#cassette-deck-unit');
+      if (deckUnit) {
+        deckUnit.classList.remove('tape-normal', 'tape-cro2', 'tape-metal');
+        deckUnit.classList.add(`tape-${type.toLowerCase()}`);
+        deckUnit.dataset.tapeType = type;
+      }
+      $$('#btn-tape-normal, #btn-tape-cro2, #btn-tape-metal').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
       toast(`Tape Bias/EQ: ${type}`);
     };
   });

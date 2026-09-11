@@ -2526,8 +2526,8 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
 /* SYSTEM MENU & AMPLIFIER BUTTON ACTIVE STATE */
 #btn-menu.active,
 #btn-amplifier.active {
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.65), 0 0 6px rgba(0, 230, 118, 0.7);
-  border-color: #00e676;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.65);
+  border-color: #353026;
 }
 
 /* Header toolbar */
@@ -3853,4 +3853,132 @@ body {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Cassette tape formulation feedback */
+.teac-cassette-deck.tape-cro2 .tape-ribbon-pack {
+  background: linear-gradient(90deg, #163b4a 0%, #287d8e 58%, #10232d 100%);
+}
+
+.teac-cassette-deck.tape-cro2 .tape-ribbon-pack.pack-yellow {
+  background: linear-gradient(90deg, #2e7184 0%, #55c5ca 60%, #183b48 100%);
+}
+
+.teac-cassette-deck.tape-cro2 .cassette-brand-strip {
+  background: linear-gradient(180deg, #1e3f49 0%, #152a32 100%);
+  border-color: #3c8993;
+}
+
+.teac-cassette-deck.tape-metal .tape-ribbon-pack {
+  background: linear-gradient(90deg, #343b42 0%, #9ca8ad 48%, #252a30 100%);
+}
+
+.teac-cassette-deck.tape-metal .tape-ribbon-pack.pack-yellow {
+  background: linear-gradient(90deg, #66757b 0%, #d7e0df 58%, #374148 100%);
+}
+
+.teac-cassette-deck.tape-metal .cassette-brand-strip {
+  background: linear-gradient(180deg, #59656a 0%, #30383d 100%);
+  border-color: #adb9bb;
+}
+
+.teac-cassette-deck.tape-cro2 .cassette-active-title { color: #67e1e4; }
+.teac-cassette-deck.tape-metal .cassette-active-title { color: #e6f0ef; }
+
+/* High-contrast volume knob indicator */
+.deck-right-controls .concentric-dial-scale {
+  border-width: 2.5px;
+  border-color: #15181b;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.7),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.8);
+}
+
+.deck-right-controls .scale-tick {
+  color: #080a0c;
+  font-size: 8.5px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.deck-right-controls .d-tick {
+  width: 1.5px;
+  background: #111418;
+}
+
+.deck-right-controls .knob-metal-body {
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.68),
+    inset 0 1.5px 2px #ffffff,
+    inset 0 -2px 3px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1.5px #6e757d;
+}
+
+.deck-right-controls .knob-metal-body:hover {
+  box-shadow:
+    0 7px 18px rgba(0, 0, 0, 0.72),
+    0 0 0 2px rgba(0, 168, 90, 0.25),
+    inset 0 1.5px 2px #ffffff,
+    inset 0 -2px 3px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1.5px #6e757d;
+}
+
+.deck-right-controls .knob-face-wedge {
+  width: 4.5px;
+  height: 38px;
+  left: 20.5px;
+  top: 29px;
+  background: linear-gradient(90deg, #171a1e 0%, #4b535a 52%, #0d0f12 100%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.75);
+  opacity: 1;
+}
+
+.deck-right-controls .knob-indicator-notch {
+  width: 4px;
+  height: 15px;
+  left: calc(50% - 2px);
+  top: 3px;
+  background: linear-gradient(90deg, #15181b 0%, #4c555d 50%, #0b0d10 100%);
+  border: 1px solid #080a0c;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 1px 3px rgba(0, 0, 0, 0.75);
+}
+
+/* Match the deck volume diameter to the amplifier master volume */
+.deck-right-controls .concentric-dial-outer {
+  width: 126px;
+  height: 126px;
+}
+
+.deck-right-controls .concentric-dial-scale {
+  inset: auto;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(1.1053);
+  transform-origin: center;
+}
+
+.deck-right-controls .knob-concentric-housing,
+.deck-right-controls .knob-metal-body {
+  width: 110px;
+  height: 110px;
+}
+
+.deck-right-controls .deck-mute-module { top: 118px; }
+.deck-right-controls .jack-socket-row {
+  position: relative;
+  top: 12px;
+}
+.deck-right-controls .jack-item:nth-child(2) .jack-label {
+  transform: translateX(-3px);
+}
+.deck-right-controls .deck-mute-module .rocker-sublabel {
+  width: 44px;
+  justify-content: space-between;
+  gap: 0;
+  font-size: 6px;
+  letter-spacing: 0.15px;
+}
+.deck-right-controls .deck-mute-module .rocker-sublabel .sym-box {
+  font-size: 5px;
 }
