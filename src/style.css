@@ -2499,7 +2499,7 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
   position: relative;
   width: 100%;
   max-width: 1180px;
-  background: #141518;
+  background: linear-gradient(180deg, #fdfbf6 0%, #eee8dc 1.5%, #e6dfd1 48%, #dad2c2 52%, #e2dac9 97%, #b7ad9b 100%);
   border: 1px solid #2d3036;
   border-top: 1px solid #3c3f46;
   border-radius: 0 0 6px 6px;
@@ -2536,7 +2536,7 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
   justify-content: space-between;
   align-items: center;
   padding: 14px 22px 10px;
-  background: #131416;
+  background: transparent;
   border-bottom: 1px solid #22252a;
   gap: 16px;
 }
@@ -2699,7 +2699,7 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
 .track-table-wrap {
   max-height: 290px;
   overflow-y: auto;
-  background: #141518;
+  background: transparent;
 }
 
 .track-table-wrap::-webkit-scrollbar {
@@ -2730,7 +2730,7 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
   border-bottom: 1px solid #202226;
   position: sticky;
   top: 0;
-  background: #141518;
+  background: transparent;
   z-index: 2;
   letter-spacing: 1px;
 }
@@ -2894,7 +2894,7 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
   justify-content: space-between;
   align-items: center;
   padding: 10px 22px;
-  background: #111215;
+  background: transparent;
   border-top: 1px solid #1f2226;
   font-size: 11px;
   color: #6d727b;
