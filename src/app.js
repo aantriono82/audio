@@ -593,7 +593,7 @@ function applyArt(element, track) {
 }
 function row(track, index) {
   const playing = track.id === state.currentId;
-  return `<tr class="track-row${playing ? ' current' : ''}" data-id="${esc(track.id)}" data-index="${index}" draggable="true" tabindex="0" aria-label="Putar ${esc(track.title)}"><td>${playing ? '<span class="equal-bars"><i></i><i></i><i></i></span>' : String(index+1).padStart(2,'0')}</td><td><div class="track-cell"><div class="mini-art" data-art="${track.art}" data-cover="${track.cover ? 'true' : 'false'}"><span>AA</span></div><div class="track-info"><span class="track-name">${esc(track.title)}</span><span class="track-artist">${esc(track.artist)}${track.genre ? ` · ${esc(track.genre)}` : ''}${track.demo ? ' · Demo' : ''}</span></div></div></td><td class="track-album">${esc(track.album)}</td><td class="track-format"><span class="format-tag">${esc(track.format)}</span></td><td class="track-duration">${formatTime(track.duration)}</td><td><div class="row-actions"><button class="icon-button favorite${state.favorites.has(track.id) ? ' active' : ''}" data-action="favorite" aria-label="${state.favorites.has(track.id) ? 'Hapus favorit' : 'Favoritkan'} ${esc(track.title)}" aria-pressed="${state.favorites.has(track.id)}">${icon('heart')}</button><button class="icon-button" data-action="more" aria-label="Opsi ${esc(track.title)}">${icon('more')}</button></div></td></tr>`;
+  return `<tr class="track-row${playing ? ' current' : ''}" data-id="${esc(track.id)}" data-index="${index}" draggable="true" tabindex="0" aria-label="Putar ${esc(track.title)}"><td>${playing ? '<span class="equal-bars"><i></i><i></i><i></i></span>' : String(index+1).padStart(2,'0')}</td><td><div class="track-cell"><div class="mini-art" data-track-id="${esc(track.id)}" data-art="${track.art}" data-cover="${track.cover ? 'true' : 'false'}"><span>AA</span></div><div class="track-info"><span class="track-name">${esc(track.title)}</span><span class="track-artist">${esc(track.artist)}${track.genre ? ` · ${esc(track.genre)}` : ''}${track.demo ? ' · Demo' : ''}</span></div></div></td><td class="track-album">${esc(track.album)}</td><td class="track-format"><span class="format-tag">${esc(track.format)}</span></td><td class="track-duration">${formatTime(track.duration)}</td><td><div class="row-actions"><button class="icon-button favorite${state.favorites.has(track.id) ? ' active' : ''}" data-action="favorite" aria-label="${state.favorites.has(track.id) ? 'Hapus favorit' : 'Favoritkan'} ${esc(track.title)}" aria-pressed="${state.favorites.has(track.id)}">${icon('heart')}</button><button class="icon-button" data-action="more" aria-label="Opsi ${esc(track.title)}">${icon('more')}</button></div></td></tr>`;
 }
 function renderTracks() {
   const tracks = visibleTracks(state);
@@ -601,7 +601,11 @@ function renderTracks() {
   $('#track-count').textContent = baseTracks(state).length; $('#queue-count').textContent = state.queue.length;
   $('#track-tab').classList.toggle('active', !state.queueView); $('#queue-tab').classList.toggle('active', state.queueView);
   $('#library-total').textContent = `${tracks.length} lagu · ${Math.ceil(tracks.reduce((total,t) => total + (t.duration || 0),0)/60)} menit${tracks.length && tracks.every(t => t.demo) ? ' · Audio demo' : ''}`;
-  tracks.forEach(track => $(`#tracks [data-id="${CSS.escape(track.id)}"] .mini-art`) && applyArt($(`#tracks [data-id="${CSS.escape(track.id)}"] .mini-art`), track));
+  const tracksById = new Map(tracks.map(track => [track.id, track]));
+  $$('#tracks .mini-art[data-track-id]').forEach(element => {
+    const track = tracksById.get(element.dataset.trackId);
+    if (track) applyArt(element, track);
+  });
 }
 function renderNav() {
   const smart = `<button class="nav-item${state.view === 'smart:frequent' ? ' active' : ''}" data-view="smart:frequent"><span class="playlist-icon">${icon('history')}</span><span class="playlist-name">Sering diputar</span></button><button class="nav-item${state.view === 'smart:unplayed' ? ' active' : ''}" data-view="smart:unplayed"><span class="playlist-icon">${icon('music')}</span><span class="playlist-name">Belum diputar</span></button>`;
@@ -716,16 +720,7 @@ function renderModes() {
   giantVolKnob?.setVal(state.volume, false);
   deckVolKnob?.setVal(state.volume, false);
 }
-function translateMenuLabels() {
-  const replacements = {
-    'TAMBAHKAN KE PLAYLIST': 'TAMBAHKAN KE DAFTAR PUTAR',
-    'Playlist dibuat. Gunakan menu ⋯ pada lagu untuk menambahkannya.': 'Daftar putar dibuat. Gunakan menu ⋯ pada lagu untuk menambahkannya.'
-  };
-  $$('*').forEach(element => {
-    if (element.children.length === 0 && replacements[element.textContent]) element.textContent = replacements[element.textContent];
-  });
-}
-function render() { renderNav(); renderGrouping(); renderTracks(); renderCurrent(); renderModes(); translateMenuLabels(); }
+function render() { renderNav(); renderGrouping(); renderTracks(); renderCurrent(); renderModes(); }
 async function selectTrack(id, autoplay = true, requestedPosition = 0) {
   const track = findTrack(id); if (!track) return;
   const token = ++playbackToken; audio.pause(); clearTimeout(crossfadeTimer); crossfadeStarted = false; state.currentId = id; loadedId = id;
@@ -807,6 +802,7 @@ function updateProgress() {
 audio.addEventListener('timeupdate', () => { updateProgress(); maybeCrossfade(); const second = Math.floor(audio.currentTime); if (second % 5 === 0 && second !== lastSavedSecond) { lastSavedSecond = second; persist(); } });
 audio.addEventListener('loadedmetadata', () => { if (Number.isFinite(audio.duration)) current().duration = audio.duration; updateProgress(); renderTracks(); });
 audio.addEventListener('play', () => {
+  scheduleSpectrum();
   $('#app')?.classList.add('is-playing');
   $('#cassette-door-bay')?.classList.add('is-playing');
   $('#play')?.classList.add('active');
@@ -821,6 +817,7 @@ audio.addEventListener('play', () => {
   if (state.view === 'recent') renderTracks(); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
 });
 audio.addEventListener('pause', () => {
+  scheduleSpectrum();
   $('#app')?.classList.remove('is-playing');
   $('#cassette-door-bay')?.classList.remove('is-playing');
   $('#play')?.classList.remove('active');
@@ -1672,6 +1669,17 @@ if ('mediaSession' in navigator) {
 }
 const canvas = $('#spectrum'), painter = canvas?.getContext('2d');
 let lastFrame = 0;
+let lastMeterFrame = 0;
+let spectrumFrame = 0;
+let waveform, wavePainter;
+const needleL = $('#vu-needle-left');
+const needleR = $('#vu-needle-right');
+const speakerL = $('#spk-left');
+const speakerR = $('#spk-right');
+const speakerStereo = $('#spk-stereo');
+const displayPeak = $('#dsp-peak');
+const wattSegmentsL = $$('#watts-track-left .watts-seg');
+const wattSegmentsR = $$('#watts-track-right .watts-seg');
 let smoothedL = 0, smoothedR = 0;
 let needleAngleL = -45, needleAngleR = 45;
 let lastMeterTimestamp = 0;
@@ -1681,22 +1689,31 @@ let waveformSamples = new Uint8Array(2048);
 let channelBinsL = new Uint8Array(0);
 let channelBinsR = new Uint8Array(0);
 
+function scheduleSpectrum() {
+  if (!spectrumFrame) spectrumFrame = requestAnimationFrame(paintSpectrum);
+}
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) scheduleSpectrum();
+});
+
 function paintSpectrum(timestamp) {
-  requestAnimationFrame(paintSpectrum);
+  spectrumFrame = 0;
   if (document.hidden) return;
 
   const isPlayingAudio = !audio.paused && !audio.muted && state.volume > 0;
+  const canvasVisible = Boolean(canvas?.clientWidth);
+  const needsMeters = isPlayingAudio || smoothedL > 0.004 || smoothedR > 0.004 || peakHoldL > 0.5 || peakHoldR > 0.5;
+  if (!needsMeters && !canvasVisible) return;
+  if (timestamp - lastMeterFrame < 33) { scheduleSpectrum(); return; }
+  lastMeterFrame = timestamp;
   if (analyser && spectrumBins.length !== analyser.frequencyBinCount) spectrumBins = new Uint8Array(analyser.frequencyBinCount);
   const bins = spectrumBins;
   if (analyser && isPlayingAudio) {
     analyser.getByteFrequencyData(bins);
   }
 
-  const needsMeters = isPlayingAudio || smoothedL > 0.004 || smoothedR > 0.004 || peakHoldL > 0.5 || peakHoldR > 0.5;
-  if (!needsMeters && (!canvas || canvas.clientWidth === 0)) return;
-
   // Render spectrum canvas in library drawer ONLY if drawer is visible
-  if (canvas && canvas.clientWidth > 0 && timestamp - lastFrame >= 30) {
+  if (canvas && canvasVisible && timestamp - lastFrame >= 30) {
     lastFrame = timestamp;
     const width = canvas.clientWidth, height = canvas.clientHeight, dpr = window.devicePixelRatio || 1;
     if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
@@ -1716,8 +1733,10 @@ function paintSpectrum(timestamp) {
         painter.fillRect(i * (barWidth + gap), height - (segment + 1) * 4, barWidth, 2);
       }
     }
-    const waveform = $('#waveform');
-    const wavePainter = waveform?.getContext('2d');
+    if (!waveform) {
+      waveform = $('#waveform');
+      wavePainter = waveform?.getContext('2d');
+    }
     if (waveform && wavePainter) {
       const waveWidth = waveform.clientWidth, waveHeight = waveform.clientHeight, waveDpr = window.devicePixelRatio || 1;
       if (waveform.width !== Math.round(waveWidth * waveDpr) || waveform.height !== Math.round(waveHeight * waveDpr)) {
@@ -1809,8 +1828,6 @@ function paintSpectrum(timestamp) {
 
   // 1. Animate both analog needles from one shared stereo level.
   // This keeps the left and right indicators synchronized and mirrored.
-  const needleL = $('#vu-needle-left');
-  const needleR = $('#vu-needle-right');
   const syncLevel = Math.min(1, (smoothedL + smoothedR) * 0.5);
   const targetAngleL = -45 - syncLevel * 90;
   const targetAngleR = 45 + syncLevel * 90;
@@ -1821,10 +1838,10 @@ function paintSpectrum(timestamp) {
   if (needleR) needleR.style.transform = `rotate(${needleAngleR.toFixed(2)}deg)`;
 
   // 2. Animate VFD horizontal Watts bargraphs (0 to 12 segments)
-  const spkL = $('#spk-left')?.classList.contains('active') ?? true;
-  const spkR = $('#spk-right')?.classList.contains('active') ?? true;
-  const isStereo = $('#spk-stereo')?.classList.contains('active') ?? true;
-  const showPeak = $('#dsp-peak')?.classList.contains('active') ?? true;
+  const spkL = speakerL?.classList.contains('active') ?? true;
+  const spkR = speakerR?.classList.contains('active') ?? true;
+  const isStereo = speakerStereo?.classList.contains('active') ?? true;
+  const showPeak = displayPeak?.classList.contains('active') ?? true;
 
   const valL = isStereo ? smoothedL : (smoothedL + smoothedR) / 2;
   const valR = isStereo ? smoothedR : (smoothedL + smoothedR) / 2;
@@ -1837,18 +1854,17 @@ function paintSpectrum(timestamp) {
   const peakIdxL = showPeak ? Math.round(peakHoldL) - 1 : -1;
   const peakIdxR = showPeak ? Math.round(peakHoldR) - 1 : -1;
 
-  const segsL = $$('#watts-track-left .watts-seg');
-  const segsR = $$('#watts-track-right .watts-seg');
-  segsL.forEach((seg, idx) => {
+  wattSegmentsL.forEach((seg, idx) => {
     const active = idx < litL;
     seg.classList.toggle('active', active);
     seg.classList.toggle('peak', idx === peakIdxL && idx >= litL && peakHoldL > 1);
   });
-  segsR.forEach((seg, idx) => {
+  wattSegmentsR.forEach((seg, idx) => {
     const active = idx < litR;
     seg.classList.toggle('active', active);
     seg.classList.toggle('peak', idx === peakIdxR && idx >= litR && peakHoldR > 1);
   });
+  if (isPlayingAudio || smoothedL > 0.004 || smoothedR > 0.004 || peakHoldL > 0.5 || peakHoldR > 0.5 || canvasVisible) scheduleSpectrum();
 }
 function makeDraggable(dialog, handle) {
   let isDragging = false;
@@ -1938,10 +1954,15 @@ function syncDspUi() {
   if (checkGapless) checkGapless.checked = Boolean(state.gapless);
 }
 
+let dspDialogReady = false;
 function openDspDialog(tab = 'general') {
   const dialog = $('#dsp-dialog');
   if (!dialog) return;
 
+  if (!dspDialogReady) {
+    setupDspDialog();
+    dspDialogReady = true;
+  }
   const tabEl = $(`#aimp-tab-${tab}`);
   if (tabEl) tabEl.click();
 
@@ -2216,12 +2237,10 @@ function setupDspDialog() {
   }
 }
 
-requestAnimationFrame(paintSpectrum);
 window.addEventListener('pagehide', persist);
 async function init() {
   addAdvancedUI(); applyTheme(); applyPanelOrder(); applyCompactState();
   setupRackControls();
-  setupDspDialog();
   render();
   try { db = await openDB(); const stored = await dbAction('readonly', store => store.getAll()); state.tracks.push(...stored.filter(t => t?.id && t.file instanceof Blob)); const directory = await directoryAction('readonly', store => store.get('music-root')); if (directory?.handle && (await directory.handle.queryPermission({ mode: 'read' })) === 'granted') { const files = await filesFromDirectory(directory.handle); await importFiles(files); } }
   catch { toast('Penyimpanan lokal tidak tersedia. Musik impor hanya tersimpan untuk sesi ini.'); }
@@ -2233,7 +2252,7 @@ async function init() {
   if ($('#preset-label')) $('#preset-label').textContent = presetLabels[state.preset] || state.preset;
   if (state.currentId) await selectTrack(state.currentId, false, state.positions[state.currentId] ?? saved.position ?? 0);
   await applyOutputDevice();
-  if (!state.onboarded) welcomeDialog?.showModal();
+  if (!state.onboarded && welcomeDialog && !welcomeDialog.open) welcomeDialog.showModal();
 }
 initTauriFileDrop();
 init();
