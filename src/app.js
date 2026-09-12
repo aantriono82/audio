@@ -1,4 +1,4 @@
-import { esc, formatTime, demoBlob, demoTracks, baseTracks, visibleTracks } from './library.js';
+import { esc, formatTime, demoBlob, demoTracks, baseTracks, visibleTracks, queueIndexAtVisibleIndex } from './library.js';
 import { isAudioFile, metadataFromFilename, readEmbeddedMetadata } from './import.js';
 
 const $ = selector => document.querySelector(selector);
@@ -130,7 +130,7 @@ function addAdvancedUI() {
 
   const settingsBtn = $('#settings');
   if (settingsBtn) {
-    settingsBtn.onclick = () => { syncSettings(); dialog.showModal(); refreshOutputDevices(); void refreshStorageUsage(); };
+    settingsBtn.onclick = () => { syncSettings(); dialog.showModal(); void refreshOutputDevices(); void applyOutputDevice(); void refreshStorageUsage(); };
   }
 
   dialog.querySelectorAll('.theme-skin').forEach(button => {
@@ -237,7 +237,7 @@ function addAdvancedUI() {
       if (Array.isArray(settings.eq) && settings.eq.length === 10 && settings.eq.every(value => Number.isFinite(value))) state.eq = settings.eq;
       if (typeof settings.preset === 'string') state.preset = settings.preset;
       if (typeof settings.outputDevice === 'string') state.outputDevice = settings.outputDevice;
-      applyTheme(); applyCompactState(); render(); syncSettings(); persist();
+      applyTheme(); applyCompactState(); render(); syncSettings(); await applyOutputDevice(); persist();
       const available = backup.tracks.filter(track => byId.has(track.id) || byFingerprint.has(track.fingerprint)).length;
       toast(`Cadangan dipulihkan. ${available} dari ${backup.tracks.length} lagu tersedia.`);
     } catch (error) { toast(`Cadangan gagal diimpor: ${error instanceof Error ? error.message : 'format tidak valid.'}`); }
@@ -261,7 +261,41 @@ function syncSettings() {
 }
 function groupOptions(type) { return [...new Set(state.tracks.map(track => String(track[type] || 'Tidak diketahui')))].sort(); }
 function renderGrouping() { const select = $('#group-by'); if (!select) return; const labels = { artist: 'Artis', album: 'Album', genre: 'Genre' }; const values = [['', 'Semua lagu'], ...['artist','album','genre'].flatMap(type => groupOptions(type).map(value => [`${type}:${value}`, `${labels[type]} · ${value}`]))]; select.innerHTML = values.map(([value, label]) => `<option value="${esc(value)}">${esc(label)}</option>`).join(''); select.value = state.view.includes(':') ? state.view : ''; }
-async function refreshOutputDevices() { const select = $('#output-device'); if (!select || !navigator.mediaDevices?.enumerateDevices) return; const devices = await navigator.mediaDevices.enumerateDevices(); const outputs = devices.filter(device => device.kind === 'audiooutput'); select.innerHTML = '<option value="default">Keluaran bawaan peramban</option>' + outputs.map(device => `<option value="${esc(device.deviceId)}">${esc(device.label || `Keluaran ${device.deviceId.slice(0, 5)}`)}</option>`).join(''); select.value = state.outputDevice; select.onchange = async event => { state.outputDevice = event.target.value; if (typeof audio.setSinkId === 'function') { try { await audio.setSinkId(state.outputDevice); } catch { toast('Perangkat keluaran tidak dapat dipilih oleh peramban.'); } } persist(); }; }
+async function applyOutputDevice(deviceId = state.outputDevice, notify = false) {
+  if (typeof audio.setSinkId !== 'function') return false;
+  try {
+    await audio.setSinkId(deviceId || 'default');
+    state.outputDevice = deviceId || 'default';
+    return true;
+  } catch {
+    state.outputDevice = 'default';
+    if (notify) toast('Perangkat keluaran tidak dapat dipilih oleh peramban.');
+    return false;
+  }
+}
+async function refreshOutputDevices() {
+  const select = $('#output-device');
+  if (!select || !navigator.mediaDevices?.enumerateDevices) return;
+  let devices;
+  try {
+    devices = await navigator.mediaDevices.enumerateDevices();
+  } catch {
+    select.innerHTML = '<option value="default">Keluaran bawaan peramban</option>';
+    state.outputDevice = 'default';
+    select.value = 'default';
+    return;
+  }
+  const outputs = devices.filter(device => device.kind === 'audiooutput');
+  select.innerHTML = '<option value="default">Keluaran bawaan peramban</option>' + outputs.map(device => `<option value="${esc(device.deviceId)}">${esc(device.label || `Keluaran ${device.deviceId.slice(0, 5)}`)}</option>`).join('');
+  select.value = state.outputDevice;
+  if (select.value !== state.outputDevice) state.outputDevice = 'default';
+  select.value = state.outputDevice;
+  select.onchange = async event => {
+    await applyOutputDevice(event.target.value, true);
+    select.value = state.outputDevice;
+    persist();
+  };
+}
 async function filesFromDirectory(handle) { const files = []; async function walk(directory) { for await (const entry of directory.values()) { if (entry.kind === 'file') files.push(await entry.getFile()); else if (entry.kind === 'directory') await walk(entry); } } await walk(handle); return files; }
 async function chooseFolder() { if (!('showDirectoryPicker' in window)) { $('#folder-input').click(); return; } try { const handle = await window.showDirectoryPicker({ mode: 'read' }); if (db) await directoryAction('readwrite', store => store.put({ id: 'music-root', handle })); const files = await filesFromDirectory(handle); await importFiles(files); toast(`${files.length} file dipindai dari folder.`); } catch (error) { if (error.name !== 'AbortError') toast('Folder tidak dapat dipindai.'); } }
 let saved = {};
@@ -1319,15 +1353,28 @@ function showTrackOptions(id, index) {
   const target = $('#track-options');
   if (target) {
     target.replaceChildren();
-    const addOption = (label, action, danger = false) => { const button = document.createElement('button'); button.textContent = label; if (danger) button.dataset.danger = 'true'; button.onclick = async () => { await action(); $('#track-dialog')?.close(); render(); persist(); }; target.append(button); };
-    addOption('Putar berikutnya', () => { state.queue.unshift(id); toast('Ditambahkan sebagai lagu berikutnya.'); });
-    addOption('Tambahkan ke antrean', () => { state.queue.push(id); toast('Lagu ditambahkan ke antrean.'); });
-    if (state.queueView) addOption('Hapus dari antrean', () => state.queue.splice(index,1));
+    const quickHeading = document.createElement('div'); quickHeading.className = 'option-section-label'; quickHeading.textContent = 'AKSI CEPAT'; target.append(quickHeading);
+    const addOption = (label, action, danger = false, iconName = 'music') => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'track-option'; button.setAttribute('aria-label', label);
+      if (danger) button.dataset.danger = 'true';
+      button.innerHTML = `<span class="track-option-icon">${icon(iconName)}</span><span class="track-option-copy"><strong>${esc(label)}</strong><small>${danger ? 'Tindakan permanen' : 'Atiga Amp'}</small></span><span class="track-option-arrow">›</span>`;
+      button.onclick = async () => { await action(); $('#track-dialog')?.close(); render(); persist(); };
+      target.append(button);
+    };
+    addOption('Putar berikutnya', () => { state.queue.unshift(id); toast('Ditambahkan sebagai lagu berikutnya.'); }, false, 'next');
+    addOption('Tambahkan ke antrean', () => { state.queue.push(id); toast('Lagu ditambahkan ke antrean.'); }, false, 'queue');
+    if (state.queueView) addOption('Hapus dari antrean', () => {
+      const queueIndex = queueIndexAtVisibleIndex(state, index);
+      if (queueIndex >= 0) state.queue.splice(queueIndex, 1);
+    }, true, 'close');
     const playlist = state.playlists.find(p => p.id === state.view);
-    if (playlist && !state.queueView) addOption('Hapus dari playlist ini', () => playlist.ids = playlist.ids.filter(item => item !== id));
-    addOption('Hapus lagu dari koleksi', () => removeTrack(id), true);
-    const label = document.createElement('span'); label.className = 'option-label'; label.textContent = 'TAMBAHKAN KE PLAYLIST'; target.append(label);
-    state.playlists.forEach(p => addOption(p.name, () => { if (!p.ids.includes(id)) { p.ids.push(id); toast(`Ditambahkan ke ${p.name}.`); } else toast('Lagu sudah ada di playlist ini.'); }));
+    if (playlist && !state.queueView) addOption('Hapus dari daftar putar ini', () => playlist.ids = playlist.ids.filter(item => item !== id), true, 'close');
+    addOption('Hapus lagu dari koleksi', () => removeTrack(id), true, 'close');
+    if (state.playlists.length) {
+      const playlistHeading = document.createElement('div'); playlistHeading.className = 'option-section-label playlist-option-heading'; playlistHeading.textContent = 'TAMBAHKAN KE DAFTAR PUTAR'; target.append(playlistHeading);
+      state.playlists.forEach(p => addOption(p.name, () => { if (!p.ids.includes(id)) { p.ids.push(id); toast(`Ditambahkan ke ${p.name}.`); } else toast('Lagu sudah ada di daftar putar ini.'); }, false, 'music'));
+    }
   }
   $('#track-dialog')?.showModal();
 }
@@ -2185,6 +2232,7 @@ async function init() {
   if ($('#eq-preset')) $('#eq-preset').value = state.preset;
   if ($('#preset-label')) $('#preset-label').textContent = presetLabels[state.preset] || state.preset;
   if (state.currentId) await selectTrack(state.currentId, false, state.positions[state.currentId] ?? saved.position ?? 0);
+  await applyOutputDevice();
   if (!state.onboarded) welcomeDialog?.showModal();
 }
 initTauriFileDrop();

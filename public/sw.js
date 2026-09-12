@@ -1,6 +1,6 @@
 /* global self, caches, URL, fetch */
 
-const CACHE_NAME = 'atiga-amp-shell-v1';
+const CACHE_NAME = 'atiga-amp-shell-v2';
 const SHELL = ['/', '/index.html', '/icon.svg', '/manifest.webmanifest'];
 
 self.addEventListener('install', event => {

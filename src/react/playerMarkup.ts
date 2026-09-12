@@ -1018,7 +1018,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
   </form>
 </dialog>
 
-<dialog id="track-dialog">
+<dialog id="track-dialog" class="track-options-dialog" aria-labelledby="track-dialog-title">
   <form method="dialog" class="dialog-heading">
     <h2 id="track-dialog-title">Opsi lagu</h2>
     <button class="icon-button" aria-label="Tutup" data-icon="close"></button>

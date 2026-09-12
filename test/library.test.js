@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { esc, formatTime, baseTracks, visibleTracks, demoBlob, demoTracks } from '../src/library.js';
+import { esc, formatTime, baseTracks, visibleTracks, queueIndexAtVisibleIndex, demoBlob, demoTracks } from '../src/library.js';
 
 function fixture(overrides = {}) {
   return {
@@ -65,6 +65,13 @@ test('queue keeps explicit order and duplicates even when title sorting is enabl
   assert.deepEqual(state, before);
   state.search = 'home';
   assert.deepEqual(ids(visibleTracks(state)), ['c', 'c']);
+});
+
+test('queue removal resolves the original index when search hides earlier items', () => {
+  const state = fixture({ queueView: true, search: 'home' });
+  assert.equal(queueIndexAtVisibleIndex(state, 0), 0);
+  state.queue = ['a', 'c', 'b', 'c'];
+  assert.equal(queueIndexAtVisibleIndex(state, 0), 1);
 });
 
 test('empty collections and queues return no tracks', () => {

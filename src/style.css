@@ -3048,6 +3048,64 @@ dialog {
 dialog::backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
 .dialog-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .dialog-heading h2 { margin: 0; font-size: 20px; font-weight: 600; }
+.track-options-dialog {
+  width: min(440px, calc(100vw - 28px));
+  padding: 0;
+  overflow: hidden;
+  border-color: #4b5159;
+  background: linear-gradient(160deg, #24282d 0%, #1b1e22 100%);
+}
+.track-options-dialog .dialog-heading {
+  margin: 0;
+  padding: 18px 20px 16px;
+  background: linear-gradient(135deg, rgba(0, 230, 118, .12), transparent 58%);
+  border-bottom: 1px solid #343a42;
+}
+.track-options-dialog .dialog-heading h2 {
+  max-width: 340px;
+  overflow: hidden;
+  color: #f5f7f8;
+  font-size: clamp(17px, 4vw, 20px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#track-options {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+}
+.option-section-label {
+  padding: 5px 8px 3px;
+  color: #8f989f;
+  font: 700 9px var(--mono);
+  letter-spacing: 1.2px;
+}
+.playlist-option-heading { margin-top: 7px; border-top: 1px solid #343a42; padding-top: 14px; }
+.track-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 1px solid #343a42;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .035);
+  text-align: left;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+.track-option:hover { border-color: rgba(0, 230, 118, .48); background: rgba(0, 230, 118, .1); transform: translateY(-1px); }
+.track-option:active { transform: translateY(0); }
+.track-option:focus-visible { outline: 2px solid #00e676; outline-offset: 2px; }
+.track-option[data-danger] { border-color: rgba(255, 90, 82, .18); }
+.track-option[data-danger]:hover { border-color: rgba(255, 90, 82, .6); background: rgba(255, 90, 82, .1); }
+.track-option-icon { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border-radius: 7px; background: rgba(0, 230, 118, .12); color: #00e676; }
+.track-option[data-danger] .track-option-icon { background: rgba(255, 90, 82, .12); color: #ff817a; }
+.track-option-copy { display: grid; min-width: 0; gap: 2px; }
+.track-option-copy strong { overflow: hidden; color: #edf1f2; font: 600 12px var(--font); text-overflow: ellipsis; white-space: nowrap; }
+.track-option-copy small { color: #899198; font: 9px var(--mono); letter-spacing: .2px; }
+.track-option-arrow { margin-left: auto; color: #6f7a82; font-size: 22px; line-height: 1; }
+.track-option:hover .track-option-arrow { color: #00e676; }
 .eq-controls select { background: #161719; color: #fff; border: 1px solid #444; padding: 4px 8px; border-radius: 3px; }
 .eq-bands { display: flex; justify-content: space-between; background: #121315; padding: 14px 8px; border-radius: 4px; margin: 16px 0; border: 1px solid #2a2c2e; }
 .eq-band { display: flex; flex-direction: column; align-items: center; gap: 8px; font: 7px var(--mono); color: #888; }

@@ -52,3 +52,18 @@ export function visibleTracks(state) {
   if (state.sortAsc && !state.queueView) tracks.sort((a,b) => a.title.localeCompare(b.title));
   return tracks;
 }
+
+export function queueIndexAtVisibleIndex(state, visibleIndex) {
+  if (!state.queueView || !Number.isInteger(visibleIndex) || visibleIndex < 0) return -1;
+  const search = String(state.search || '').toLowerCase();
+  let visible = 0;
+  for (let index = 0; index < state.queue.length; index++) {
+    const track = state.tracks.find(item => item.id === state.queue[index]);
+    if (!track) continue;
+    const haystack = [track.title, track.artist, track.album].join(' ').toLowerCase();
+    if (search && !haystack.includes(search)) continue;
+    if (visible === visibleIndex) return index;
+    visible++;
+  }
+  return -1;
+}
