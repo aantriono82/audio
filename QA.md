@@ -1,41 +1,58 @@
-# Pemeriksaan versi 0.1
+# Pemeriksaan Atiga Amp 0.1.0
 
-Diperiksa pada browser Chrome di lingkungan Linux, 9 September 2026.
+Pemeriksaan desktop terbaru dilakukan pada Linux Mint 22.3 x64, 12 September 2026. Pemeriksaan browser sebelumnya dilakukan dengan Chrome di Linux pada 9 September 2026.
+
+## Hasil otomatis
 
 | Pemeriksaan | Hasil |
 | --- | --- |
-| Syntax JavaScript (`npm run check`) | Lulus |
-| Audio demo: play, waktu berjalan, pause, seek, next | Lulus |
-| Favorit dan filter favorit | Lulus |
-| Pencarian judul | Lulus |
-| Membuat playlist dan menambahkan lagu melalui menu | Lulus |
-| Preset EQ Warm dan nilai sepuluh slider | Lulus |
-| Menambahkan antrean dan mengonsumsi lagu melalui Next | Lulus |
-| Membuka / menutup mode compact dan equalizer | Lulus |
-| Impor WAV lokal melalui input file | Lulus, memakai WAV hasil demo sebagai fixture |
-| Reload: file impor, playlist, EQ, posisi 9 detik, tanpa autoplay | Lulus |
-| Layout desktop tanpa overflow horizontal | Lulus |
-| Layout mobile emulasi 390 px tanpa overflow horizontal | Lulus |
-| Console error / warning di pemeriksaan desktop | Tidak ditemukan |
-| Dialog sambutan, audio demo, dan mode ringkas | Ditambahkan; perlu uji klik ulang setelah reset storage |
-| Ekspor / impor cadangan library | Ditambahkan; perlu uji dengan file JSON lintas profil |
-| PWA manifest / service worker shell | Ditambahkan; perlu uji install dan reload offline |
+| ESLint dan unit/regresi JavaScript (`npm run check`) | Lulus, 41 tes |
+| TypeScript dan Vite production (`npm run build`) | Lulus |
+| Rust format dan Clippy dengan warning sebagai error (`npm run desktop:check`) | Lulus |
+| Unit test penyimpanan native (`npm run desktop:test`) | Lulus, 6 tes |
+| Build Linux `.deb` | Lulus |
+| Build Linux `.AppImage` dengan framework media | Lulus |
+| Tauri memuat konfigurasi khusus Windows (`--no-bundle`) | Lulus |
+| Smoke test binary dari `.deb` | Lulus |
+| Smoke test `.AppImage` secara langsung | Lulus |
 
-Pemeriksaan browser dilakukan secara interaktif dan melalui DOM; hasil pada tabel ini merupakan pemeriksaan manual sebelum penambahan suite regresi otomatis. Uji ini belum membuktikan kompatibilitas Windows, semua codec, kualitas audio secara subjektif, shortcut media fisik, pengurutan dengan drag fisik, atau ketahanan kuota penyimpanan. Screenshot mobile penuh gagal karena koneksi browser terputus; pemeriksaan ukuran 390 px berhasil sebelum koneksi terputus. Browser dapat dibuka kembali dan pemeriksaan desktop dilanjutkan.
+Smoke test menjalankan Tauri dan WebKitGTK sebenarnya pada display virtual dengan direktori data pengguna terisolasi. Skenario yang lulus:
 
+- pembukaan pertama tanpa resource internet dan tombol Play memilih demo;
+- penolakan IPC untuk membaca `/etc/passwd` di luar scope;
+- pemindaian folder bersarang bernama Unicode dan pengabaian file non-audio;
+- impor native, deteksi duplikat saat pemindaian ulang, dan penyimpanan album dari nama folder;
+- pemutaran salinan koleksi setelah folder sumber dipindahkan;
+- penulisan favorit ke `settings.json`;
+- restart memulihkan koleksi dan favorit tanpa autoplay.
 
-## Suite otomatis
+Unit test Rust mencakup salinan audio yang tetap tersedia setelah sumber dihapus, penolakan traversal/overwrite, metadata koleksi rusak, penulisan settings atomik, fingerprint pemindaian yang stabil, dan symlink yang tidak diikuti. Suite JavaScript mencakup antrean penulisan settings, library, UI contract, format audio demo, serta regresi server.
 
-Jalankan `npm ci`, lalu `npm run check` untuk lint JavaScript dan unit test. Suite di `test/library.test.js` menguji modul produksi `src/library.js`: escaping metadata, waktu, koleksi/favorit/riwayat/playlist, pencarian, antrean, serta format dan sinyal WAV demo. GitHub Actions menjalankan pemeriksaan yang sama pada push dan pull request.
+## Artefak Linux lokal
 
-Suite ini belum menggantikan pemeriksaan browser pada tabel di atas. Saat mengubah playback, DOM, impor, penyimpanan, HTML, CSS, atau server, lakukan juga pemeriksaan manual yang relevan dan catat hasilnya. Kontrak UI di `test/ui-contract.test.js` menjaga entry point penting tetap tersedia; pengujian browser interaktif penuh masih diperlukan sebelum rilis desktop.
+| Paket | Ukuran | SHA-256 |
+| --- | ---: | --- |
+| `Atiga Amp_0.1.0_amd64.AppImage` | 166.865.400 byte | `6d8021bacc8590c51ee83bb65c928a1a88c3d7f5964045e0d8b117e6a041a3f7` |
+| `Atiga Amp_0.1.0_amd64.deb` | 3.551.976 byte | `b552ba8c6be4ac4e45377c7bd31f8324e68c3809d6b0dd29a6739b5852724ff2` |
 
-## Pemeriksaan tambahan versi terbaru
+Metadata `.deb` telah diperiksa: arsitektur `amd64`, versi `0.1.0`, dan dependensi WebKitGTK, GTK, serta GStreamer tercantum tanpa duplikasi. `SHA256SUMS.txt` dibuat bersama artefak.
 
-1. Hapus data situs, buka aplikasi pada lebar 390 px, lalu pastikan dialog sambutan muncul dan mode ringkas menampilkan player di bagian bawah.
-2. Pilih “Jelajahi audio demo”, putar lagu, pindah lagu, reload, lalu pastikan lagu dan posisi terakhir dipulihkan tanpa autoplay.
-3. Impor beberapa file audio, batalkan di tengah proses, lalu pastikan jumlah lagu dan pesan hasil tetap benar.
-4. Buka Pengaturan, ekspor cadangan, hapus data situs, impor kembali JSON, lalu periksa playlist dan pengaturan.
-5. Jalankan build production, buka sekali saat online, matikan jaringan, dan reload untuk memastikan shell PWA terbuka.
+## Hasil browser
 
-Regresi server di `test/server.test.js` mencakup port tidak valid, port sibuk dengan fallback, port eksplisit sibuk, serta respons HTTP halaman dan modul JavaScript. Test ini memerlukan izin membuka socket loopback.
+| Pemeriksaan | Hasil |
+| --- | --- |
+| Audio demo: play, pause, seek, next, dan waktu berjalan | Lulus |
+| Favorit, filter favorit, dan pencarian judul | Lulus |
+| Playlist dan menu penambahan lagu | Lulus |
+| Preset EQ Warm dan sepuluh slider | Lulus |
+| Antrean dan konsumsi melalui Next | Lulus |
+| Mode compact dan equalizer | Lulus |
+| Impor WAV lokal dan pemulihan setelah reload tanpa autoplay | Lulus |
+| Layout desktop dan emulasi mobile 390 px tanpa overflow horizontal | Lulus |
+| Resource font lokal dan tidak ada request runtime ke internet | Lulus |
+
+## Batas validasi rilis
+
+Workflow `.github/workflows/desktop.yml` menyiapkan build Windows 2022 untuk NSIS `.exe` dan `.msi`, serta build Ubuntu 22.04 untuk `.deb` dan `.AppImage`. Runner Linux juga menjalankan smoke test AppImage. Binary installer Windows belum dibangun atau dipasang pada mesin Windows dalam pemeriksaan lokal ini; jalankan workflow dan uji instalasi Windows 10/11 sebelum publikasi.
+
+Dialog file OS, drag fisik dari file manager, install/uninstall sistem, upgrade versi lama, seluruh variasi codec, tombol media fisik, dan kualitas audio subjektif tetap memerlukan uji penerimaan manual pada tiap OS sasaran. Daftar langkahnya ada di [docs/DESKTOP.md](docs/DESKTOP.md).

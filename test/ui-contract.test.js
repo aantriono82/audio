@@ -23,8 +23,7 @@ test('offline app contract includes a manifest and service worker registration',
   assert.match(manifest, /"start_url": "\/"/);
 });
 
-test('critical CSS is owned by the module entry and external fonts stay off the render path', () => {
+test('critical CSS is owned by the module entry and startup needs no remote fonts', () => {
   assert.doesNotMatch(index, /rel="stylesheet" href="\/src\/style\.css"/);
-  assert.match(index, /rel="preload" as="style"[^>]+fonts\.googleapis\.com/);
-  assert.match(index, /display=optional/);
+  assert.doesNotMatch(index, /fonts\.(googleapis|gstatic)\.com/);
 });

@@ -844,6 +844,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 
           <button type="button" class="icon-button pl-tool-btn" id="sort" aria-label="Urutkan lagu berdasarkan judul" title="Urutkan berdasarkan judul" data-icon="sort"></button>
           <button type="button" class="icon-button pl-tool-btn" id="play-session" aria-label="Tambah musik" title="Tambah musik" data-icon="plus"></button>
+          <button type="button" class="icon-button pl-tool-btn" id="import-folder" aria-label="Tambah folder musik" title="Tambah folder musik" data-icon="folder-plus"></button>
         </div>
       </div>
 
@@ -911,7 +912,6 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
         <canvas id="spectrum"></canvas>
         <button id="eq-toggle"></button>
         <span id="preset-label"></span>
-        <button id="import-folder"></button>
         <button id="import"></button>
         <button id="new-playlist"></button>
         <span id="spectrum-status"></span>

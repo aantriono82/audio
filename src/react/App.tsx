@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { isTauri } from '@tauri-apps/api/core';
 import { playerMarkup } from './playerMarkup';
 
 export function App() {
@@ -10,7 +11,7 @@ export function App() {
       onboarded = JSON.parse(localStorage.getItem('atiga-state') || '{}')?.onboarded === true;
     } catch { /* The runtime will recover from invalid state and start fresh. */ }
     const welcomeDialog = document.getElementById('welcome-dialog');
-    if (!onboarded && welcomeDialog instanceof HTMLDialogElement && !welcomeDialog.open) {
+    if (!isTauri() && !onboarded && welcomeDialog instanceof HTMLDialogElement && !welcomeDialog.open) {
       welcomeDialog.showModal();
     }
 

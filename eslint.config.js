@@ -11,5 +11,5 @@ export default [
     rules: { eqeqeq: ['error', 'always'], 'no-var': 'error', 'prefer-const': 'error' }
   },
   { files: ['src/**/*.js'], languageOptions: { globals: globals.browser } },
-  { files: ['*.{js,mjs}', 'test/**/*.js'], languageOptions: { globals: globals.node } }
+  { files: ['*.{js,mjs}', 'test/**/*.js', 'scripts/**/*.mjs'], languageOptions: { globals: globals.node } }
 ];
