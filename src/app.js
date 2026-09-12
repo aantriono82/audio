@@ -1654,9 +1654,16 @@ async function importFiles(files) {
       const fingerprint = `${entry.name}:${entry.size}:${entry.lastModified}`;
       if (state.tracks.some(t => t.fingerprint === fingerprint)) { duplicates++; processed++; updateImportProgress(processed, accepted.length, `Melewati duplikat: ${entry.name}`); continue; }
       let file = entry;
-      const duration = await readDuration(entry.path ? entry : file); if (!duration) { unsupported++; processed++; updateImportProgress(processed, accepted.length, `Format tidak didukung atau rusak: ${entry.name}`); continue; }
+      let duration = await readDuration(entry.path ? entry : file);
+      if (!duration && entry.path) {
+        try {
+          file = await readNativeAudio(entry);
+          duration = await readDuration(file);
+        } catch { /* The common path below reports the unreadable file. */ }
+      }
+      if (!duration) { unsupported++; processed++; updateImportProgress(processed, accepted.length, `Format tidak didukung atau rusak: ${entry.name}`); continue; }
       if (entry.path) {
-        try { file = await readNativeAudio(entry); }
+        try { if (file === entry) file = await readNativeAudio(entry); }
         catch { unreadable++; processed++; updateImportProgress(processed, accepted.length, `File tidak dapat dibaca: ${entry.name}`); continue; }
       }
       const fallback = metadataFromFilename(file), metadata = await readMetadataOffThread(file);

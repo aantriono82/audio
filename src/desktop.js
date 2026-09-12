@@ -16,22 +16,26 @@ function audioType(name) {
   return { mp3: 'audio/mpeg', wav: 'audio/wav', flac: 'audio/flac', ogg: 'audio/ogg', opus: 'audio/ogg', m4a: 'audio/mp4', aac: 'audio/aac', aiff: 'audio/aiff', webm: 'audio/webm' }[extension] || 'application/octet-stream';
 }
 
+async function nativeBlob(path) {
+  try {
+    const response = await fetch(nativeURL(path), { signal: AbortSignal.timeout(5000) });
+    if (response.ok) return response.blob();
+  } catch { /* Fall back to the authorized native command below. */ }
+  const bytes = await invoke('read_audio_file', { path });
+  return new Blob([new Uint8Array(bytes)], { type: audioType(path) });
+}
+
 export async function readNativeAudio(entry) {
   // Fetch through Tauri's asset protocol instead of serializing the complete
   // file through IPC. Large files otherwise block WebKitGTK while the Vec<u8>
   // is copied into JavaScript.
-  const response = await fetch(nativeURL(entry.path));
-  if (!response.ok) throw new Error(`Audio tidak dapat dibaca (${response.status}).`);
-  const file = new File([await response.blob()], entry.name, { type: audioType(entry.name), lastModified: entry.lastModified });
+  const file = new File([await nativeBlob(entry.path)], entry.name, { type: audioType(entry.name), lastModified: entry.lastModified });
   Object.defineProperty(file, 'webkitRelativePath', { value: entry.relativePath });
   return file;
 }
 
 export async function nativeAudioBlob(path) {
-  const response = await fetch(nativeURL(path));
-  if (!response.ok) throw new Error(`Audio tidak dapat dibaca (${response.status}).`);
-  const blob = await response.blob();
-  return blob.type ? blob : new Blob([blob], { type: audioType(path) });
+  return nativeBlob(path);
 }
 
 export async function saveNativeTrack(path, track) {
