@@ -1385,6 +1385,9 @@ document.addEventListener('dragover', event => { preventFileDrop(event); });
 document.addEventListener('dragleave', event => { if (!carriesFiles(event.dataTransfer)) return; if (--dragDepth <= 0) { dragDepth = 0; const overlay = $('#drop-overlay'); if (overlay) overlay.hidden = true; } });
 document.addEventListener('drop', event => { if (!preventFileDrop(event)) return; const overlay = $('#drop-overlay'); if (overlay) overlay.hidden = true; dragDepth = 0; if (event.dataTransfer.files.length) importFiles(event.dataTransfer.files); });
 async function initTauriFileDrop() {
+  // The Tauri API package can also be imported by the regular Vite build, but
+  // its window/webview helpers require the Tauri runtime to be present.
+  if (!window.__TAURI_INTERNALS__) return;
   try {
     const [{ getCurrentWebview }, { invoke }] = await Promise.all([import('@tauri-apps/api/webview'), import('@tauri-apps/api/core')]);
     await getCurrentWebview().onDragDropEvent(async event => {
