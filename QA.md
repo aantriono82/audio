@@ -35,7 +35,7 @@ Unit test Rust mencakup salinan audio yang tetap tersedia setelah sumber dihapus
 | Paket | Ukuran | SHA-256 |
 | --- | ---: | --- |
 | `Atiga Amp_0.1.0_amd64.AppImage` | 166.865.400 byte | `6d8021bacc8590c51ee83bb65c928a1a88c3d7f5964045e0d8b117e6a041a3f7` |
-| `Atiga Amp_0.1.0_amd64.deb` | 3.551.964 byte | `190a4ab01b792ea88ebeecc1cc3224211c31cbf6d1c77e903d970a10fb02722c` |
+| `Atiga Amp_0.1.0_amd64.deb` | 3.551.946 byte | `dbf4a049f6f865682ca03e811f8c4d3afec7b710816d85c4be58bd363a63c641` |
 
 Metadata `.deb` telah diperiksa: arsitektur `amd64`, versi `0.1.0`, dan dependensi WebKitGTK, GTK, serta GStreamer tercantum tanpa duplikasi. `SHA256SUMS.txt` dibuat bersama artefak.
 
