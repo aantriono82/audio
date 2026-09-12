@@ -17,18 +17,13 @@ function audioType(name) {
 }
 
 async function nativeBlob(path) {
-  try {
-    const response = await fetch(nativeURL(path), { signal: AbortSignal.timeout(5000) });
-    if (response.ok) {
-      // The asset protocol may return application/octet-stream. Preserve the
-      // codec hint from the filename so WebKitGTK/GStreamer selects the right
-      // demuxer for the Blob URL used by the player.
-      const blob = await response.blob();
-      return new Blob([blob], { type: audioType(path) });
-    }
-  } catch { /* Fall back to the authorized native command below. */ }
-  const bytes = await invoke('read_audio_file', { path });
-  return new Blob([new Uint8Array(bytes)], { type: audioType(path) });
+  const response = await fetch(nativeURL(path), { signal: AbortSignal.timeout(30000) });
+  if (!response.ok) throw new Error(`Audio tidak dapat dibaca (${response.status}).`);
+  // The asset protocol may return application/octet-stream. Preserve the
+  // codec hint from the filename so WebKitGTK/GStreamer selects the right
+  // demuxer for the Blob URL used by the player.
+  const blob = await response.blob();
+  return new Blob([blob], { type: audioType(path) });
 }
 
 export async function readNativeAudio(entry) {

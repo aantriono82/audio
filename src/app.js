@@ -338,7 +338,7 @@ const state = {
 };
 const audio = $('#audio');
 state.playlists = state.playlists.filter(playlist => !['after-hours', 'slow-living'].includes(playlist.id));
-let context, analyser, analyserL, analyserR, filters = [], compressor, masterGain, panner, db, loadedId, playbackToken = 0, lastSavedSecond = -1, directAudio = false;
+let context, analyser, analyserL, analyserR, filters = [], compressor, masterGain, panner, db, loadedId, pendingStartupPosition = 0, playbackToken = 0, lastSavedSecond = -1, directAudio = false;
 let pendingStartCleanup;
 let dspBassFilter, dspEchoDelay, dspEchoFeedback, dspEchoGain, dspReverbConvolver, dspReverbGain, dspChorusDelay, dspChorusGain, dspChorusLfo, dspVoiceDryGain, dspVoiceWetGain, dspVoiceSplitter, dspVoiceMerger, dspVoiceInvGain, dspSumGain;
 let giantVolKnob, deckVolKnob, balKnob, preampKnob, bassKnob, trebleKnob;
@@ -789,6 +789,15 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
   pendingStartCleanup?.(); pendingStartCleanup = undefined;
   audio.pause(); clearTimeout(crossfadeTimer); crossfadeStarted = false; state.currentId = id; loadedId = id;
   state.playCounts[id] = (state.playCounts[id] || 0) + (autoplay ? 1 : 0);
+  // Restoring the selected track must not read the whole audio file while the
+  // window is starting. Load it only after the user presses Play.
+  if (!autoplay && Number.isFinite(requestedPosition)) {
+    loadedId = null;
+    pendingStartupPosition = Math.max(0, requestedPosition);
+    renderCurrent(); renderTracks(); updateProgress();
+    return;
+  }
+  pendingStartupPosition = 0;
   try {
     const url = await sourceURL(track);
     if (token !== playbackToken) return;
@@ -827,7 +836,7 @@ function maybeCrossfade() {
   crossfadeTimer = setTimeout(() => { advance(1, true); setTimeout(() => { if (masterGain) { masterGain.gain.cancelScheduledValues(context.currentTime); applyAudioSettings(); } }, 80); }, Math.max(50, state.crossfade * 700));
 }
 async function togglePlay() {
-  if (!loadedId) return selectTrack(current()?.id);
+  if (!loadedId) return selectTrack(current()?.id, true, pendingStartupPosition);
   if (!audio.paused) {
     if (state.dsp?.fadePause && masterGain && context) {
       masterGain.gain.setTargetAtTime(0.0001, context.currentTime, 0.08);
