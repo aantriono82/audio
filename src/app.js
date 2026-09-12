@@ -845,19 +845,52 @@ function setupRackControls() {
   bindRotaryKnob($('#knob-enhancer'), { min: 0, max: 10, initial: 5, step: 1, angleMin: -140, angleMax: 140, onChange: v => toast(`Enhancer: ${v}`) });
   bindRotaryKnob($('#knob-reverb'), { min: 0, max: 10, initial: 2, step: 1, angleMin: -140, angleMax: 140, onChange: v => toast(`Reverb: ${v}`) });
 
+  const tapeButtons = $$('#btn-tape-normal, #btn-tape-cro2, #btn-tape-metal');
   const sourceRotary = $('#deck-source-rotary');
+  const sourceKnob = sourceRotary?.querySelector('.rotary-knob');
+  const tapeModes = ['normal', 'cro2', 'metal'];
+  let sourcePos = Number(sourceKnob?.dataset.pos) || 0;
+
+  const selectTapeMode = (mode, showToast = true) => {
+    const selectedMode = tapeModes.includes(mode) ? mode : 'normal';
+    const selectedIndex = tapeModes.indexOf(selectedMode);
+    const selectedButton = tapeButtons[selectedIndex];
+    const deckUnit = $('#cassette-deck-unit');
+
+    tapeButtons.forEach(button => {
+      const active = button === selectedButton;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+
+    if (deckUnit) {
+      deckUnit.classList.remove('tape-normal', 'tape-cro2', 'tape-metal');
+      deckUnit.classList.add(`tape-${selectedMode}`);
+      deckUnit.dataset.tapeType = selectedMode.toUpperCase();
+    }
+
+    sourcePos = selectedIndex;
+    if (sourceKnob) {
+      sourceKnob.dataset.pos = String(sourcePos);
+      sourceKnob.style.transform = `rotate(${(sourcePos - 1) * 45}deg)`;
+    }
+
+    if (showToast) toast(`Tape Bias/EQ: ${selectedMode.toUpperCase()}`);
+  };
+
+  tapeButtons.forEach((button, index) => {
+    button.onclick = () => selectTapeMode(tapeModes[index]);
+  });
+
   if (sourceRotary) {
-    const knob = sourceRotary.querySelector('.rotary-knob');
-    let pos = 0;
     sourceRotary.onclick = () => {
-      pos = (pos + 1) % 3;
-      if (knob) {
-        knob.dataset.pos = String(pos);
-        knob.style.transform = `rotate(${(pos - 1) * 45}deg)`;
-      }
-      toast(`Source Channel: ${['A', 'B', 'C'][pos]}`);
+      sourcePos = (sourcePos + 1) % tapeModes.length;
+      selectTapeMode(tapeModes[sourcePos], false);
+      toast(`Source Channel: ${['A', 'B', 'C'][sourcePos]} · Tape ${tapeModes[sourcePos].toUpperCase()}`);
     };
   }
+
+  selectTapeMode(tapeModes[sourcePos], false);
 
   const playBtn = $('#play');
   if (playBtn) playBtn.onclick = togglePlay;
@@ -929,22 +962,6 @@ function setupRackControls() {
       toggleDrawer();
     };
   }
-
-  $$('#btn-tape-normal, #btn-tape-cro2, #btn-tape-metal').forEach(btn => {
-    btn.onclick = () => {
-      $$('#btn-tape-normal, #btn-tape-cro2, #btn-tape-metal').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const type = btn.id.replace('btn-tape-', '').toUpperCase();
-      const deckUnit = $('#cassette-deck-unit');
-      if (deckUnit) {
-        deckUnit.classList.remove('tape-normal', 'tape-cro2', 'tape-metal');
-        deckUnit.classList.add(`tape-${type.toLowerCase()}`);
-        deckUnit.dataset.tapeType = type;
-      }
-      $$('#btn-tape-normal, #btn-tape-cro2, #btn-tape-metal').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
-      toast(`Tape Bias/EQ: ${type}`);
-    };
-  });
 
   const dbxBadge = $('#dbx-badge');
   if (dbxBadge) {
