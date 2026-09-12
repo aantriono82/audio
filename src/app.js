@@ -1,6 +1,6 @@
 import { esc, formatTime, demoBlob, demoTracks, baseTracks, visibleTracks, queueIndexAtVisibleIndex } from './library.js';
 import { isAudioFile, metadataFromFilename, readEmbeddedMetadata } from './import.js';
-import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, saveNativeTrack, removeNativeTrack, nativeURL, onNativeClose } from './desktop.js';
+import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, nativeAudioBlob, saveNativeTrack, removeNativeTrack, nativeURL, onNativeClose } from './desktop.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -625,11 +625,12 @@ function applyAudioSettings() {
 }
 async function sourceURL(track) {
   if (urls.has(track.id)) return urls.get(track.id);
-  // A native track is already inside the Tauri asset scope. Let WebKitGTK
-  // stream it from the asset protocol; sending the complete file through IPC
+  // Fetch asynchronously from the Tauri asset scope and use a same-origin Blob
+  // URL for WebKitGTK media playback. Sending the complete file through IPC
   // makes the window appear frozen for large albums.
   if (desktop && track.nativePath) {
-    const url = nativeURL(track.nativePath);
+    const blob = await nativeAudioBlob(track.nativePath);
+    const url = URL.createObjectURL(blob);
     urls.set(track.id, url);
     return url;
   }
