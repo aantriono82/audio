@@ -33,6 +33,7 @@ test('filename metadata uses Artist - Title and folder album fallbacks', () => {
   const file = new File(['x'], 'Nujabes - Feather.mp3', { type: 'audio/mpeg' });
   Object.defineProperty(file, 'webkitRelativePath', { value: 'Music/Nujabes/ Nujabes - Feather.mp3' });
   assert.deepEqual(metadataFromFilename(file), { title: 'Feather', artist: 'Nujabes', album: 'Nujabes' });
+  assert.deepEqual(metadataFromFilename({ name: 'Nujabes - Feather.mp3', relativePath: 'Music/Nujabes/Nujabes - Feather.mp3' }), { title: 'Feather', artist: 'Nujabes', album: 'Nujabes' });
 });
 
 test('ID3 metadata is preferred and replay gain is parsed', async () => {

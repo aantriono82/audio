@@ -17,15 +17,21 @@ function audioType(name) {
 }
 
 export async function readNativeAudio(entry) {
-  const bytes = await invoke('read_audio_file', { path: entry.path });
-  const file = new File([new Uint8Array(bytes)], entry.name, { type: audioType(entry.name), lastModified: entry.lastModified });
+  // Fetch through Tauri's asset protocol instead of serializing the complete
+  // file through IPC. Large files otherwise block WebKitGTK while the Vec<u8>
+  // is copied into JavaScript.
+  const response = await fetch(nativeURL(entry.path));
+  if (!response.ok) throw new Error(`Audio tidak dapat dibaca (${response.status}).`);
+  const file = new File([await response.blob()], entry.name, { type: audioType(entry.name), lastModified: entry.lastModified });
   Object.defineProperty(file, 'webkitRelativePath', { value: entry.relativePath });
   return file;
 }
 
 export async function nativeAudioBlob(path) {
-  const bytes = await invoke('read_audio_file', { path });
-  return new Blob([new Uint8Array(bytes)], { type: audioType(path) });
+  const response = await fetch(nativeURL(path));
+  if (!response.ok) throw new Error(`Audio tidak dapat dibaca (${response.status}).`);
+  const blob = await response.blob();
+  return blob.type ? blob : new Blob([blob], { type: audioType(path) });
 }
 
 export async function saveNativeTrack(path, track) {
@@ -39,8 +45,28 @@ export async function saveNativeTrack(path, track) {
 export async function onNativeClose(handler) {
   const { getCurrentWindow } = await import('@tauri-apps/api/window');
   const window = getCurrentWindow();
+  let closing = false;
   return window.onCloseRequested(event => {
+    // destroy() may emit another close request on some WebKitGTK/Tauri
+    // combinations. Let that final request pass through without starting a
+    // second save operation.
+    if (closing) return;
     event.preventDefault();
-    void handler().then(close => { if (close) return window.destroy(); }).catch(console.error);
+    void (async () => {
+      try {
+        const close = await Promise.race([
+          Promise.resolve().then(handler),
+          new Promise(resolve => setTimeout(() => resolve(true), 1500))
+        ]);
+        if (close) {
+          closing = true;
+          await window.destroy();
+        }
+      } catch (error) {
+        console.error('Atiga Amp close handler failed', error);
+        closing = true;
+        await window.destroy();
+      }
+    })();
   });
 }

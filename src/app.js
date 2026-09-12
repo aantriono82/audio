@@ -1,6 +1,6 @@
 import { esc, formatTime, demoBlob, demoTracks, baseTracks, visibleTracks, queueIndexAtVisibleIndex } from './library.js';
 import { isAudioFile, metadataFromFilename, readEmbeddedMetadata } from './import.js';
-import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, nativeAudioBlob, saveNativeTrack, removeNativeTrack, nativeURL, onNativeClose } from './desktop.js';
+import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, saveNativeTrack, removeNativeTrack, nativeURL, onNativeClose } from './desktop.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -302,10 +302,6 @@ async function chooseFolder() { if (desktop) { await importNativeSelection('fold
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('atiga-state') || '{}') || {}; } catch { /* Start fresh if browser data is invalid. */ }
 let nativeSettingsWritable = true;
-if (desktop) {
-  try { saved = (await loadNativeSettings()) || saved; }
-  catch (error) { nativeSettingsWritable = false; toast(`Pengaturan tidak dapat dibaca; file dipertahankan: ${error}`); }
-}
 const savedPositions = saved.positions && typeof saved.positions === 'object' ? saved.positions : {};
 const state = {
   tracks: [...demoTracks], favorites: new Set(Array.isArray(saved.favorites) ? saved.favorites : []),
@@ -343,6 +339,7 @@ const state = {
 const audio = $('#audio');
 state.playlists = state.playlists.filter(playlist => !['after-hours', 'slow-living'].includes(playlist.id));
 let context, analyser, analyserL, analyserR, filters = [], compressor, masterGain, panner, db, loadedId, playbackToken = 0, lastSavedSecond = -1, directAudio = false;
+let pendingStartCleanup;
 let dspBassFilter, dspEchoDelay, dspEchoFeedback, dspEchoGain, dspReverbConvolver, dspReverbGain, dspChorusDelay, dspChorusGain, dspChorusLfo, dspVoiceDryGain, dspVoiceWetGain, dspVoiceSplitter, dspVoiceMerger, dspVoiceInvGain, dspSumGain;
 let giantVolKnob, deckVolKnob, balKnob, preampKnob, bassKnob, trebleKnob;
 let crossfadeTimer, crossfadeStarted = false;
@@ -375,6 +372,52 @@ function readMetadataOffThread(file) {
 }
 const findTrack = id => state.tracks.find(t => t.id === id);
 const current = () => findTrack(state.currentId) || state.tracks[0];
+function applySavedState(nextSaved) {
+  if (!nextSaved || typeof nextSaved !== 'object') return;
+  state.favorites = new Set(Array.isArray(nextSaved.favorites) ? nextSaved.favorites : []);
+  state.playlists = Array.isArray(nextSaved.playlists)
+    ? nextSaved.playlists.filter(p => p && typeof p.name === 'string' && Array.isArray(p.ids) && !['after-hours', 'slow-living'].includes(p.id))
+    : [];
+  state.recent = Array.isArray(nextSaved.recent) ? nextSaved.recent : [];
+  state.currentId = typeof nextSaved.currentId === 'string' ? nextSaved.currentId : null;
+  state.queue = Array.isArray(nextSaved.queue) ? nextSaved.queue : [];
+  state.positions = nextSaved.positions && typeof nextSaved.positions === 'object' ? nextSaved.positions : {};
+  state.shuffle = Boolean(nextSaved.shuffle);
+  state.repeat = [0, 1, 2].includes(nextSaved.repeat) ? nextSaved.repeat : 0;
+  state.volume = Number.isFinite(nextSaved.volume) ? Math.min(1, Math.max(0, nextSaved.volume)) : .7;
+  state.eq = Array.isArray(nextSaved.eq) && nextSaved.eq.length === 10
+    ? nextSaved.eq.map(n => Number.isFinite(n) ? Math.max(-12, Math.min(12, n)) : 0)
+    : Array(10).fill(0);
+  state.preset = typeof nextSaved.preset === 'string' ? nextSaved.preset : 'Flat';
+  state.theme = typeof nextSaved.theme === 'string' ? nextSaved.theme : 'ember';
+  state.glow = nextSaved.glow !== false;
+  state.gapless = nextSaved.gapless !== false;
+  state.compact = typeof nextSaved.compact === 'boolean' ? nextSaved.compact : state.compact;
+  state.onboarded = nextSaved.onboarded === true;
+  state.crossfade = Number.isFinite(nextSaved.crossfade) ? Math.max(0, Math.min(12, nextSaved.crossfade)) : 0;
+  state.preamp = Number.isFinite(nextSaved.preamp) ? Math.max(-12, Math.min(12, nextSaved.preamp)) : 0;
+  state.balance = Number.isFinite(nextSaved.balance) ? Math.max(-1, Math.min(1, nextSaved.balance)) : 0;
+  state.replayGain = nextSaved.replayGain !== false;
+  state.notifications = nextSaved.notifications === true;
+  state.outputDevice = typeof nextSaved.outputDevice === 'string' ? nextSaved.outputDevice : 'default';
+  state.panelOrder = Array.isArray(nextSaved.panelOrder) ? nextSaved.panelOrder : ['sidebar', 'library', 'now'];
+  state.playCounts = nextSaved.playCounts && typeof nextSaved.playCounts === 'object' ? nextSaved.playCounts : {};
+  state.ampHidden = Boolean(nextSaved.ampHidden);
+  state.dsp = {
+    echo: Number.isFinite(nextSaved.dsp?.echo) ? Math.max(0, Math.min(100, nextSaved.dsp.echo)) : 0,
+    reverb: Number.isFinite(nextSaved.dsp?.reverb) ? Math.max(0, Math.min(100, nextSaved.dsp.reverb)) : 0,
+    flanger: Number.isFinite(nextSaved.dsp?.flanger) ? Math.max(0, Math.min(100, nextSaved.dsp.flanger)) : 0,
+    chorus: Number.isFinite(nextSaved.dsp?.chorus) ? Math.max(0, Math.min(100, nextSaved.dsp.chorus)) : 0,
+    bass: Number.isFinite(nextSaved.dsp?.bass) ? Math.max(-12, Math.min(12, nextSaved.dsp.bass)) : 0,
+    stereo: Number.isFinite(nextSaved.dsp?.stereo) ? Math.max(0, Math.min(100, nextSaved.dsp.stereo)) : 0,
+    speed: Number.isFinite(nextSaved.dsp?.speed) ? Math.max(50, Math.min(150, nextSaved.dsp.speed)) : 100,
+    tempo: Number.isFinite(nextSaved.dsp?.tempo) ? Math.max(50, Math.min(150, nextSaved.dsp.tempo)) : 100,
+    pitch: Number.isFinite(nextSaved.dsp?.pitch) ? Math.max(-12, Math.min(12, nextSaved.dsp.pitch)) : 0,
+    voiceRemover: Boolean(nextSaved.dsp?.voiceRemover),
+    fadePause: nextSaved.dsp?.fadePause !== false,
+    fadeNav: nextSaved.dsp?.fadeNav !== false
+  };
+}
 function persist() {
   try {
     if (state.currentId && Number.isFinite(audio.currentTime)) state.positions[state.currentId] = Math.max(0, audio.currentTime);
@@ -582,7 +625,15 @@ function applyAudioSettings() {
 }
 async function sourceURL(track) {
   if (urls.has(track.id)) return urls.get(track.id);
-  const blob = track.demo ? demoBlob(track) : track.nativePath ? await nativeAudioBlob(track.nativePath) : track.file;
+  // A native track is already inside the Tauri asset scope. Let WebKitGTK
+  // stream it from the asset protocol; sending the complete file through IPC
+  // makes the window appear frozen for large albums.
+  if (desktop && track.nativePath) {
+    const url = nativeURL(track.nativePath);
+    urls.set(track.id, url);
+    return url;
+  }
+  const blob = track.demo ? demoBlob(track) : track.file;
   if (!blob) throw new Error('File tidak tersedia. Silakan impor ulang.');
   const url = URL.createObjectURL(blob); urls.set(track.id, url); return url;
 }
@@ -731,26 +782,36 @@ function renderModes() {
   deckVolKnob?.setVal(state.volume, false);
 }
 function render() { renderNav(); renderGrouping(); renderTracks(); renderCurrent(); renderModes(); }
-async function selectTrack(id, autoplay = true, requestedPosition = 0) {
+async function selectTrack(id, autoplay = true, requestedPosition) {
   const track = findTrack(id); if (!track) return;
-  const token = ++playbackToken; audio.pause(); clearTimeout(crossfadeTimer); crossfadeStarted = false; state.currentId = id; loadedId = id;
+  const token = ++playbackToken;
+  pendingStartCleanup?.(); pendingStartCleanup = undefined;
+  audio.pause(); clearTimeout(crossfadeTimer); crossfadeStarted = false; state.currentId = id; loadedId = id;
   state.playCounts[id] = (state.playCounts[id] || 0) + (autoplay ? 1 : 0);
   try {
     const url = await sourceURL(track);
     if (token !== playbackToken) return;
-    const fallbackPosition = Number.isFinite(state.positions[id]) ? state.positions[id] : (id === saved.currentId && Number.isFinite(saved.position) ? saved.position : 0);
-    const startPosition = Math.max(0, Number.isFinite(requestedPosition) && requestedPosition > 0 ? requestedPosition : fallbackPosition);
+    // Explicit user navigation starts at the beginning. The only caller that
+    // supplies a position is startup restoration of the last track.
+    const startPosition = Number.isFinite(requestedPosition) ? Math.max(0, requestedPosition) : 0;
     audio.pause(); audio.removeAttribute('src'); audio.load();
     audio.src = url; audio.preload = state.gapless ? 'auto' : 'metadata';
+    let initialized = false;
+    const cleanupStart = () => {
+      audio.removeEventListener('loadedmetadata', resetStart);
+      if (pendingStartCleanup === cleanupStart) pendingStartCleanup = undefined;
+    };
     const resetStart = () => {
-      if (token !== playbackToken) return;
+      if (token !== playbackToken || initialized) return;
+      initialized = true;
+      cleanupStart();
       const duration = Number.isFinite(audio.duration) ? audio.duration : track.duration;
       audio.currentTime = Math.min(startPosition, Math.max(0, duration - 0.25));
     };
     audio.addEventListener('loadedmetadata', resetStart, { once: true });
-    audio.addEventListener('canplay', resetStart, { once: true });
+    pendingStartCleanup = cleanupStart;
     audio.load();
-    resetStart();
+    if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) resetStart();
     renderCurrent(); renderTracks(); updateProgress();
     if (autoplay) { setupAudio(); applyAudioSettings(); if (context) await context.resume(); if (token !== playbackToken) return; await audio.play(); }
   } catch (error) { if (token === playbackToken && error.name !== 'AbortError') toast('Audio belum dapat diputar. Coba file MP3, WAV, atau OGG yang valid.'); }
@@ -810,7 +871,7 @@ function updateProgress() {
   updateTapeCounter();
 }
 audio.addEventListener('timeupdate', () => { updateProgress(); maybeCrossfade(); const second = Math.floor(audio.currentTime); if (second % 5 === 0 && second !== lastSavedSecond) { lastSavedSecond = second; persist(); } });
-audio.addEventListener('loadedmetadata', () => { if (Number.isFinite(audio.duration)) current().duration = audio.duration; updateProgress(); renderTracks(); });
+audio.addEventListener('loadedmetadata', () => { if (loadedId && Number.isFinite(audio.duration)) current().duration = audio.duration; updateProgress(); renderTracks(); });
 audio.addEventListener('play', () => {
   scheduleSpectrum();
   $('#app')?.classList.add('is-playing');
@@ -1538,18 +1599,21 @@ const importFolderBtn = $('#import-folder');
 if (importFolderBtn) importFolderBtn.onclick = chooseFolder;
 async function readDuration(file) {
   return new Promise(resolve => {
-    let probe, url, finished = false;
+    let probe, url, revokeUrl = false, finished = false;
     const finish = value => {
       if (finished) return;
       finished = true;
       clearTimeout(timer);
       if (probe) { probe.removeAttribute('src'); probe.load(); }
-      if (url) URL.revokeObjectURL(url);
+      if (url && revokeUrl) URL.revokeObjectURL(url);
       resolve(value);
     };
     const timer = setTimeout(() => finish(0), 8000);
     try {
-      probe = new Audio(); probe.preload = 'metadata'; url = URL.createObjectURL(file);
+      probe = new Audio(); probe.preload = 'metadata';
+      if (typeof file === 'string') url = file;
+      else if (desktop && file?.path) url = nativeURL(file.path);
+      else { url = URL.createObjectURL(file); revokeUrl = true; }
       probe.onloadedmetadata = () => finish(Number.isFinite(probe.duration) ? probe.duration : 0);
       probe.onerror = () => finish(0);
       probe.src = url; probe.load();
@@ -1589,10 +1653,12 @@ async function importFiles(files) {
       if (importCancelled) break;
       const fingerprint = `${entry.name}:${entry.size}:${entry.lastModified}`;
       if (state.tracks.some(t => t.fingerprint === fingerprint)) { duplicates++; processed++; updateImportProgress(processed, accepted.length, `Melewati duplikat: ${entry.name}`); continue; }
-      let file;
-      try { file = entry.path ? await readNativeAudio(entry) : entry; }
-      catch { unreadable++; processed++; updateImportProgress(processed, accepted.length, `File tidak dapat dibaca: ${entry.name}`); continue; }
-      const duration = await readDuration(file); if (!duration) { unsupported++; processed++; updateImportProgress(processed, accepted.length, `Format tidak didukung: ${file.name}`); continue; }
+      let file = entry;
+      const duration = await readDuration(entry.path ? entry : file); if (!duration) { unsupported++; processed++; updateImportProgress(processed, accepted.length, `Format tidak didukung atau rusak: ${entry.name}`); continue; }
+      if (entry.path) {
+        try { file = await readNativeAudio(entry); }
+        catch { unreadable++; processed++; updateImportProgress(processed, accepted.length, `File tidak dapat dibaca: ${entry.name}`); continue; }
+      }
       const fallback = metadataFromFilename(file), metadata = await readMetadataOffThread(file);
       const track = { id: crypto.randomUUID(), fingerprint, title: metadata.title || fallback.title, artist: metadata.artist || fallback.artist, album: metadata.album || fallback.album, genre: metadata.genre || 'Tidak diketahui', replayGain: metadata.replayGain || 0, cover: metadata.cover, art: added % 6, duration, format: file.name.split('.').pop().toUpperCase(), file };
       if (desktop && entry.path) {
@@ -2269,6 +2335,18 @@ function setupDspDialog() {
 
 window.addEventListener('pagehide', persist);
 async function init() {
+  if (desktop) {
+    try {
+      const nativeSaved = await loadNativeSettings();
+      if (nativeSaved && typeof nativeSaved === 'object' && !Array.isArray(nativeSaved)) {
+        saved = nativeSaved;
+        applySavedState(nativeSaved);
+      }
+    } catch (error) {
+      nativeSettingsWritable = false;
+      toast(`Pengaturan tidak dapat dibaca; file dipertahankan: ${error}`);
+    }
+  }
   addAdvancedUI(); applyTheme(); applyPanelOrder(); applyCompactState();
   setupRackControls();
   render();
@@ -2304,5 +2382,5 @@ if (desktop) await onNativeClose(async () => {
   if (importing || choosingNativeAudio) { toast('Selesaikan atau batalkan impor sebelum menutup aplikasi.'); return false; }
   persist();
   try { await nativeSettings.flush(); return true; }
-  catch { toast('Pengaturan gagal disimpan. Periksa ruang penyimpanan lalu tutup kembali.'); return false; }
+  catch { toast('Pengaturan gagal disimpan; aplikasi tetap ditutup.'); return true; }
 });

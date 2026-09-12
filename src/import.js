@@ -18,10 +18,11 @@ export function isAudioFile(file) {
 export function metadataFromFilename(file) {
   const name = file.name.replace(/\.[^.]+$/, '');
   const parts = name.split(' - ');
+  const relativePath = file.webkitRelativePath || file.relativePath || '';
   return {
     title: parts.length > 1 ? parts.slice(1).join(' - ') : name,
     artist: parts.length > 1 ? parts[0] : 'Artis tidak diketahui',
-    album: file.webkitRelativePath?.split('/').slice(-2, -1)[0] || 'Koleksi lokal',
+    album: relativePath.split('/').slice(-2, -1)[0] || 'Koleksi lokal',
   };
 }
 
