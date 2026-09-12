@@ -1,4 +1,4 @@
-# Pemeriksaan Atiga Amp 0.1.0
+# Pemeriksaan Atiga Amp 0.1.0 — Linux
 
 Pemeriksaan desktop terbaru dilakukan pada Linux Mint 22.3 x64, 12 September 2026. Pemeriksaan browser sebelumnya dilakukan dengan Chrome di Linux pada 9 September 2026.
 
@@ -14,7 +14,7 @@ Pemeriksaan desktop terbaru dilakukan pada Linux Mint 22.3 x64, 12 September 202
 | Penggabungan aset release dan checksum | Lulus; 2 installer lokal diproses |
 | Build Linux `.deb` setelah perubahan CI | Lulus |
 | Build Linux `.AppImage` dengan framework media | Lulus |
-| Tauri memuat konfigurasi khusus Windows (`--no-bundle`) | Lulus |
+| Tauri memuat konfigurasi bundling Linux (`--no-bundle`) | Lulus |
 | Smoke test binary dari `.deb` | Lulus |
 | Smoke test `.AppImage` secara langsung | Lulus |
 
@@ -35,7 +35,7 @@ Unit test Rust mencakup salinan audio yang tetap tersedia setelah sumber dihapus
 | Paket | Ukuran | SHA-256 |
 | --- | ---: | --- |
 | `Atiga Amp_0.1.0_amd64.AppImage` | 166.865.400 byte | `6d8021bacc8590c51ee83bb65c928a1a88c3d7f5964045e0d8b117e6a041a3f7` |
-| `Atiga Amp_0.1.0_amd64.deb` | 3.551.976 byte | `b552ba8c6be4ac4e45377c7bd31f8324e68c3809d6b0dd29a6739b5852724ff2` |
+| `Atiga Amp_0.1.0_amd64.deb` | 3.551.964 byte | `190a4ab01b792ea88ebeecc1cc3224211c31cbf6d1c77e903d970a10fb02722c` |
 
 Metadata `.deb` telah diperiksa: arsitektur `amd64`, versi `0.1.0`, dan dependensi WebKitGTK, GTK, serta GStreamer tercantum tanpa duplikasi. `SHA256SUMS.txt` dibuat bersama artefak.
 
@@ -55,6 +55,6 @@ Metadata `.deb` telah diperiksa: arsitektur `amd64`, versi `0.1.0`, dan dependen
 
 ## Batas validasi rilis
 
-Workflow `.github/workflows/desktop.yml` menyiapkan build Windows 2022 untuk NSIS `.exe` dan `.msi`, serta build Ubuntu 22.04 untuk `.deb` dan `.AppImage`. Pada tag `v*`, workflow memeriksa kecocokan versi, mewajibkan secret signing Windows, memverifikasi signature installer, menggabungkan checksum, lalu membuat atau memperbarui GitHub Release. Runner Linux juga menjalankan smoke test AppImage. Workflow tag dan binary installer Windows belum dijalankan dari pemeriksaan lokal ini; jalankan workflow dan uji instalasi Windows 10/11 sebelum publikasi. Build AppImage lokal pada pemeriksaan ini berhenti lama di bundler setelah `.AppDir` dibuat; AppImage yang dicantumkan di atas adalah artefak sebelumnya yang sudah lulus smoke test dan checksum.
+Workflow `.github/workflows/desktop.yml` menyiapkan build Ubuntu 22.04 untuk `.deb` dan `.AppImage`. Pada tag `v*`, workflow menggabungkan paket, membuat checksum, dan mempublikasikan GitHub Release. Runner Linux juga menjalankan smoke test AppImage. Build AppImage lokal pada pemeriksaan ini berhenti lama di bundler setelah `.AppDir` dibuat; AppImage yang dicantumkan di atas adalah artefak sebelumnya yang sudah lulus smoke test dan checksum.
 
-Dialog file OS, drag fisik dari file manager, install/uninstall sistem, upgrade versi lama, seluruh variasi codec, tombol media fisik, dan kualitas audio subjektif tetap memerlukan uji penerimaan manual pada tiap OS sasaran. Daftar langkahnya ada di [docs/DESKTOP.md](docs/DESKTOP.md).
+Dialog file OS, drag fisik dari file manager, install/uninstall sistem, upgrade versi lama, seluruh variasi codec, tombol media fisik, dan kualitas audio subjektif tetap memerlukan uji penerimaan manual pada distro Linux sasaran. Daftar langkahnya ada di [docs/DESKTOP.md](docs/DESKTOP.md).
