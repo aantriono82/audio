@@ -4064,3 +4064,497 @@ body {
 .deck-right-controls .deck-mute-module .rocker-sublabel .sym-box {
   font-size: 5px;
 }
+
+/* RESPONSIVE RACK LAYOUT */
+
+html {
+  overflow-x: hidden;
+}
+
+.app.teac-rack-app,
+.hifi-rack-container,
+.teac-unit,
+.teac-unit-playlist {
+  min-width: 0;
+}
+
+.hifi-rack-container {
+  width: 100%;
+  padding-inline: clamp(8px, 2vw, 20px);
+}
+
+@media (max-width: 1100px) and (min-width: 641px) {
+  .hifi-rack-container {
+    padding-block: 16px 24px;
+  }
+
+  .deck-main-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'cassette cassette'
+      'console meters'
+      'left right';
+    gap: 14px 18px;
+    padding: 14px 18px 20px;
+    align-items: center;
+  }
+
+  .deck-left-column { grid-area: left; }
+  .cassette-door-bay {
+    grid-area: cassette;
+    width: min(336px, 100%);
+    justify-self: center;
+  }
+  .deck-center-console { grid-area: console; justify-self: center; }
+  .deck-vu-section { grid-area: meters; justify-self: center; }
+  .deck-right-controls { grid-area: right; justify-self: center; }
+
+  .teac-cassette-deck,
+  .teac-amplifier {
+    height: auto;
+  }
+
+  .amp-main-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'vfd vfd'
+      'controls master'
+      'left left';
+    gap: 14px 18px;
+    padding: 14px 18px 20px;
+    align-items: center;
+  }
+
+  .amp-left-column { grid-area: left; width: 100%; }
+  .amp-vfd-display-panel {
+    grid-area: vfd;
+    width: min(385px, 100%);
+    justify-self: center;
+  }
+  .amp-controls-bank {
+    grid-area: controls;
+    width: 100%;
+    height: 192px;
+  }
+  .amp-master-volume-section {
+    grid-area: master;
+    justify-self: center;
+  }
+
+  .playlist-deck-header {
+    flex-wrap: wrap;
+  }
+
+  .playlist-deck-tabs {
+    flex: 1 1 240px;
+  }
+
+  .playlist-deck-tools {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+  }
+
+  .pl-search-box {
+    flex: 1 1 220px;
+    width: auto;
+  }
+}
+
+@media (max-width: 1100px) and (min-width: 781px) {
+  .amp-main-panel {
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 1fr);
+    grid-template-areas:
+      'left vfd'
+      'controls master';
+  }
+
+  .amp-vfd-display-panel {
+    width: min(385px, 100%);
+  }
+
+  .amp-controls-bank {
+    height: 192px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 12px;
+  }
+
+  .hifi-rack-container {
+    gap: 0;
+    padding: 10px 8px 20px;
+  }
+
+  .teac-unit,
+  .teac-unit-playlist {
+    width: 100%;
+  }
+
+  .deck-header-row,
+  .amp-header-row {
+    height: auto;
+    min-height: 30px;
+    padding: 8px 18px 4px 24px;
+  }
+
+  .deck-header-row .teac-logo-block,
+  .amp-header-row .teac-logo-block {
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 3px 7px;
+  }
+
+  .teac-brand-text { font-size: clamp(18px, 7vw, 22px); }
+  .teac-model-text { font-size: clamp(12px, 4vw, 15px); }
+  .teac-sub-text { font-size: 10px; }
+  .maker-credit { display: none; }
+
+  .deck-main-panel,
+  .amp-main-panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 14px 12px 22px;
+  }
+
+  .deck-main-panel {
+    grid-template-areas:
+      'power'
+      'cassette'
+      'source'
+      'eject'
+      'console'
+      'meters'
+      'right';
+  }
+
+  .cassette-door-bay,
+  .deck-center-console,
+  .deck-vu-section,
+  .deck-right-controls {
+    justify-self: center;
+  }
+
+  .deck-left-column { display: contents; }
+  .deck-left-column .power-switch-module {
+    grid-area: power;
+    justify-self: center;
+  }
+  .deck-left-column .rotary-switch-block {
+    grid-area: source;
+    justify-self: center;
+  }
+  .deck-left-column .eject-module {
+    grid-area: eject;
+    justify-self: center;
+  }
+  .cassette-door-bay {
+    grid-area: cassette;
+    width: 100%;
+    height: 192px;
+  }
+  .deck-center-console { grid-area: console; width: min(236px, 100%); }
+  .deck-vu-section { grid-area: meters; }
+  .deck-right-controls { grid-area: right; }
+
+  .bay-recess {
+    width: 100%;
+    max-width: 336px;
+  }
+
+  .basf-cassette {
+    width: min(298px, calc(100% - 12px));
+  }
+
+  .cassette-middle-window {
+    padding-inline: clamp(8px, 7vw, 24px);
+  }
+
+  .tape-pack-window {
+    left: clamp(42px, 16vw, 68px);
+    right: clamp(42px, 16vw, 68px);
+  }
+
+  .strip-meta {
+    gap: 4px;
+    font-size: 6.5px;
+  }
+
+  .cassette-active-title {
+    max-width: 32vw;
+  }
+
+  .amp-main-panel {
+    grid-template-areas:
+      'left'
+      'vfd'
+      'controls'
+      'master';
+  }
+
+  .amp-left-column {
+    grid-area: left;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 6px 0;
+  }
+
+  .amp-vfd-display-panel {
+    grid-area: vfd;
+    width: 100%;
+    height: 192px;
+  }
+
+  .vfd-screen-frame { padding-inline: 8px; }
+  .watts-scale-row,
+  .vfd-center-graticule,
+  .vfd-bottom-ticks { padding-inline: clamp(8px, 8vw, 40px); }
+  .watts-channel-row { gap: 5px; }
+  .ch-label,
+  .ch-status-indicator { width: 28px; }
+  .peak-text,
+  .vu-text { font-size: 6.5px; }
+
+  .amp-controls-bank {
+    grid-area: controls;
+    width: 100%;
+    height: auto;
+    gap: 18px;
+    padding: 0;
+  }
+
+  .amp-top-knob-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 4px;
+  }
+
+  .tone-large-module { width: 104px; justify-self: center; }
+
+  .amp-bottom-knob-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 4px;
+    padding: 0;
+  }
+
+  .amp-dual-keys-block,
+  .mini-module,
+  .amp-mute-block { justify-self: center; }
+
+  .amp-master-volume-section {
+    grid-area: master;
+    height: 192px;
+    justify-self: center;
+  }
+
+  .playlist-deck-header,
+  .playlist-deck-footer { min-width: 0; }
+
+  .playlist-deck-tabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .playlist-deck-tools {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .pl-view-select { min-width: 0; }
+
+  .playlist-deck-footer {
+    align-items: stretch;
+  }
+
+  .pl-footer-center,
+  .pl-drop-prompt { min-width: 0; }
+
+  .pl-drop-prompt span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  dialog {
+    padding: 16px;
+  }
+
+  .dialog-heading h2 { font-size: 18px; }
+  .eq-bands { gap: 3px; padding-inline: 5px; }
+  .eq-band input[type=range] { height: 96px; }
+
+  dialog.aimp-dsp-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .aimp-header {
+    gap: 8px;
+    padding-inline: 12px;
+  }
+
+  .aimp-logo-text { font-size: 18px; }
+  .aimp-subtitle { font-size: 14px; }
+  .aimp-tabs {
+    overflow-x: auto;
+    padding-inline: 8px;
+    scrollbar-width: thin;
+  }
+
+  .aimp-tab {
+    flex: 0 0 auto;
+    padding-inline: 9px;
+  }
+
+  .aimp-tab-content-frame {
+    margin-inline: 8px;
+    padding: 10px 9px;
+  }
+
+  .aimp-subpanel-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .deck-main-panel,
+  .amp-main-panel { padding-inline: 8px; }
+  .teac-brand-text { letter-spacing: 1.5px; }
+  .teac-model-text { margin-left: 0; }
+  .amp-bottom-knob-row { column-gap: 0; }
+  .knob-label-bottom { font-size: 7px; }
+}
+
+/* Narrow tablet / mobile landscape: use a compact two-column deck layout. */
+@media (max-width: 767px) and (min-width: 641px) {
+  .deck-main-panel {
+    grid-template-columns: 120px 230px 178px;
+    grid-template-areas:
+      'left cassette cassette'
+      'console console meters'
+      'right right right';
+    column-gap: 18px;
+    row-gap: 14px;
+    padding: 14px 12px 22px;
+    justify-content: start;
+  }
+
+  .deck-left-column {
+    grid-area: left;
+    display: flex;
+    width: 120px;
+    height: 192px;
+    justify-self: center;
+  }
+
+  .cassette-door-bay {
+    grid-area: cassette;
+    width: min(336px, 100%);
+    height: 192px;
+    justify-self: start;
+  }
+  .bay-recess {
+    width: 100%;
+    max-width: 336px;
+  }
+  .deck-center-console {
+    grid-area: console;
+    justify-self: start;
+    margin-left: 29px;
+  }
+  .deck-vu-section {
+    grid-area: meters;
+    justify-self: center;
+  }
+  .deck-right-controls {
+    grid-area: right;
+    justify-self: center;
+    transform: translateX(24px);
+  }
+
+  .amp-main-panel {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'left'
+      'vfd'
+      'controls'
+      'master';
+    gap: 14px;
+    padding: 14px 12px 22px;
+  }
+
+  .amp-left-column {
+    grid-area: left;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 6px 0;
+  }
+  .amp-vfd-display-panel {
+    grid-area: vfd;
+    width: 100%;
+    height: 192px;
+  }
+  .amp-controls-bank {
+    grid-area: controls;
+    width: 100%;
+    height: auto;
+    gap: 18px;
+    padding: 0;
+  }
+  .amp-top-knob-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 4px;
+  }
+  .amp-bottom-knob-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 4px;
+    padding: 0;
+  }
+  .amp-top-knob-row {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .tone-large-module { flex: 0 0 104px; }
+  .amp-bottom-knob-row {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .amp-dual-keys-block { flex: 0 0 100px; }
+  .mini-module { flex: 0 0 80px; }
+  .amp-mute-block { flex: 0 0 68px; }
+  .amp-master-volume-section {
+    grid-area: master;
+    height: 192px;
+    justify-self: center;
+  }
+}
+
+@media (max-width: 980px) {
+  .playlist-deck-header {
+    flex: 0 0 auto;
+  }
+
+  .playlist-deck-tabs,
+  .playlist-deck-tools {
+    flex: 0 0 auto;
+  }
+
+  .playlist-deck-tools {
+    width: 100%;
+  }
+}
