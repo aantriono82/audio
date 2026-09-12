@@ -8,9 +8,11 @@ Pemeriksaan desktop terbaru dilakukan pada Linux Mint 22.3 x64, 12 September 202
 | --- | --- |
 | ESLint dan unit/regresi JavaScript (`npm run check`) | Lulus, 41 tes |
 | TypeScript dan Vite production (`npm run build`) | Lulus |
+| Konsistensi versi dan kecocokan tag (`npm run version:check`) | Lulus; `0.1.0`, tag mismatch ditolak |
 | Rust format dan Clippy dengan warning sebagai error (`npm run desktop:check`) | Lulus |
 | Unit test penyimpanan native (`npm run desktop:test`) | Lulus, 6 tes |
-| Build Linux `.deb` | Lulus |
+| Penggabungan aset release dan checksum | Lulus; 2 installer lokal diproses |
+| Build Linux `.deb` setelah perubahan CI | Lulus |
 | Build Linux `.AppImage` dengan framework media | Lulus |
 | Tauri memuat konfigurasi khusus Windows (`--no-bundle`) | Lulus |
 | Smoke test binary dari `.deb` | Lulus |
@@ -53,6 +55,6 @@ Metadata `.deb` telah diperiksa: arsitektur `amd64`, versi `0.1.0`, dan dependen
 
 ## Batas validasi rilis
 
-Workflow `.github/workflows/desktop.yml` menyiapkan build Windows 2022 untuk NSIS `.exe` dan `.msi`, serta build Ubuntu 22.04 untuk `.deb` dan `.AppImage`. Runner Linux juga menjalankan smoke test AppImage. Binary installer Windows belum dibangun atau dipasang pada mesin Windows dalam pemeriksaan lokal ini; jalankan workflow dan uji instalasi Windows 10/11 sebelum publikasi.
+Workflow `.github/workflows/desktop.yml` menyiapkan build Windows 2022 untuk NSIS `.exe` dan `.msi`, serta build Ubuntu 22.04 untuk `.deb` dan `.AppImage`. Pada tag `v*`, workflow memeriksa kecocokan versi, mewajibkan secret signing Windows, memverifikasi signature installer, menggabungkan checksum, lalu membuat atau memperbarui GitHub Release. Runner Linux juga menjalankan smoke test AppImage. Workflow tag dan binary installer Windows belum dijalankan dari pemeriksaan lokal ini; jalankan workflow dan uji instalasi Windows 10/11 sebelum publikasi. Build AppImage lokal pada pemeriksaan ini berhenti lama di bundler setelah `.AppDir` dibuat; AppImage yang dicantumkan di atas adalah artefak sebelumnya yang sudah lulus smoke test dan checksum.
 
 Dialog file OS, drag fisik dari file manager, install/uninstall sistem, upgrade versi lama, seluruh variasi codec, tombol media fisik, dan kualitas audio subjektif tetap memerlukan uji penerimaan manual pada tiap OS sasaran. Daftar langkahnya ada di [docs/DESKTOP.md](docs/DESKTOP.md).

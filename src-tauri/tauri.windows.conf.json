@@ -4,6 +4,7 @@
     "targets": ["nsis", "msi"],
     "windows": {
       "webviewInstallMode": { "type": "offlineInstaller", "silent": true },
+      "signCommand": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sign-windows.ps1 %1",
       "nsis": { "installMode": "currentUser" }
     }
   }

@@ -15,6 +15,7 @@
     "desktop:test": "cargo test --manifest-path src-tauri/Cargo.toml --locked",
     "desktop:check": "cargo fmt --manifest-path src-tauri/Cargo.toml --check && cargo clippy --manifest-path src-tauri/Cargo.toml --locked --all-targets -- -D warnings",
     "desktop:checksums": "node scripts/checksums.mjs",
+    "version:check": "node scripts/version-check.mjs",
     "check": "npm run lint && npm test",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "npm run lint -- --fix",

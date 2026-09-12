@@ -32,7 +32,7 @@ Penyimpanan browser terpisah per origin, termasuk port. Gunakan kembali port seb
 
 ## Batas versi ini
 
-Aplikasi sudah memiliki backend desktop dan proses bundling installer. Status build dan pengujian aktual dicatat di [QA.md](QA.md); konfigurasi build Windows belum merupakan bukti kelulusan instalasi di Windows. Dukungan codec mengikuti WebView2 di Windows dan WebKitGTK/GStreamer di Linux. File yang gagal dibaca dilewati dengan pemberitahuan. Impor membaca tag ID3 dasar jika tersedia. File tanpa tag memakai pola nama `Artis - Judul.ext` dan nama folder sebagai album.
+Aplikasi sudah memiliki backend desktop, proses bundling installer, serta workflow GitHub Release berbasis tag. Status build dan pengujian aktual dicatat di [QA.md](QA.md); validasi instalasi Windows tetap perlu dilakukan pada Windows 10/11. Dukungan codec mengikuti WebView2 di Windows dan WebKitGTK/GStreamer di Linux. File yang gagal dibaca dilewati dengan pemberitahuan. Impor membaca tag ID3 dasar jika tersedia. File tanpa tag memakai pola nama `Artis - Judul.ext` dan nama folder sebagai album.
 
 Audio desktop disalin ke data aplikasi, sehingga membutuhkan ruang tambahan sebesar file impor. Menghapus lagu dari koleksi menghapus salinan tersebut, tanpa menghapus file asal. Data browser tetap memiliki batas kuota; data desktop lama di IndexedDB tetap dibaca jika tersedia. Koleksi browser pada origin lain tidak otomatis berpindah ke desktop. Font disertakan di paket; file musik tidak diunggah. Gapless/crossfade, codec, pemilihan output, dan notifikasi masih mengikuti kemampuan WebView. Pemindaian ulang desktop dijalankan dari Pengaturan; bila folder asal dipindahkan, pilih folder baru.
 

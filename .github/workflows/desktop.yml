@@ -38,14 +38,49 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf libfuse2 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav webkit2gtk-driver xvfb
       - run: npm ci
+      - run: npm run version:check
       - run: npm run check
       - run: npm run build
       - run: npm run desktop:check
       - run: npm run desktop:test
+      - name: Prepare Windows signing certificate
+        if: runner.os == 'Windows' && startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          WINDOWS_SIGNING_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_BASE64 }}
+          WINDOWS_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_SIGNING_CERTIFICATE_BASE64)) {
+            throw 'Secret WINDOWS_SIGNING_CERTIFICATE_BASE64 wajib diatur untuk tag rilis.'
+          }
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_SIGNING_CERTIFICATE_PASSWORD)) {
+            throw 'Secret WINDOWS_SIGNING_CERTIFICATE_PASSWORD wajib diatur untuk tag rilis.'
+          }
+          $certificatePath = Join-Path $env:RUNNER_TEMP 'atiga-amp-signing.pfx'
+          [IO.File]::WriteAllBytes($certificatePath, [Convert]::FromBase64String($env:WINDOWS_SIGNING_CERTIFICATE_BASE64))
+          Write-Host "Sertifikat signing disiapkan di $certificatePath"
       - name: Build installers
         run: npm run desktop:build -- --ci
         env:
           APPIMAGE_EXTRACT_AND_RUN: '1'
+          ATIGA_WINDOWS_SIGNING: ${{ startsWith(github.ref, 'refs/tags/v') && 'required' || 'optional' }}
+          WINDOWS_SIGNING_CERTIFICATE_PATH: ${{ runner.temp }}\atiga-amp-signing.pfx
+          WINDOWS_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_PASSWORD }}
+          WINDOWS_SIGNING_TIMESTAMP_URL: ${{ secrets.WINDOWS_SIGNING_TIMESTAMP_URL }}
+      - name: Verify Windows signatures
+        if: runner.os == 'Windows' && startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $installers = Get-ChildItem 'src-tauri/target/release/bundle' -Recurse -File |
+            Where-Object { $_.Extension -in '.exe', '.msi' }
+          if (-not $installers) { throw 'Installer Windows tidak ditemukan untuk verifikasi signature.' }
+          foreach ($installer in $installers) {
+            $signature = Get-AuthenticodeSignature -LiteralPath $installer.FullName
+            if ($signature.Status -ne 'Valid') {
+              throw "Signature tidak valid untuk $($installer.FullName): $($signature.Status)"
+            }
+            Write-Host "$($installer.Name): $($signature.SignerCertificate.Subject)"
+          }
       - name: Smoke test Linux AppImage
         if: runner.os == 'Linux'
         run: node scripts/native-smoke.mjs --appimage
@@ -62,3 +97,34 @@ jobs:
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/appimage/*.AppImage
             src-tauri/target/release/bundle/SHA256SUMS.txt
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: atiga-amp-*
+          path: release-input
+          merge-multiple: false
+      - run: node scripts/prepare-release-assets.mjs release-input release-assets
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" release-assets/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" release-assets/* \
+              --title "Atiga Amp ${GITHUB_REF_NAME#v}" \
+              --generate-notes \
+              --verify-tag
+          fi

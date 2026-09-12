@@ -21,6 +21,7 @@ Pasang Node.js 22.13+, Rust stable, dan [prasyarat Tauri untuk OS build](https:/
 
 ```sh
 npm ci
+npm run version:check
 npm run check
 npm run build
 npm run desktop:check
@@ -31,7 +32,23 @@ npm run desktop:checksums
 
 Hasil berada di `src-tauri/target/release/bundle/`. Konfigurasi `tauri.windows.conf.json` dan `tauri.linux.conf.json` otomatis digabung dengan konfigurasi utama pada OS terkait. Untuk membuat `.deb` saja saat diagnosis: `npm run desktop:build -- --bundles deb`.
 
-Workflow `.github/workflows/desktop.yml` membangun dan mengunggah artefak Windows/Linux pada pull request, tag `v*`, atau pemicu manual. Setiap artefak memuat installer dan `SHA256SUMS.txt`; workflow tidak mempublikasikan GitHub Release. Unduh artefak dari run yang berhasil. Build belum menggunakan sertifikat code signing Windows; paket belum menampilkan penerbit terverifikasi.
+Workflow `.github/workflows/desktop.yml` membangun dan mengunggah artefak Windows/Linux pada pull request, tag `v*`, atau pemicu manual. Pada tag `v*`, workflow juga menggabungkan installer, membuat checksum gabungan, dan mempublikasikan GitHub Release. Build pull request dan manual dapat unsigned untuk diagnosis; build tag rilis wajib signed dan gagal bila secret sertifikat belum tersedia.
+
+Untuk mengaktifkan signing Windows pada tag, simpan secret repository berikut di GitHub Actions:
+
+- `WINDOWS_SIGNING_CERTIFICATE_BASE64`: isi berkas PFX yang diubah menjadi Base64.
+- `WINDOWS_SIGNING_CERTIFICATE_PASSWORD`: password PFX.
+- `WINDOWS_SIGNING_TIMESTAMP_URL`: opsional; bila kosong memakai timestamp DigiCert.
+
+Contoh pembuatan nilai Base64 dilakukan secara lokal dan nilainya saja yang disimpan sebagai secret:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes('.\certificate.pfx'))
+```
+
+Jangan commit sertifikat, password, atau hasil Base64 ke repositori. Signing memakai `signtool.exe` pada runner Windows dan diverifikasi kembali sebelum artefak diunggah.
+
+Untuk rilis, perbarui versi di `package.json`, `package-lock.json`, `src-tauri/Cargo.toml`, dan `src-tauri/tauri.conf.json`, jalankan `npm run version:check`, lalu push tag yang sama, misalnya `v0.1.0`. Tag harus cocok dengan versi aplikasi. Rilis yang dibuat ulang akan memperbarui aset dengan nama yang sama.
 
 ## Data pengguna
 
@@ -61,5 +78,7 @@ Sebelum rilis publik, uji pada Windows dan distro Linux sasaran:
 5. Putar MP3/WAV/OGG/FLAC, seek, jeda, pindah lagu, dan EQ; catat codec yang tersedia.
 6. Simpan favorit, playlist, volume dan posisi; tutup lalu buka kembali tanpa autoplay. Pindahkan file asli dan pastikan salinan impor tetap diputar.
 7. Hapus lagu dari koleksi dan pastikan file asli masih ada. Uji upgrade, uninstall, dan install ulang sesuai kebijakan data yang ingin dirilis.
+
+Setelah uji manual selesai, catat hasilnya bersama versi OS, arsitektur, jenis installer, status signature, codec yang diuji, serta checksum aset pada release. Publikasikan rilis hanya jika build tag, verifikasi signature Windows, smoke test Linux, dan uji penerimaan manual semuanya lulus.
 
 Tes integrasi Linux dapat dijalankan dengan `node scripts/native-smoke.mjs /path/to/atiga-amp` setelah tersedia `Xvfb` dan `WebKitWebDriver`. Variabel `XVFB` dan `WEBKIT_DRIVER` dapat menunjuk executable alternatif. Tes memakai data sementara, menguji IPC sebenarnya, pemindaian folder tersimpan, pemutaran, dan restart. Tes ini tidak mengotomatisasi dialog file OS, drag fisik, atau proses instalasi; bagian tersebut tetap memerlukan uji penerimaan. Hasil aktual ada di [QA.md](../QA.md).
