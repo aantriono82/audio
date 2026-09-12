@@ -53,9 +53,21 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
 .app.teac-rack-app {
   max-width: 1400px;
   margin: 0 auto;
-  min-height: 100vh;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+.app.teac-rack-app.amp-hidden {
+  min-height: 0;
+}
+
+.app.teac-rack-app.amp-hidden .hifi-rack-container {
+  padding-bottom: 0;
+}
+
+.app.teac-rack-app .statusbar {
+  display: none;
 }
 
 /* TOP TITLEBAR */

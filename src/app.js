@@ -830,7 +830,6 @@ function toggleDrawer(forceState) {
   if (isOpen) {
     renderTracks();
   }
-  toast(isOpen ? 'Daftar lagu ditampilkan.' : 'Daftar lagu disembunyikan.');
 }
 
 function setupRackControls() {
@@ -1024,9 +1023,9 @@ function setupRackControls() {
       btnAmplifier.classList.toggle('active', !hidden);
       btnAmplifier.setAttribute('aria-pressed', String(!hidden));
       deckUnit?.classList.toggle('standalone', hidden);
+      $('#app')?.classList.toggle('amp-hidden', hidden);
       state.ampHidden = hidden;
       if (notify) {
-        toast(hidden ? 'ATIGA Integrated DC Servo Amplifier disembunyikan' : 'ATIGA Integrated DC Servo Amplifier ditampilkan');
         persist();
       }
     };
