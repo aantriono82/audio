@@ -1,8 +1,8 @@
 # Atiga Amp
 
-Pemutar musik lokal untuk Windows dan Linux dengan antarmuka charcoal–amber, terinspirasi pemutar musik desktop klasik. Installer desktop membundel antarmuka dan font; pengguna tidak memerlukan Node.js, Rust, terminal, atau server pengembangan. Node.js 22.13+ dan Rust hanya diperlukan oleh pengembang.
+Pemutar musik lokal untuk Linux dengan antarmuka charcoal–amber, terinspirasi pemutar musik desktop klasik. Installer desktop membundel antarmuka dan font; pengguna tidak memerlukan Node.js, Rust, terminal, atau server pengembangan. Node.js 22.13+ dan Rust hanya diperlukan oleh pengembang.
 
-Target distribusi awal adalah Windows x64 (`.exe`/`.msi`) dan Linux x64 (`.deb`/`.AppImage`). AppImage merupakan paket portabel, sedangkan `.deb` dipasang melalui pengelola paket. Lihat [panduan desktop](docs/DESKTOP.md) untuk build, lokasi data, dan batas pengujian.
+Target distribusi adalah Linux x64 (`.deb`/`.AppImage`). AppImage merupakan paket portabel, sedangkan `.deb` dipasang melalui pengelola paket. Lihat [panduan desktop](docs/DESKTOP.md) untuk build, lokasi data, dan batas pengujian.
 
 ## Menjalankan
 
@@ -10,7 +10,7 @@ Target distribusi awal adalah Windows x64 (`.exe`/`.msi`) dan Linux x64 (`.deb`/
 npm run dev
 ```
 
-Desktop menggunakan Vite, React, TypeScript, dan Tauri 2. `src/main.tsx` memasang shell React, sedangkan engine playback dan library dimuat dari `src/app.js`. Jalankan desktop dengan `npm run desktop:dev`; hasilkan installer dengan `npm run desktop:build`. Konfigurasi Windows/Linux dipilih otomatis oleh Tauri berdasarkan OS build. `npm run build` hanya menghasilkan antarmuka web.
+Desktop menggunakan Vite, React, TypeScript, dan Tauri 2. `src/main.tsx` memasang shell React, sedangkan engine playback dan library dimuat dari `src/app.js`. Jalankan desktop dengan `npm run desktop:dev`; hasilkan paket Linux dengan `npm run desktop:build`. `npm run build` hanya menghasilkan antarmuka web.
 
 Buka URL Vite yang tercetak di terminal (bawaan http://127.0.0.1:5174) untuk pengembangan browser. Untuk memilih port, gunakan `npm run dev -- --port 5185`. Mode desktop memakai port 5174 secara ketat agar alamat WebView sesuai dengan server. Server legacy dan pengaturan `PORT` hanya berlaku pada `npm run dev:legacy`.
 
@@ -32,7 +32,7 @@ Penyimpanan browser terpisah per origin, termasuk port. Gunakan kembali port seb
 
 ## Batas versi ini
 
-Aplikasi sudah memiliki backend desktop dan proses bundling installer. Status build dan pengujian aktual dicatat di [QA.md](QA.md); konfigurasi build Windows belum merupakan bukti kelulusan instalasi di Windows. Dukungan codec mengikuti WebView2 di Windows dan WebKitGTK/GStreamer di Linux. File yang gagal dibaca dilewati dengan pemberitahuan. Impor membaca tag ID3 dasar jika tersedia. File tanpa tag memakai pola nama `Artis - Judul.ext` dan nama folder sebagai album.
+Aplikasi memiliki backend desktop, paket Linux, serta workflow GitHub Release berbasis tag. Status build dan pengujian aktual dicatat di [QA.md](QA.md). Dukungan codec mengikuti WebKitGTK/GStreamer di Linux. File yang gagal dibaca dilewati dengan pemberitahuan. Impor membaca tag ID3 dasar jika tersedia. File tanpa tag memakai pola nama `Artis - Judul.ext` dan nama folder sebagai album.
 
 Audio desktop disalin ke data aplikasi, sehingga membutuhkan ruang tambahan sebesar file impor. Menghapus lagu dari koleksi menghapus salinan tersebut, tanpa menghapus file asal. Data browser tetap memiliki batas kuota; data desktop lama di IndexedDB tetap dibaca jika tersedia. Koleksi browser pada origin lain tidak otomatis berpindah ke desktop. Font disertakan di paket; file musik tidak diunggah. Gapless/crossfade, codec, pemilihan output, dan notifikasi masih mengikuti kemampuan WebView. Pemindaian ulang desktop dijalankan dari Pengaturan; bila folder asal dipindahkan, pilih folder baru.
 
