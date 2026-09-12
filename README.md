@@ -8,7 +8,7 @@ Prototipe interaktif pemutar musik lokal dengan antarmuka charcoal–amber, teri
 npm run dev
 ```
 
-Fondasi desktop menggunakan Vite, React, TypeScript, dan Tauri. `index.html` sekarang hanya menjadi dokumen bootstrap dan `src/main.tsx` memasang `App` sebagai entry point utama. Shell player dirender oleh `src/react/App.tsx`; controller audio yang sudah ada dimuat setelah shell terpasang agar fitur playback dan library tetap kompatibel selama kontrol-kontrolnya dipindahkan ke komponen typed. Model `Track`, katalog demo, dan pembuat WAV tersedia di `src/domain/track.ts`; state library dan playback aktif dikelola oleh engine player. Untuk membuka shell desktop Tauri setelah dependensi Rust tersedia, gunakan `npm run tauri dev`. Build produksi web menggunakan `npm run build`, sedangkan installer desktop menggunakan `npm run tauri build`.
+Fondasi desktop menggunakan Vite, React, TypeScript, dan Tauri. `index.html` menjadi dokumen bootstrap dan `src/main.tsx` memasang `App` sebagai entry point utama. Shell player dirender oleh `src/react/App.tsx`, sedangkan satu-satunya engine playback dan library aktif dimuat dari `src/app.js`; ini menjaga seluruh kontrol retro, impor, playlist, EQ, dan penyimpanan memakai sumber state yang sama. Untuk membuka shell desktop Tauri setelah dependensi Rust tersedia, gunakan `npm run tauri dev`. Build produksi web menggunakan `npm run build`, sedangkan installer desktop menggunakan `npm run tauri build`.
 
 Buka URL yang tercetak di terminal (bawaan http://localhost:5174) di browser Linux atau Windows. Jika port bawaan sibuk, server mencoba port berikutnya sampai 5184. Server yang sudah berjalan tidak dihentikan. Server hanya mendengarkan pada loopback perangkat lokal.
 
@@ -28,6 +28,7 @@ Penyimpanan browser terpisah per origin, termasuk port. Gunakan kembali port seb
 - Metadata ID3 dasar, embedded cover, pengelompokan artis/album/genre, smart playlist, waveform, notifikasi, dan pemindaian ulang folder.
 - Penyimpanan file impor di IndexedDB; pengaturan dan posisi terakhir di localStorage. Tidak otomatis memutar setelah reload.
 - Mode compact, layout responsif, kontrol keyboard, dan Media Session pada browser yang mendukung.
+- PWA shell cache agar antarmuka dapat dibuka kembali saat offline; audio impor tetap dibaca dari penyimpanan lokal perangkat.
 
 ## Batas versi ini
 

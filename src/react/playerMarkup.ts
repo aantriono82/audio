@@ -135,9 +135,9 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           <div class="console-matrix-panel">
             <!-- Row 1: dbx badge aligned to the top right -->
             <div class="matrix-top-header">
-              <div class="dbx-indicator-badge active" id="dbx-badge" title="dbx Dynamic Noise Reduction System" role="button" tabindex="0" aria-label="dbx Noise Reduction">
+              <button type="button" class="dbx-indicator-badge active" id="dbx-badge" title="dbx Dynamic Noise Reduction System" aria-label="dbx Noise Reduction">
                 <span>dbx</span>
-              </div>
+              </button>
             </div>
 
             <!-- Row 2: Push buttons for Menu, Amplifier, DSP -->
@@ -158,15 +158,15 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
             <div class="matrix-chart-card">
               <div class="chart-row chart-row-top">
                 <div class="chart-col-head">SYSTEM</div>
-                <div class="chart-col-cell" id="matrix-lbl-menu" role="button" tabindex="0" title="Buka / Tutup Daftar Lagu">MENU</div>
-                <div class="chart-col-cell" id="matrix-lbl-amplifier" role="button" tabindex="0" title="Tampilkan / Sembunyikan Amplifier">AMPLIFIER</div>
-                <div class="chart-col-cell" id="matrix-lbl-dsp" role="button" tabindex="0" title="Buka AIMP Sound Effects DSP">DSP</div>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-menu" title="Buka / Tutup Daftar Lagu">MENU</button>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-amplifier" title="Tampilkan / Sembunyikan Amplifier">AMPLIFIER</button>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-dsp" title="Buka AIMP Sound Effects DSP">DSP</button>
               </div>
               <div class="chart-row chart-row-bottom">
                 <div class="chart-col-head">TAPE (BIAS/EQ)</div>
-                <div class="chart-col-cell" id="matrix-lbl-normal" role="button" tabindex="0" title="Pilih Tape Normal">NORMAL</div>
-                <div class="chart-col-cell" id="matrix-lbl-cro2" role="button" tabindex="0" title="Pilih Tape CrO₂">Co (CrO₂)</div>
-                <div class="chart-col-cell" id="matrix-lbl-metal" role="button" tabindex="0" title="Pilih Tape Metal">METAL</div>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-normal" title="Pilih Tape Normal">NORMAL</button>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-cro2" title="Pilih Tape CrO₂">Co (CrO₂)</button>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-metal" title="Pilih Tape Metal">METAL</button>
               </div>
             </div>
 
@@ -884,6 +884,14 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           <span class="pl-ready-indicator"><i></i> Siap untuk didengarkan</span>
         </div>
       </div>
+      <div class="import-progress" id="import-progress" hidden role="status" aria-live="polite">
+        <div class="import-progress-heading">
+          <span id="import-progress-label">Mengimpor musik…</span>
+          <output id="import-progress-value">0 / 0</output>
+          <button type="button" class="text-button" id="cancel-import">Batalkan</button>
+        </div>
+        <progress id="import-progress-bar" value="0" max="1" aria-label="Kemajuan impor">0%</progress>
+      </div>
 
       <!-- Hidden interop container for secondary bindings -->
       <div class="legacy-bindings" hidden style="display:none !important;" aria-hidden="true">
@@ -924,6 +932,11 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
     </div>
     <div class="transport">
       <button id="shuffle" aria-label="Acak"></button>
+      <div class="compact-transport-controls" aria-label="Kontrol pemutaran ringkas">
+        <button id="compact-previous" class="icon-button" aria-label="Lagu sebelumnya" data-icon="previous"></button>
+        <button id="compact-play" class="icon-button compact-play-button" aria-label="Putar" data-icon="play"></button>
+        <button id="compact-next" class="icon-button" aria-label="Lagu berikutnya" data-icon="next"></button>
+      </div>
       <div class="seek-row">
         <time id="elapsed">00:00</time>
         <input type="range" id="seek" min="0" max="100" step="0.1" value="0" aria-label="Posisi pemutaran" />
@@ -947,11 +960,25 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 <!-- Native and Dialog Inputs -->
 <input type="file" id="file-input" accept="audio/*,.flac,.ogg,.m4a,.opus,.aiff,.webm" multiple hidden />
 <input type="file" id="folder-input" webkitdirectory multiple hidden />
+<input type="file" id="library-import" accept="application/json,.json" hidden />
 <div class="drop-overlay" id="drop-overlay" hidden>
   <span data-icon="music"></span>
   <h2>Load your tape.</h2>
   <p>Lepaskan file audio untuk memuat kaset ke deck.</p>
 </div>
+
+<dialog id="welcome-dialog" class="welcome-dialog" aria-labelledby="welcome-title">
+  <form method="dialog" class="welcome-card">
+    <div class="eyebrow">ATIGA AMP / SELAMAT DATANG</div>
+    <h2 id="welcome-title">Musikmu<span>.</span></h2>
+    <p>Putar audio demo sekarang atau tambahkan koleksi musik dari perangkatmu. Semua file tetap berada di perangkat ini.</p>
+    <div class="welcome-actions">
+      <button type="button" class="primary-button" id="welcome-import">Tambah musik</button>
+      <button type="button" class="text-button" id="welcome-demo">Jelajahi audio demo</button>
+    </div>
+    <label class="setting-check"><input type="checkbox" id="welcome-compact" /> Gunakan mode ringkas dengan player yang selalu terlihat</label>
+  </form>
+</dialog>
 
 <!-- Dialogs: Equalizer, Playlist, Track Options, Help -->
 <dialog id="eq-dialog">

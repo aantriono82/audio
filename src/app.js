@@ -1,4 +1,4 @@
-import { esc, formatTime, demoBlob, baseTracks, visibleTracks } from './library.js';
+import { esc, formatTime, demoBlob, demoTracks, baseTracks, visibleTracks } from './library.js';
 import { isAudioFile, metadataFromFilename, readEmbeddedMetadata } from './import.js';
 
 const $ = selector => document.querySelector(selector);
@@ -130,7 +130,7 @@ function addAdvancedUI() {
 
   const settingsBtn = $('#settings');
   if (settingsBtn) {
-    settingsBtn.onclick = () => { syncSettings(); dialog.showModal(); refreshOutputDevices(); };
+    settingsBtn.onclick = () => { syncSettings(); dialog.showModal(); refreshOutputDevices(); void refreshStorageUsage(); };
   }
 
   dialog.querySelectorAll('.theme-skin').forEach(button => {
@@ -155,6 +155,20 @@ function addAdvancedUI() {
   const scanBtn = dialog.querySelector('#scan-folder');
   if (scanBtn) scanBtn.onclick = chooseFolder;
 
+  const settingsActions = dialog.querySelector('.settings-actions');
+  if (settingsActions && !dialog.querySelector('#export-library')) {
+    const makeSettingsButton = (id, label) => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'text-button'; button.id = id; button.textContent = label;
+      settingsActions.append(button);
+      return button;
+    };
+    makeSettingsButton('export-library', 'Ekspor cadangan');
+    makeSettingsButton('import-library-button', 'Impor cadangan');
+    const note = settingsActions.querySelector('.dialog-note');
+    if (note) note.textContent = 'Cadangan berisi metadata, playlist, dan pengaturan. File audio tetap berada di perangkat.';
+  }
+
   [$('.sidebar'), $('.library'), $('.now-panel')].filter(Boolean).forEach(panel => {
     panel.draggable = true;
     panel.dataset.panel = panel.classList.contains('sidebar') ? 'sidebar' : panel.classList.contains('library') ? 'library' : 'now';
@@ -176,6 +190,61 @@ function addAdvancedUI() {
   if (formatSupport) {
     formatSupport.innerHTML = ['mp3','wav','ogg','flac','m4a','aac','opus','aiff','webm'].map(ext => `<span>${ext.toUpperCase()} ${audio.canPlayType(`audio/${ext}`) ? '✓' : '?'}</span>`).join('');
   }
+
+  const storageUsage = dialog.querySelector('#storage-usage') || document.createElement('div');
+  storageUsage.id = 'storage-usage'; storageUsage.className = 'storage-usage';
+  if (!storageUsage.parentElement) dialog.append(storageUsage);
+  async function refreshStorageUsage() {
+    if (!storageUsage) return;
+    if (!navigator.storage?.estimate) { storageUsage.textContent = 'Kapasitas storage tidak tersedia di peramban ini.'; return; }
+    const estimate = await navigator.storage.estimate();
+    const used = estimate.usage || 0;
+    const quota = estimate.quota || 0;
+    const formatBytes = bytes => bytes > 1024 ** 3 ? `${(bytes / 1024 ** 3).toFixed(1)} GB` : `${Math.round(bytes / 1024 ** 2)} MB`;
+    storageUsage.textContent = quota ? `Storage lokal: ${formatBytes(used)} dari sekitar ${formatBytes(quota)} terpakai.` : `Storage lokal: ${formatBytes(used)} terpakai.`;
+  }
+  async function exportLibrary() {
+    const backup = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      tracks: state.tracks.filter(track => !track.demo).map(({ id, fingerprint, title, artist, album, genre, format, duration }) => ({ id, fingerprint, title, artist, album, genre, format, duration })),
+      favorites: [...state.favorites], playlists: state.playlists, recent: state.recent, queue: state.queue, positions: state.positions,
+      settings: { theme: state.theme, glow: state.glow, gapless: state.gapless, compact: state.compact, shuffle: state.shuffle, repeat: state.repeat, volume: state.volume, eq: state.eq, preset: state.preset, crossfade: state.crossfade, preamp: state.preamp, balance: state.balance, replayGain: state.replayGain, notifications: state.notifications, outputDevice: state.outputDevice }
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a'); const url = URL.createObjectURL(blob); link.href = url; link.download = `atiga-amp-backup-${new Date().toISOString().slice(0, 10)}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 0);
+    toast('Cadangan library berhasil diekspor.');
+  }
+  async function importLibrary(file) {
+    try {
+      const backup = JSON.parse(await file.text());
+      if (backup?.version !== 1 || !Array.isArray(backup.tracks) || !Array.isArray(backup.playlists)) throw new Error('Format cadangan tidak dikenali.');
+      const byId = new Map(state.tracks.map(track => [track.id, track]));
+      const byFingerprint = new Map(state.tracks.filter(track => track.fingerprint).map(track => [track.fingerprint, track]));
+      const backupTracks = new Map(backup.tracks.map(track => [track.id, track]));
+      const resolveId = id => byId.get(id)?.id || (backupTracks.get(id)?.fingerprint && byFingerprint.get(backupTracks.get(id).fingerprint)?.id) || null;
+      const resolveIds = ids => ids.map(resolveId).filter(Boolean);
+      state.favorites = new Set(resolveIds(Array.isArray(backup.favorites) ? backup.favorites : []));
+      state.playlists = backup.playlists.filter(playlist => playlist && typeof playlist.name === 'string').map(playlist => ({ id: playlist.id || crypto.randomUUID(), name: playlist.name, ids: resolveIds(Array.isArray(playlist.ids) ? playlist.ids : []) }));
+      state.recent = resolveIds(Array.isArray(backup.recent) ? backup.recent : []);
+      state.queue = resolveIds(Array.isArray(backup.queue) ? backup.queue : []);
+      state.positions = Object.fromEntries(Object.entries(backup.positions || {}).map(([id, value]) => { const resolved = resolveId(id); return resolved ? [resolved, Number(value) || 0] : null; }).filter(Boolean));
+      const settings = backup.settings || {};
+      if (typeof settings.theme === 'string') state.theme = settings.theme;
+      ['glow', 'gapless', 'compact', 'shuffle', 'replayGain', 'notifications'].forEach(key => { if (typeof settings[key] === 'boolean') state[key] = settings[key]; });
+      ['volume', 'crossfade', 'preamp', 'balance'].forEach(key => { if (Number.isFinite(settings[key])) state[key] = settings[key]; });
+      if ([0, 1, 2].includes(settings.repeat)) state.repeat = settings.repeat;
+      if (Array.isArray(settings.eq) && settings.eq.length === 10 && settings.eq.every(value => Number.isFinite(value))) state.eq = settings.eq;
+      if (typeof settings.preset === 'string') state.preset = settings.preset;
+      if (typeof settings.outputDevice === 'string') state.outputDevice = settings.outputDevice;
+      applyTheme(); applyCompactState(); render(); syncSettings(); persist();
+      const available = backup.tracks.filter(track => byId.has(track.id) || byFingerprint.has(track.fingerprint)).length;
+      toast(`Cadangan dipulihkan. ${available} dari ${backup.tracks.length} lagu tersedia.`);
+    } catch (error) { toast(`Cadangan gagal diimpor: ${error instanceof Error ? error.message : 'format tidak valid.'}`); }
+  }
+  dialog.querySelector('#export-library')?.addEventListener('click', () => void exportLibrary());
+  dialog.querySelector('#import-library-button')?.addEventListener('click', () => $('#library-import')?.click());
+  $('#library-import')?.addEventListener('change', event => { const file = event.target.files?.[0]; if (file) void importLibrary(file); event.target.value = ''; });
 }
 function syncSettings() {
   const set = (id, value) => { const el = $(`#${id}`); if (!el) return; if (el.type === 'checkbox') el.checked = value; else el.value = value; };
@@ -197,15 +266,17 @@ async function filesFromDirectory(handle) { const files = []; async function wal
 async function chooseFolder() { if (!('showDirectoryPicker' in window)) { $('#folder-input').click(); return; } try { const handle = await window.showDirectoryPicker({ mode: 'read' }); if (db) await directoryAction('readwrite', store => store.put({ id: 'music-root', handle })); const files = await filesFromDirectory(handle); await importFiles(files); toast(`${files.length} file dipindai dari folder.`); } catch (error) { if (error.name !== 'AbortError') toast('Folder tidak dapat dipindai.'); } }
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('atiga-state') || '{}') || {}; } catch { /* Start fresh if browser data is invalid. */ }
+const savedPositions = saved.positions && typeof saved.positions === 'object' ? saved.positions : {};
 const state = {
-  tracks: [], favorites: new Set(Array.isArray(saved.favorites) ? saved.favorites : []),
+  tracks: [...demoTracks], favorites: new Set(Array.isArray(saved.favorites) ? saved.favorites : []),
   playlists: Array.isArray(saved.playlists) ? saved.playlists.filter(p => p && typeof p.name === 'string' && Array.isArray(p.ids)) : [],
-  recent: Array.isArray(saved.recent) ? saved.recent : [], currentId: saved.currentId || null, queue: Array.isArray(saved.queue) ? saved.queue : [],
+  recent: Array.isArray(saved.recent) ? saved.recent : [], currentId: saved.currentId || null, queue: Array.isArray(saved.queue) ? saved.queue : [], positions: savedPositions,
   view: 'all', queueView: false, search: '', sortAsc: false, shuffle: Boolean(saved.shuffle), repeat: [0,1,2].includes(saved.repeat) ? saved.repeat : 0,
   volume: Number.isFinite(saved.volume) ? Math.min(1, Math.max(0, saved.volume)) : .7,
   eq: Array.isArray(saved.eq) && saved.eq.length === 10 ? saved.eq.map(n => Number.isFinite(n) ? Math.max(-12,Math.min(12,n)) : 0) : Array(10).fill(0),
   preset: saved.preset || 'Flat',
   theme: saved.theme || 'ember', glow: saved.glow !== false, gapless: saved.gapless !== false,
+  compact: saved.compact ?? (window.matchMedia?.('(max-width: 640px)').matches ?? false), onboarded: saved.onboarded === true,
   crossfade: Number.isFinite(saved.crossfade) ? Math.max(0, Math.min(12, saved.crossfade)) : 0,
   preamp: Number.isFinite(saved.preamp) ? Math.max(-12, Math.min(12, saved.preamp)) : 0,
   balance: Number.isFinite(saved.balance) ? Math.max(-1, Math.min(1, saved.balance)) : 0,
@@ -237,10 +308,38 @@ let giantVolKnob, deckVolKnob, balKnob, preampKnob, bassKnob, trebleKnob;
 let crossfadeTimer, crossfadeStarted = false;
 const urls = new Map();
 const artUrls = new Map();
+let metadataWorker;
+let metadataRequestId = 0;
+const metadataRequests = new Map();
+try {
+  metadataWorker = new Worker(new URL('./metadata-worker.js', import.meta.url), { type: 'module' });
+  metadataWorker.onmessage = event => {
+    const request = metadataRequests.get(event.data?.id);
+    if (!request) return;
+    metadataRequests.delete(event.data.id);
+    if (event.data.error) request.reject(new Error(event.data.error)); else request.resolve(event.data.metadata || {});
+  };
+  metadataWorker.onerror = () => {
+    metadataRequests.forEach(request => request.reject(new Error('Metadata worker tidak tersedia.')));
+    metadataRequests.clear();
+    metadataWorker?.terminate(); metadataWorker = undefined;
+  };
+} catch { metadataWorker = undefined; }
+function readMetadataOffThread(file) {
+  if (!metadataWorker) return readEmbeddedMetadata(file);
+  return new Promise((resolve, reject) => {
+    const id = ++metadataRequestId;
+    metadataRequests.set(id, { resolve, reject });
+    metadataWorker.postMessage({ id, file });
+  }).catch(() => readEmbeddedMetadata(file));
+}
 const findTrack = id => state.tracks.find(t => t.id === id);
 const current = () => findTrack(state.currentId) || state.tracks[0];
 function persist() {
-  try { localStorage.setItem('atiga-state', JSON.stringify({ ...state, tracks: undefined, favorites: [...state.favorites], position: audio.currentTime, currentId: state.currentId })); }
+  try {
+    if (state.currentId && Number.isFinite(audio.currentTime)) state.positions[state.currentId] = Math.max(0, audio.currentTime);
+    localStorage.setItem('atiga-state', JSON.stringify({ ...state, tracks: undefined, favorites: [...state.favorites], position: audio.currentTime, currentId: state.currentId }));
+  }
   catch { toast('Pengaturan belum tersimpan. Periksa ruang penyimpanan browser.'); }
 }
 function openDB() {
@@ -554,6 +653,8 @@ function renderCurrent() {
   const nowArt = $('#now-art'), playerArt = $('#player-art');
   if (nowArt) { nowArt.dataset.art = String(track.art); applyArt(nowArt, track); const artTitle = nowArt.querySelector('.art-title'); if (artTitle) artTitle.innerHTML = `${esc(track.title)}<span>${esc(track.artist)}</span>`; }
   if (playerArt) { playerArt.dataset.art = String(track.art); applyArt(playerArt, track); }
+  const compactPlay = $('#compact-play');
+  if (compactPlay) compactPlay.setAttribute('aria-label', audio.paused ? 'Putar' : 'Jeda');
   $$('#now-favorite, #player-favorite').forEach(el => { el.classList.toggle('active',state.favorites.has(track.id)); el.setAttribute('aria-pressed', String(state.favorites.has(track.id))); el.setAttribute('aria-label', state.favorites.has(track.id) ? 'Hapus dari favorit' : 'Tambahkan ke favorit'); });
   const durationEl = $('#duration'); if (durationEl) durationEl.textContent = formatTime(track.duration);
   const upcoming = nextTrack();
@@ -591,17 +692,22 @@ function translateMenuLabels() {
   });
 }
 function render() { renderNav(); renderGrouping(); renderTracks(); renderCurrent(); renderModes(); translateMenuLabels(); }
-async function selectTrack(id, autoplay = true) {
+async function selectTrack(id, autoplay = true, requestedPosition = 0) {
   const track = findTrack(id); if (!track) return;
   const token = ++playbackToken; audio.pause(); clearTimeout(crossfadeTimer); crossfadeStarted = false; state.currentId = id; loadedId = id;
   state.playCounts[id] = (state.playCounts[id] || 0) + (autoplay ? 1 : 0);
   try {
     const url = await sourceURL(track);
     if (token !== playbackToken) return;
-    const startPosition = 0;
+    const fallbackPosition = Number.isFinite(state.positions[id]) ? state.positions[id] : (id === saved.currentId && Number.isFinite(saved.position) ? saved.position : 0);
+    const startPosition = Math.max(0, Number.isFinite(requestedPosition) && requestedPosition > 0 ? requestedPosition : fallbackPosition);
     audio.pause(); audio.removeAttribute('src'); audio.load();
     audio.src = url; audio.preload = state.gapless ? 'auto' : 'metadata';
-    const resetStart = () => { if (token === playbackToken) audio.currentTime = startPosition; };
+    const resetStart = () => {
+      if (token !== playbackToken) return;
+      const duration = Number.isFinite(audio.duration) ? audio.duration : track.duration;
+      audio.currentTime = Math.min(startPosition, Math.max(0, duration - 0.25));
+    };
     audio.addEventListener('loadedmetadata', resetStart, { once: true });
     audio.addEventListener('canplay', resetStart, { once: true });
     audio.load();
@@ -672,6 +778,8 @@ audio.addEventListener('play', () => {
   $('#play')?.classList.add('active');
   $('#pause-btn')?.classList.remove('active');
   $('#play')?.setAttribute('aria-label','Jeda');
+  const compactPlay = $('#compact-play');
+  if (compactPlay) { compactPlay.innerHTML = icon('pause'); compactPlay.setAttribute('aria-label', 'Jeda'); }
   const spectrumStatus = $('#spectrum-status');
   if (spectrumStatus) spectrumStatus.textContent = 'LIVE';
   state.recent = [state.currentId, ...state.recent.filter(id => id !== state.currentId)].slice(0,100); persist();
@@ -686,6 +794,8 @@ audio.addEventListener('pause', () => {
     $('#pause-btn')?.classList.add('active');
   }
   $('#play')?.setAttribute('aria-label','Putar');
+  const compactPlay = $('#compact-play');
+  if (compactPlay) { compactPlay.innerHTML = icon('play'); compactPlay.setAttribute('aria-label', 'Putar'); }
   const spectrumStatus = $('#spectrum-status');
   if (spectrumStatus) spectrumStatus.textContent = 'STANDBY';
   persist();
@@ -711,9 +821,16 @@ function bindRotaryKnob(element, { min, max, initial, step = 1, angleMin = -135,
     const clamped = Math.max(min, Math.min(max, v));
     currentVal = clamped;
     updateAngle(currentVal);
+    element.setAttribute('aria-valuenow', String(Number(currentVal.toFixed(2))));
     if (notify && onChange) onChange(currentVal);
   }
 
+  element.setAttribute('role', 'slider');
+  element.setAttribute('tabindex', '0');
+  element.setAttribute('aria-valuemin', String(min));
+  element.setAttribute('aria-valuemax', String(max));
+  element.setAttribute('aria-valuenow', String(initial));
+  element.setAttribute('aria-label', element.title || element.dataset.param || 'Kontrol');
   setVal(initial, false);
 
   let startY = 0;
@@ -746,6 +863,14 @@ function bindRotaryKnob(element, { min, max, initial, step = 1, angleMin = -135,
     const delta = dir * step * (e.shiftKey ? 3 : 1);
     setVal(Math.round((currentVal + delta) / step) * step);
   }, { passive: false });
+
+  element.addEventListener('keydown', event => {
+    const increment = event.shiftKey ? step * 3 : step;
+    if (event.key === 'ArrowUp' || event.key === 'ArrowRight') { event.preventDefault(); setVal(currentVal + increment); }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') { event.preventDefault(); setVal(currentVal - increment); }
+    if (event.key === 'Home') { event.preventDefault(); setVal(min); }
+    if (event.key === 'End') { event.preventDefault(); setVal(max); }
+  });
 
   return { setVal, getVal: () => currentVal };
 }
@@ -1073,20 +1198,24 @@ function setupRackControls() {
   const btnAmpEq = $('#btn-amp-eq');
   const btnAmpDsp = $('#btn-amp-dsp');
   if (btnAmpEq) {
+    btnAmpEq.setAttribute('aria-pressed', String(btnAmpEq.classList.contains('active')));
     btnAmpEq.onclick = (e) => {
       e.stopPropagation();
       btnAmpEq.classList.toggle('active');
       const on = btnAmpEq.classList.contains('active');
+      btnAmpEq.setAttribute('aria-pressed', String(on));
       $('#lamp-equalizer')?.classList.toggle('active', on);
       openEQ();
       toast(on ? 'Equalizer 10-Band ON' : 'Equalizer Bypass');
     };
   }
   if (btnAmpDsp) {
+    btnAmpDsp.setAttribute('aria-pressed', String(btnAmpDsp.classList.contains('active')));
     btnAmpDsp.onclick = (e) => {
       e.stopPropagation();
       btnAmpDsp.classList.toggle('active');
       const on = btnAmpDsp.classList.contains('active');
+      btnAmpDsp.setAttribute('aria-pressed', String(on));
       $('#lamp-dsp')?.classList.toggle('active', on);
       openDspDialog('general');
       toast(on ? 'ATIGA AMP DSP Manager ON' : 'ATIGA AMP DSP Bypass');
@@ -1266,12 +1395,47 @@ if (playlistForm) {
   };
 }
 const compactBtn = $('#compact');
+function applyCompactState() {
+  const app = $('#app');
+  if (!app) return;
+  app.classList.toggle('compact', Boolean(state.compact));
+  if (compactBtn) {
+    compactBtn.setAttribute('aria-pressed', String(state.compact));
+    compactBtn.title = state.compact ? 'Kembali ke tampilan penuh' : 'Mode ringkas';
+  }
+}
 if (compactBtn) {
   compactBtn.onclick = () => {
-    const compact = $('#app')?.classList.toggle('compact');
-    compactBtn.setAttribute('aria-pressed', compact);
-    compactBtn.title = compact ? 'Kembali ke tampilan penuh' : 'Mode compact';
+    state.compact = !state.compact;
+    applyCompactState();
+    persist();
   };
+}
+applyCompactState();
+
+const compactPrevious = $('#compact-previous');
+if (compactPrevious) compactPrevious.onclick = () => advance(-1);
+const compactNext = $('#compact-next');
+if (compactNext) compactNext.onclick = () => advance(1);
+const compactPlay = $('#compact-play');
+if (compactPlay) compactPlay.onclick = () => togglePlay();
+
+const welcomeDialog = $('#welcome-dialog');
+function finishWelcome(openImport = false) {
+  state.onboarded = true;
+  const compactPreference = $('#welcome-compact');
+  if (compactPreference) state.compact = compactPreference.checked;
+  applyCompactState();
+  persist();
+  welcomeDialog?.close();
+  if (openImport) $('#file-input')?.click();
+}
+if (welcomeDialog) {
+  $('#welcome-demo')?.addEventListener('click', () => finishWelcome(false));
+  $('#welcome-import')?.addEventListener('click', () => finishWelcome(true));
+  welcomeDialog.addEventListener('close', () => {
+    if (!state.onboarded) finishWelcome(false);
+  });
 }
 const helpBtn = $('#help');
 if (helpBtn) {
@@ -1338,32 +1502,62 @@ async function readDuration(file) {
   });
 }
 let importing = false;
+let importCancelled = false;
+const importProgress = $('#import-progress');
+const importProgressBar = $('#import-progress-bar');
+const importProgressLabel = $('#import-progress-label');
+const importProgressValue = $('#import-progress-value');
+const cancelImport = $('#cancel-import');
+function updateImportProgress(processed, total, label = 'Mengimpor musik…') {
+  if (importProgress) importProgress.hidden = false;
+  if (importProgressBar) { importProgressBar.max = Math.max(1, total); importProgressBar.value = processed; }
+  if (importProgressLabel) importProgressLabel.textContent = label;
+  if (importProgressValue) importProgressValue.textContent = `${processed} / ${total}`;
+}
+if (cancelImport) cancelImport.onclick = () => {
+  if (importing) {
+    importCancelled = true;
+    cancelImport.disabled = true;
+    updateImportProgress(0, 1, 'Menyelesaikan file yang sedang diproses…');
+  }
+};
 async function importFiles(files) {
   if (importing) { toast('Tunggu impor yang sedang berjalan selesai.'); return; }
   const accepted = [...files].filter(isAudioFile);
   if (!accepted.length) { toast('Tidak ada file audio yang ditemukan.'); return; }
-  importing = true; let added = 0, duplicates = 0, unsupported = 0, unsaved = 0;
+  importing = true; importCancelled = false; if (cancelImport) cancelImport.disabled = false;
+  let added = 0, duplicates = 0, unsupported = 0, unsaved = 0, processed = 0;
+  updateImportProgress(0, accepted.length);
   toast(`Mengimpor ${accepted.length} file musik…`);
   try {
     for (const file of accepted) {
+      if (importCancelled) break;
       const fingerprint = `${file.name}:${file.size}:${file.lastModified}`;
-      if (state.tracks.some(t => t.fingerprint === fingerprint)) { duplicates++; continue; }
-      const duration = await readDuration(file); if (!duration) { unsupported++; continue; }
-      const fallback = metadataFromFilename(file), metadata = await readEmbeddedMetadata(file);
+      if (state.tracks.some(t => t.fingerprint === fingerprint)) { duplicates++; processed++; updateImportProgress(processed, accepted.length, `Melewati duplikat: ${file.name}`); continue; }
+      const duration = await readDuration(file); if (!duration) { unsupported++; processed++; updateImportProgress(processed, accepted.length, `Format tidak didukung: ${file.name}`); continue; }
+      const fallback = metadataFromFilename(file), metadata = await readMetadataOffThread(file);
       const track = { id: crypto.randomUUID(), fingerprint, title: metadata.title || fallback.title, artist: metadata.artist || fallback.artist, album: metadata.album || fallback.album, genre: metadata.genre || 'Tidak diketahui', replayGain: metadata.replayGain || 0, cover: metadata.cover, art: added % 6, duration, format: file.name.split('.').pop().toUpperCase(), file };
       if (db) { try { await dbAction('readwrite', store => store.put(track)); } catch { unsaved++; } } else unsaved++;
       state.tracks.push(track); added++;
       const playlist = state.playlists.find(p => p.id === state.view); if (playlist) playlist.ids.push(track.id);
+      processed++;
+      updateImportProgress(processed, accepted.length, `Menambahkan: ${track.title}`);
     }
+    const wasCancelled = importCancelled;
     state.search = ''; $('#search').value = ''; state.queueView = false; if (['favorites','recent'].includes(state.view)) state.view = 'all';
     render(); persist();
     const summary = added ? `${added} lagu ditambahkan.` : 'Tidak ada lagu baru.';
     const duplicateNote = duplicates ? ` ${duplicates} duplikat dilewati.` : '';
-    toast(`${summary}${duplicateNote}${unsupported ? ` ${unsupported} file tidak didukung.` : ''}${unsaved ? ` ${unsaved} lagu hanya tersedia selama sesi ini; penyimpanan penuh/tidak tersedia.` : ''}`);
+    toast(`${summary}${duplicateNote}${unsupported ? ` ${unsupported} file tidak didukung.` : ''}${unsaved ? ` ${unsaved} lagu hanya tersedia selama sesi ini; penyimpanan penuh/tidak tersedia.` : ''}${wasCancelled ? ' Impor dibatalkan.' : ''}`);
   } catch (error) {
     console.error('Atiga Amp import failed', error);
     toast(`Impor gagal: ${error instanceof Error ? error.message : 'file tidak dapat diproses.'}`);
-  } finally { importing = false; $('#file-input').value = ''; $('#folder-input').value = ''; }
+  } finally {
+    importing = false;
+    if (cancelImport) cancelImport.disabled = false;
+    if (importProgress) importProgress.hidden = true;
+    $('#file-input').value = ''; $('#folder-input').value = '';
+  }
 }
 $$('#file-input, #folder-input').forEach(input => input.onchange = event => importFiles(event.target.files));
 let dragDepth = 0;
@@ -1435,16 +1629,24 @@ let smoothedL = 0, smoothedR = 0;
 let needleAngleL = -45, needleAngleR = 45;
 let lastMeterTimestamp = 0;
 let peakHoldL = 0, peakHoldR = 0;
+let spectrumBins = new Uint8Array(1024);
+let waveformSamples = new Uint8Array(2048);
+let channelBinsL = new Uint8Array(0);
+let channelBinsR = new Uint8Array(0);
 
 function paintSpectrum(timestamp) {
   requestAnimationFrame(paintSpectrum);
   if (document.hidden) return;
 
   const isPlayingAudio = !audio.paused && !audio.muted && state.volume > 0;
-  const bins = new Uint8Array(analyser?.frequencyBinCount || 1024);
+  if (analyser && spectrumBins.length !== analyser.frequencyBinCount) spectrumBins = new Uint8Array(analyser.frequencyBinCount);
+  const bins = spectrumBins;
   if (analyser && isPlayingAudio) {
     analyser.getByteFrequencyData(bins);
   }
+
+  const needsMeters = isPlayingAudio || smoothedL > 0.004 || smoothedR > 0.004 || peakHoldL > 0.5 || peakHoldR > 0.5;
+  if (!needsMeters && (!canvas || canvas.clientWidth === 0)) return;
 
   // Render spectrum canvas in library drawer ONLY if drawer is visible
   if (canvas && canvas.clientWidth > 0 && timestamp - lastFrame >= 30) {
@@ -1480,7 +1682,8 @@ function paintSpectrum(timestamp) {
       wavePainter.strokeStyle = '#d9a261';
       wavePainter.lineWidth = 1;
       wavePainter.beginPath();
-      const samples = new Uint8Array(analyser?.fftSize || 2048);
+      if (analyser && waveformSamples.length !== analyser.fftSize) waveformSamples = new Uint8Array(analyser.fftSize);
+      const samples = waveformSamples;
       if (analyser && !audio.paused) analyser.getByteTimeDomainData(samples);
       for (let i = 0; i < waveWidth; i++) {
         const sample = samples[Math.floor(i / waveWidth * samples.length)] || 128;
@@ -1496,8 +1699,10 @@ function paintSpectrum(timestamp) {
   if (isPlayingAudio) {
     if (analyserL && analyserR) {
       // TRUE STEREO: read each channel independently via ChannelSplitter
-      const binsL = new Uint8Array(analyserL.frequencyBinCount);
-      const binsR = new Uint8Array(analyserR.frequencyBinCount);
+      if (channelBinsL.length !== analyserL.frequencyBinCount) channelBinsL = new Uint8Array(analyserL.frequencyBinCount);
+      if (channelBinsR.length !== analyserR.frequencyBinCount) channelBinsR = new Uint8Array(analyserR.frequencyBinCount);
+      const binsL = channelBinsL;
+      const binsR = channelBinsR;
       analyserL.getByteFrequencyData(binsL);
       analyserR.getByteFrequencyData(binsR);
       // Full-spectrum average (bins 1..512 covers ~20 Hz → ~11 kHz)
@@ -1967,7 +2172,7 @@ function setupDspDialog() {
 requestAnimationFrame(paintSpectrum);
 window.addEventListener('pagehide', persist);
 async function init() {
-  addAdvancedUI(); applyTheme(); applyPanelOrder();
+  addAdvancedUI(); applyTheme(); applyPanelOrder(); applyCompactState();
   setupRackControls();
   setupDspDialog();
   render();
@@ -1979,7 +2184,8 @@ async function init() {
   render();
   if ($('#eq-preset')) $('#eq-preset').value = state.preset;
   if ($('#preset-label')) $('#preset-label').textContent = presetLabels[state.preset] || state.preset;
-  if (state.currentId) await selectTrack(state.currentId,false,0);
+  if (state.currentId) await selectTrack(state.currentId, false, state.positions[state.currentId] ?? saved.position ?? 0);
+  if (!state.onboarded) welcomeDialog?.showModal();
 }
 initTauriFileDrop();
 init();

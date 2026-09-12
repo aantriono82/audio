@@ -143,9 +143,9 @@ Error generating stack: `+e.message+`
           <div class="console-matrix-panel">
             <!-- Row 1: dbx badge aligned to the top right -->
             <div class="matrix-top-header">
-              <div class="dbx-indicator-badge active" id="dbx-badge" title="dbx Dynamic Noise Reduction System" role="button" tabindex="0" aria-label="dbx Noise Reduction">
+              <button type="button" class="dbx-indicator-badge active" id="dbx-badge" title="dbx Dynamic Noise Reduction System" aria-label="dbx Noise Reduction">
                 <span>dbx</span>
-              </div>
+              </button>
             </div>
 
             <!-- Row 2: Push buttons for Menu, Amplifier, DSP -->
@@ -166,15 +166,15 @@ Error generating stack: `+e.message+`
             <div class="matrix-chart-card">
               <div class="chart-row chart-row-top">
                 <div class="chart-col-head">SYSTEM</div>
-                <div class="chart-col-cell" id="matrix-lbl-menu" role="button" tabindex="0" title="Buka / Tutup Daftar Lagu">MENU</div>
-                <div class="chart-col-cell" id="matrix-lbl-amplifier" role="button" tabindex="0" title="Tampilkan / Sembunyikan Amplifier">AMPLIFIER</div>
-                <div class="chart-col-cell" id="matrix-lbl-dsp" role="button" tabindex="0" title="Buka AIMP Sound Effects DSP">DSP</div>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-menu" title="Buka / Tutup Daftar Lagu">MENU</button>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-amplifier" title="Tampilkan / Sembunyikan Amplifier">AMPLIFIER</button>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-dsp" title="Buka AIMP Sound Effects DSP">DSP</button>
               </div>
               <div class="chart-row chart-row-bottom">
                 <div class="chart-col-head">TAPE (BIAS/EQ)</div>
-                <div class="chart-col-cell" id="matrix-lbl-normal" role="button" tabindex="0" title="Pilih Tape Normal">NORMAL</div>
-                <div class="chart-col-cell" id="matrix-lbl-cro2" role="button" tabindex="0" title="Pilih Tape CrO₂">Co (CrO₂)</div>
-                <div class="chart-col-cell" id="matrix-lbl-metal" role="button" tabindex="0" title="Pilih Tape Metal">METAL</div>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-normal" title="Pilih Tape Normal">NORMAL</button>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-cro2" title="Pilih Tape CrO₂">Co (CrO₂)</button>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-metal" title="Pilih Tape Metal">METAL</button>
               </div>
             </div>
 
@@ -892,6 +892,14 @@ Error generating stack: `+e.message+`
           <span class="pl-ready-indicator"><i></i> Siap untuk didengarkan</span>
         </div>
       </div>
+      <div class="import-progress" id="import-progress" hidden role="status" aria-live="polite">
+        <div class="import-progress-heading">
+          <span id="import-progress-label">Mengimpor musik…</span>
+          <output id="import-progress-value">0 / 0</output>
+          <button type="button" class="text-button" id="cancel-import">Batalkan</button>
+        </div>
+        <progress id="import-progress-bar" value="0" max="1" aria-label="Kemajuan impor">0%</progress>
+      </div>
 
       <!-- Hidden interop container for secondary bindings -->
       <div class="legacy-bindings" hidden style="display:none !important;" aria-hidden="true">
@@ -932,6 +940,11 @@ Error generating stack: `+e.message+`
     </div>
     <div class="transport">
       <button id="shuffle" aria-label="Acak"></button>
+      <div class="compact-transport-controls" aria-label="Kontrol pemutaran ringkas">
+        <button id="compact-previous" class="icon-button" aria-label="Lagu sebelumnya" data-icon="previous"></button>
+        <button id="compact-play" class="icon-button compact-play-button" aria-label="Putar" data-icon="play"></button>
+        <button id="compact-next" class="icon-button" aria-label="Lagu berikutnya" data-icon="next"></button>
+      </div>
       <div class="seek-row">
         <time id="elapsed">00:00</time>
         <input type="range" id="seek" min="0" max="100" step="0.1" value="0" aria-label="Posisi pemutaran" />
@@ -955,11 +968,25 @@ Error generating stack: `+e.message+`
 <!-- Native and Dialog Inputs -->
 <input type="file" id="file-input" accept="audio/*,.flac,.ogg,.m4a,.opus,.aiff,.webm" multiple hidden />
 <input type="file" id="folder-input" webkitdirectory multiple hidden />
+<input type="file" id="library-import" accept="application/json,.json" hidden />
 <div class="drop-overlay" id="drop-overlay" hidden>
   <span data-icon="music"></span>
   <h2>Load your tape.</h2>
   <p>Lepaskan file audio untuk memuat kaset ke deck.</p>
 </div>
+
+<dialog id="welcome-dialog" class="welcome-dialog" aria-labelledby="welcome-title">
+  <form method="dialog" class="welcome-card">
+    <div class="eyebrow">ATIGA AMP / SELAMAT DATANG</div>
+    <h2 id="welcome-title">Musikmu<span>.</span></h2>
+    <p>Putar audio demo sekarang atau tambahkan koleksi musik dari perangkatmu. Semua file tetap berada di perangkat ini.</p>
+    <div class="welcome-actions">
+      <button type="button" class="primary-button" id="welcome-import">Tambah musik</button>
+      <button type="button" class="text-button" id="welcome-demo">Jelajahi audio demo</button>
+    </div>
+    <label class="setting-check"><input type="checkbox" id="welcome-compact" /> Gunakan mode ringkas dengan player yang selalu terlihat</label>
+  </form>
+</dialog>
 
 <!-- Dialogs: Equalizer, Playlist, Track Options, Help -->
 <dialog id="eq-dialog">
@@ -1298,4 +1325,4 @@ Error generating stack: `+e.message+`
 
 <div role="status" id="toast" class="toast" hidden></div>
 <audio id="audio" preload="auto"></audio>
-`,f=e((e=>{var t=Symbol.for(`react.transitional.element`);function n(e,n,r){var i=null;if(r!==void 0&&(i=``+r),n.key!==void 0&&(i=``+n.key),`key`in n)for(var a in r={},n)a!==`key`&&(r[a]=n[a]);else r=n;return n=r.ref,{$$typeof:t,type:e,key:i,ref:n===void 0?null:n,props:r}}e.jsx=n})),p=e(((e,t)=>{t.exports=f()}))(),m=`modulepreload`,h=function(e){return`/`+e},g={},_=function(e,t,n){let r=Promise.resolve();if(t&&t.length>0){let e=document.getElementsByTagName(`link`),i=document.querySelector(`meta[property=csp-nonce]`),a=i?.nonce||i?.getAttribute(`nonce`);function o(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}function s(e){return import.meta.resolve?import.meta.resolve(e):new URL(e,import.meta.url).href}r=o(t.map(t=>{if(t=h(t,n),t=s(t),t in g)return;g[t]=!0;let r=t.endsWith(`.css`);for(let n=e.length-1;n>=0;n--){let i=e[n];if(i.href===t&&(!r||i.rel===`stylesheet`))return}let i=document.createElement(`link`);if(i.rel=r?`stylesheet`:m,r||(i.as=`script`),i.crossOrigin=``,i.href=t,a&&i.setAttribute(`nonce`,a),document.head.appendChild(i),r)return new Promise((e,n)=>{i.addEventListener(`load`,e),i.addEventListener(`error`,()=>n(Error(`Unable to preload CSS for ${t}`)))})}))}function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})};function v(){return(0,l.useEffect)(()=>{_(()=>import(`./app-DvQ-c8Gk.js`),[])},[]),(0,p.jsx)(`div`,{dangerouslySetInnerHTML:{__html:d}})}var y=document.getElementById(`root`);if(!y)throw Error(`Elemen root React tidak ditemukan.`);(0,u.createRoot)(y).render((0,p.jsx)(v,{}));export{_ as t};
+`,f=e((e=>{var t=Symbol.for(`react.transitional.element`);function n(e,n,r){var i=null;if(r!==void 0&&(i=``+r),n.key!==void 0&&(i=``+n.key),`key`in n)for(var a in r={},n)a!==`key`&&(r[a]=n[a]);else r=n;return n=r.ref,{$$typeof:t,type:e,key:i,ref:n===void 0?null:n,props:r}}e.jsx=n})),p=e(((e,t)=>{t.exports=f()}))(),m=`modulepreload`,h=function(e){return`/`+e},g={},_=function(e,t,n){let r=Promise.resolve();if(t&&t.length>0){let e=document.getElementsByTagName(`link`),i=document.querySelector(`meta[property=csp-nonce]`),a=i?.nonce||i?.getAttribute(`nonce`);function o(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}function s(e){return import.meta.resolve?import.meta.resolve(e):new URL(e,import.meta.url).href}r=o(t.map(t=>{if(t=h(t,n),t=s(t),t in g)return;g[t]=!0;let r=t.endsWith(`.css`);for(let n=e.length-1;n>=0;n--){let i=e[n];if(i.href===t&&(!r||i.rel===`stylesheet`))return}let i=document.createElement(`link`);if(i.rel=r?`stylesheet`:m,r||(i.as=`script`),i.crossOrigin=``,i.href=t,a&&i.setAttribute(`nonce`,a),document.head.appendChild(i),r)return new Promise((e,n)=>{i.addEventListener(`load`,e),i.addEventListener(`error`,()=>n(Error(`Unable to preload CSS for ${t}`)))})}))}function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})};function v(){return(0,l.useEffect)(()=>{_(()=>import(`./app-Be5pxwjy.js`),[])},[]),(0,p.jsx)(`div`,{dangerouslySetInnerHTML:{__html:d}})}var y=document.getElementById(`root`);if(!y)throw Error(`Elemen root React tidak ditemukan.`);(0,u.createRoot)(y).render((0,p.jsx)(v,{})),`serviceWorker`in navigator&&window.addEventListener(`load`,()=>{navigator.serviceWorker.register(`/sw.js`)});export{_ as t};

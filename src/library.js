@@ -1,6 +1,18 @@
 export const esc = text => String(text).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const formatTime = seconds => `${Math.floor((seconds || 0) / 60).toString().padStart(2, '0')}:${Math.floor((seconds || 0) % 60).toString().padStart(2, '0')}`;
 
+export const demoTracks = [
+  ['Amber Skies', 'After Hours', 0, 130.81],
+  ['Slow Sunday', 'Soft Focus', 1, 146.83],
+  ['Midnight Transit', 'Night Signals', 2, 110],
+  ['A Little Further', 'Daydreams', 3, 164.81],
+  ['Tape Memories', 'Analog Diaries', 4, 123.47],
+  ['Home Again', 'Quiet Places', 5, 174.61],
+].map(([title, album, art, frequency], index) => ({
+  id: `demo-${index}`, title, album, artist: 'Atiga Sessions', art, frequency,
+  duration: 32, format: 'WAV', demo: true,
+}));
+
 // Original, generated instrumental previews. No remote audio or copyrighted recordings.
 export function demoBlob(track) {
   const sampleRate = 22050, length = sampleRate * track.duration;

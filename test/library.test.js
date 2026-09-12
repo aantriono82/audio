@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { esc, formatTime, baseTracks, visibleTracks, demoBlob } from '../src/library.js';
+import { esc, formatTime, baseTracks, visibleTracks, demoBlob, demoTracks } from '../src/library.js';
 
 function fixture(overrides = {}) {
   return {
@@ -100,4 +100,10 @@ test('demoBlob produces a valid mono PCM WAV with non-silent audio', async () =>
   }
   assert.ok(peak > 100, 'Audio should contain an audible signal');
   assert.ok(peak < 32767, 'Audio should not clip');
+});
+
+test('demo catalog contains six playable local previews', () => {
+  assert.equal(demoTracks.length, 6);
+  assert.ok(demoTracks.every(track => track.demo && track.format === 'WAV' && track.duration > 0));
+  assert.equal(new Set(demoTracks.map(track => track.id)).size, demoTracks.length);
 });
