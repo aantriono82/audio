@@ -905,6 +905,11 @@ audio.addEventListener('pause', () => {
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
 });
 audio.addEventListener('ended', () => {
+  // Do not restore a completed track from its final timestamp after restart.
+  // WebKitGTK can report the ended position slightly before or after duration.
+  if (state.currentId) state.positions[state.currentId] = 0;
+  audio.currentTime = 0;
+  persist();
   $('#pause-btn')?.classList.remove('active');
   advance(1, true);
 });

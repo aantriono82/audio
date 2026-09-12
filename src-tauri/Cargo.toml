@@ -1,6 +1,6 @@
 [package]
 name = "atiga-amp"
-version = "0.1.3"
+version = "0.1.4"
 description = "Atiga Amp desktop music player"
 authors = ["Atiga"]
 edition = "2021"

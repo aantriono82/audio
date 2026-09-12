@@ -4,7 +4,7 @@
     "targets": ["deb", "appimage"],
     "linux": {
       "appimage": { "bundleMediaFramework": true },
-      "deb": { "depends": ["gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good", "gstreamer1.0-libav"] }
+      "deb": { "depends": ["gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good", "gstreamer1.0-plugins-bad", "gstreamer1.0-plugins-ugly", "gstreamer1.0-libav"] }
     }
   }
 }
