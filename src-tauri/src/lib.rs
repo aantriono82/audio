@@ -3,7 +3,7 @@ mod storage;
 use serde_json::{json, Value};
 use std::{fs, path::PathBuf};
 use storage::Result;
-use tauri::Manager;
+use tauri::{DragDropEvent, Manager, WindowEvent};
 use tauri_plugin_dialog::DialogExt;
 
 fn data_root(app: &tauri::AppHandle) -> Result<PathBuf> {
@@ -192,6 +192,26 @@ async fn save_player_settings(app: tauri::AppHandle, settings: Value) -> Result<
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        // Keep an explicit authorization step in the app event path as a
+        // fallback for runtimes that emit a drop without updating the asset
+        // protocol scope before the frontend asks us to scan it.
+        .on_window_event(|window, event| {
+            if let WindowEvent::DragDrop(DragDropEvent::Drop { paths, .. }) = event {
+                let scope = window.app_handle().asset_protocol_scope();
+                for path in paths {
+                    let result = if path.is_file() {
+                        scope.allow_file(path)
+                    } else if path.is_dir() {
+                        scope.allow_directory(path, false)
+                    } else {
+                        Ok(())
+                    };
+                    if let Err(error) = result {
+                        eprintln!("Unable to authorize dropped path: {error}");
+                    }
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             select_audio,
             scan_audio_paths,

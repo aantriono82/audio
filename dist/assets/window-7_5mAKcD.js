@@ -1,1 +1,0 @@
-import{c as e}from"./window-Yxcl4dDn.js";export{e as getCurrentWindow};

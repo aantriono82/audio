@@ -1,6 +1,6 @@
 import { esc, formatTime, demoBlob, demoTracks, baseTracks, visibleTracks, queueIndexAtVisibleIndex } from './library.js';
 import { isAudioFile, metadataFromFilename, readEmbeddedMetadata } from './import.js';
-import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, nativeAudioBlob, saveNativeTrack, removeNativeTrack, nativeURL, onNativeClose } from './desktop.js';
+import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, saveNativeTrack, removeNativeTrack, nativeURL } from './desktop.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -190,6 +190,11 @@ function addAdvancedUI() {
   const formatSupport = $('#format-support');
   if (formatSupport) {
     formatSupport.innerHTML = ['mp3','wav','ogg','flac','m4a','aac','opus','aiff','webm'].map(ext => `<span>${ext.toUpperCase()} ${audio.canPlayType(`audio/${ext}`) ? '✓' : '?'}</span>`).join('');
+    if (nativeDirectPlayback) {
+      const note = document.createElement('small');
+      note.textContent = 'Mode kompatibilitas Linux aktif; EQ/DSP Web Audio dinonaktifkan agar playback stabil.';
+      formatSupport.append(note);
+    }
   }
 
   const storageUsage = dialog.querySelector('#storage-usage') || document.createElement('div');
@@ -337,14 +342,23 @@ const state = {
   }
 };
 const audio = $('#audio');
+// WebKitGTK/GStreamer has a known failure mode when a media element is routed
+// through a complex Web Audio graph. Keep Linux desktop playback on the
+// native media element; the browser build retains EQ/DSP and analyser output.
+const nativeDirectPlayback = desktop && /linux/i.test(navigator.platform || navigator.userAgent);
 state.playlists = state.playlists.filter(playlist => !['after-hours', 'slow-living'].includes(playlist.id));
-let context, analyser, analyserL, analyserR, filters = [], compressor, masterGain, panner, db, loadedId, pendingStartupPosition = 0, playbackToken = 0, lastSavedSecond = -1, directAudio = false;
+let context, analyser, analyserL, analyserR, filters = [], compressor, masterGain, panner, db, loadedId, pendingStartupPosition = 0, playbackToken = 0, lastSavedSecond = -1, directAudio = nativeDirectPlayback;
 let pendingStartCleanup;
 let dspBassFilter, dspEchoDelay, dspEchoFeedback, dspEchoGain, dspReverbConvolver, dspReverbGain, dspChorusDelay, dspChorusGain, dspChorusLfo, dspVoiceDryGain, dspVoiceWetGain, dspVoiceSplitter, dspVoiceMerger, dspVoiceInvGain, dspSumGain;
 let giantVolKnob, deckVolKnob, balKnob, preampKnob, bassKnob, trebleKnob;
 let crossfadeTimer, crossfadeStarted = false;
 const urls = new Map();
 const artUrls = new Map();
+function releaseTrackURL(id) {
+  const url = urls.get(id);
+  if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
+  urls.delete(id);
+}
 let metadataWorker;
 let metadataRequestId = 0;
 const metadataRequests = new Map();
@@ -625,12 +639,11 @@ function applyAudioSettings() {
 }
 async function sourceURL(track) {
   if (urls.has(track.id)) return urls.get(track.id);
-  // Fetch asynchronously from the Tauri asset scope and use a same-origin Blob
-  // URL for WebKitGTK media playback. Sending the complete file through IPC
-  // makes the window appear frozen for large albums.
+  // Let the asset protocol stream native files and honor HTTP range requests.
+  // Fetching the complete file into a Blob makes every played track resident
+  // in WebKit memory and can freeze the window on larger collections.
   if (desktop && track.nativePath) {
-    const blob = await nativeAudioBlob(track.nativePath);
-    const url = URL.createObjectURL(blob);
+    const url = nativeURL(track.nativePath);
     urls.set(track.id, url);
     return url;
   }
@@ -787,7 +800,9 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
   const track = findTrack(id); if (!track) return;
   const token = ++playbackToken;
   pendingStartCleanup?.(); pendingStartCleanup = undefined;
+  const previousLoadedId = loadedId;
   audio.pause(); clearTimeout(crossfadeTimer); crossfadeStarted = false; state.currentId = id; loadedId = id;
+  if (previousLoadedId && previousLoadedId !== id) releaseTrackURL(previousLoadedId);
   state.playCounts[id] = (state.playCounts[id] || 0) + (autoplay ? 1 : 0);
   // Restoring the selected track must not read the whole audio file while the
   // window is starting. Load it only after the user presses Play.
@@ -800,7 +815,12 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
   pendingStartupPosition = 0;
   try {
     const url = await sourceURL(track);
-    if (token !== playbackToken) return;
+    if (token !== playbackToken) {
+      // A fast second click can finish this request after another track was
+      // selected. Do not retain a URL that no active player can use.
+      if (loadedId !== id) releaseTrackURL(id);
+      return;
+    }
     // Explicit user navigation starts at the beginning. The only caller that
     // supplies a position is startup restoration of the last track.
     const startPosition = Number.isFinite(requestedPosition) ? Math.max(0, requestedPosition) : 0;
@@ -1473,7 +1493,7 @@ async function removeTrack(id) {
     audio.pause(); audio.removeAttribute('src'); audio.load();
     loadedId = null; state.currentId = null;
   }
-  const url = urls.get(id); if (url) { URL.revokeObjectURL(url); urls.delete(id); }
+  releaseTrackURL(id);
   const artUrl = artUrls.get(id); if (artUrl) { URL.revokeObjectURL(artUrl); artUrls.delete(id); }
   state.tracks = state.tracks.filter(item => item.id !== id);
   state.playlists.forEach(playlist => { playlist.ids = playlist.ids.filter(item => item !== id); });
@@ -2394,15 +2414,11 @@ async function init() {
   render();
   if ($('#eq-preset')) $('#eq-preset').value = state.preset;
   if ($('#preset-label')) $('#preset-label').textContent = presetLabels[state.preset] || state.preset;
-  if (state.currentId) await selectTrack(state.currentId, false, state.positions[state.currentId] ?? saved.position ?? 0);
+  // Reopening the application selects the last song without restoring its
+  // playback timestamp. A newly opened player always starts at the beginning.
+  if (state.currentId) await selectTrack(state.currentId, false, 0);
   await applyOutputDevice();
   if (!state.onboarded && welcomeDialog && !welcomeDialog.open) welcomeDialog.showModal();
 }
 await init();
 await initTauriFileDrop();
-if (desktop) await onNativeClose(async () => {
-  if (importing || choosingNativeAudio) { toast('Selesaikan atau batalkan impor sebelum menutup aplikasi.'); return false; }
-  persist();
-  try { await nativeSettings.flush(); return true; }
-  catch { toast('Pengaturan gagal disimpan; aplikasi tetap ditutup.'); return true; }
-});

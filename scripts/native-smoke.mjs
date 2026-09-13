@@ -127,6 +127,7 @@ try {
   await until(() => evaluate('return document.querySelector("#tracks").textContent.includes("Desktop smoke")'), 'restored library');
   assert.equal(await evaluate('return document.querySelector("#welcome-dialog").open'), false);
   assert.equal(await evaluate('return document.querySelector("#audio").paused'), true);
+  assert.equal(await evaluate('return document.querySelector("#audio").currentTime'), 0);
   assert.equal(await evaluate(`return document.querySelector('#tracks [data-id="${track.id}"] [data-action="favorite"]').getAttribute('aria-pressed')`), 'true');
   const screenshot = await request('GET', endpoint('/screenshot'));
   await writeFile(path.join(directory, 'desktop.png'), Buffer.from(screenshot, 'base64'));

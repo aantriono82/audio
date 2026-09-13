@@ -27,6 +27,7 @@ Penyimpanan browser terpisah per origin, termasuk port. Gunakan kembali port seb
 - Crossfade, preload gapless, ReplayGain dari tag, preamp, balance, output device, tema, CRT/glow, dan panel drag-and-drop.
 - Metadata ID3 dasar, embedded cover, pengelompokan artis/album/genre, smart playlist, waveform, notifikasi, dan pemindaian ulang folder.
 - Desktop: dialog sistem untuk file/folder, pemindaian ulang folder, serta drag-and-drop file/folder; audio disalin ke direktori data aplikasi dan pengaturan disimpan dalam JSON secara atomik. Browser: IndexedDB dan localStorage. Tidak otomatis memutar setelah dibuka kembali.
+- Pada Linux desktop, mode kompatibilitas memutar melalui elemen media native agar stabil di WebKitGTK/GStreamer; pemrosesan EQ/DSP dan visualisasi Web Audio dinonaktifkan pada mode ini.
 - Mode compact, layout responsif, kontrol keyboard, dan Media Session pada browser yang mendukung.
 - PWA shell cache agar antarmuka dapat dibuka kembali saat offline; audio impor tetap dibaca dari penyimpanan lokal perangkat.
 

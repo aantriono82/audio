@@ -8,6 +8,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const markup = await readFile(path.join(root, 'src/react/playerMarkup.ts'), 'utf8');
 const index = await readFile(path.join(root, 'index.html'), 'utf8');
 const manifest = await readFile(path.join(root, 'public/manifest.webmanifest'), 'utf8');
+const appSource = await readFile(path.join(root, 'src/app.js'), 'utf8');
+const desktopSource = await readFile(path.join(root, 'src/desktop.js'), 'utf8');
+const nativeSource = await readFile(path.join(root, 'src-tauri/src/lib.rs'), 'utf8');
 
 test('primary UI contract keeps onboarding, compact controls, and backup entry points', () => {
   for (const id of ['welcome-dialog', 'welcome-import', 'welcome-demo', 'compact-previous', 'compact-play', 'compact-next', 'library-import']) {
@@ -26,4 +29,21 @@ test('offline app contract includes a manifest and service worker registration',
 test('critical CSS is owned by the module entry and startup needs no remote fonts', () => {
   assert.doesNotMatch(index, /rel="stylesheet" href="\/src\/style\.css"/);
   assert.doesNotMatch(index, /fonts\.(googleapis|gstatic)\.com/);
+});
+
+test('Linux playback avoids the fragile Web Audio path and starts from zero', () => {
+  assert.match(appSource, /const nativeDirectPlayback = desktop && \/linux\/i/);
+  assert.match(appSource, /directAudio = nativeDirectPlayback/);
+  assert.match(appSource, /selectTrack\(state\.currentId, false, 0\)/);
+  assert.match(appSource, /const url = nativeURL\(track\.nativePath\)/);
+});
+
+test('native window close is not intercepted by the WebView', () => {
+  assert.doesNotMatch(desktopSource, /onCloseRequested/);
+});
+
+test('native file drops authorize paths before scanning', () => {
+  assert.match(nativeSource, /WindowEvent::DragDrop\(DragDropEvent::Drop/);
+  assert.match(nativeSource, /asset_protocol_scope\(\)/);
+  assert.match(nativeSource, /scope\.allow_file\(path\)/);
 });

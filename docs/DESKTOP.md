@@ -44,9 +44,9 @@ Untuk rilis, perbarui versi di `package.json`, `package-lock.json`, `src-tauri/C
 - `library/<UUID>/`: salinan audio, `track.json`, dan cover jika tersedia. Penyalinan diselesaikan dalam direktori sementara sebelum lagu dimasukkan ke koleksi.
 - `music-folder.json`: folder terakhir yang dipilih pengguna, untuk pemindaian ulang.
 
-Pembacaan audio dibatasi ke file/folder pilihan pengguna dan salinan dalam data aplikasi. Pemindaian tidak mengikuti symlink agar tidak keluar dari folder atau berputar tanpa henti. Impor membaca satu file per giliran; pembatalan selesai setelah file aktif diproses. Pemindaian direktori berjalan sebelum tahap impor dan belum memiliki pembatalan tersendiri. Audio yang sedang dianalisis atau diputar dibaca ke memori dan diberikan ke elemen audio sebagai Blob URL. Cover tersimpan dilayani melalui asset protocol Tauri.
+Pembacaan audio dibatasi ke file/folder pilihan pengguna dan salinan dalam data aplikasi. Pemindaian tidak mengikuti symlink agar tidak keluar dari folder atau berputar tanpa henti. Impor membaca satu file per giliran; pembatalan selesai setelah file aktif diproses. Pemindaian direktori berjalan sebelum tahap impor dan belum memiliki pembatalan tersendiri. Pada Linux desktop, elemen audio memutar salinan dari data aplikasi melalui asset protocol dengan dukungan range sehingga seluruh lagu tidak perlu disalin ke Blob URL; metadata impor tetap dibaca sesuai kebutuhan. Cover tersimpan dilayani melalui asset protocol Tauri.
 
-Menutup jendela menunggu penulisan pengaturan selesai. Saat impor berlangsung, selesaikan atau batalkan impor lebih dahulu. Jika pengaturan rusak, aplikasi mempertahankan file tersebut dan melaporkan kegagalan; jangan menganggap perubahan sesi tersimpan sampai file dipulihkan. Metadata koleksi yang rusak dilaporkan dan dilewati tanpa menghapus berkasnya.
+Penutupan jendela tidak ditahan oleh WebView; pengaturan ditulis berurutan selama sesi dan disimpan berkala. Saat impor berlangsung, pembatalan dapat dilakukan dari UI. Jika pengaturan rusak, aplikasi mempertahankan file tersebut dan melaporkan kegagalan; jangan menganggap perubahan sesi tersimpan sampai file dipulihkan. Metadata koleksi yang rusak dilaporkan dan dilewati tanpa menghapus berkasnya.
 
 Ekspor cadangan di UI berisi metadata dan pengaturan, tanpa audio. Untuk mencadangkan seluruh koleksi desktop, tutup aplikasi dan salin direktori data di atas. Data IndexedDB dari prototipe desktop tetap dibaca di WebView yang sama; untuk koleksi yang berasal dari browser lain, impor kembali file musik lalu pulihkan cadangan metadata.
 
@@ -58,7 +58,7 @@ Sebelum rilis publik, uji pada distro Linux sasaran:
 2. Putuskan jaringan, buka aplikasi, dan putar demo serta musik lokal.
 3. Pilih beberapa file dan folder bersarang dengan nama Unicode; batalkan dialog; drag file dan folder dari pengelola berkas.
 4. Pindai ulang: file baru ditambahkan dan file lama tidak terduplikasi. Uji file rusak, folder hilang, izin ditolak, serta pembatalan impor.
-5. Putar MP3/WAV/OGG/FLAC, seek, jeda, pindah lagu, dan EQ; catat codec yang tersedia.
+5. Putar MP3/WAV/OGG/FLAC, seek, jeda, dan pindah lagu; di browser uji EQ, sedangkan Linux desktop memakai mode playback kompatibilitas tanpa pemrosesan Web Audio.
 6. Simpan favorit, playlist, volume dan posisi; tutup lalu buka kembali tanpa autoplay. Pindahkan file asli dan pastikan salinan impor tetap diputar.
 7. Hapus lagu dari koleksi dan pastikan file asli masih ada. Uji upgrade, uninstall, dan install ulang sesuai kebijakan data yang ingin dirilis.
 

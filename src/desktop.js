@@ -35,43 +35,10 @@ export async function readNativeAudio(entry) {
   return file;
 }
 
-export async function nativeAudioBlob(path) {
-  return nativeBlob(path);
-}
-
 export async function saveNativeTrack(path, track) {
   const { cover } = track;
   const metadata = { ...track };
   delete metadata.file; delete metadata.cover;
   const bytes = cover ? Array.from(new Uint8Array(await cover.arrayBuffer())) : [];
   return invoke('save_audio_track', { path, track: metadata, cover: bytes });
-}
-
-export async function onNativeClose(handler) {
-  const { getCurrentWindow } = await import('@tauri-apps/api/window');
-  const window = getCurrentWindow();
-  let closing = false;
-  return window.onCloseRequested(event => {
-    // destroy() may emit another close request on some WebKitGTK/Tauri
-    // combinations. Let that final request pass through without starting a
-    // second save operation.
-    if (closing) return;
-    event.preventDefault();
-    void (async () => {
-      try {
-        const close = await Promise.race([
-          Promise.resolve().then(handler),
-          new Promise(resolve => setTimeout(() => resolve(true), 1500))
-        ]);
-        if (close) {
-          closing = true;
-          await window.destroy();
-        }
-      } catch (error) {
-        console.error('Atiga Amp close handler failed', error);
-        closing = true;
-        await window.destroy();
-      }
-    })();
-  });
 }
