@@ -841,16 +841,23 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
     audio.pause(); audio.removeAttribute('src'); audio.load();
     audio.src = url; audio.preload = state.gapless ? 'auto' : 'metadata';
     // Set the target immediately when the engine permits it, then repeat it
-    // after metadata/canplay. GStreamer may expose a stale seek position until
-    // one of those events has fired.
-    const applyStartPosition = () => {
+    // after metadata/canplay. Keep verifying until the media pipeline reports
+    // that the seek itself has completed.
+    const getStartTarget = () => {
       const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : track.duration;
-      const target = Number.isFinite(duration) && duration > 0 ? Math.min(startPosition, Math.max(0, duration - 0.25)) : startPosition;
-      try { audio.currentTime = target; return true; } catch { return false; }
+      return Number.isFinite(duration) && duration > 0 ? Math.min(startPosition, Math.max(0, duration - 0.25)) : startPosition;
+    };
+    const applyStartPosition = () => {
+      try { audio.currentTime = getStartTarget(); return true; } catch { return false; }
+    };
+    const startPositionMatches = () => {
+      const target = getStartTarget();
+      return Number.isFinite(audio.currentTime) && Math.abs(audio.currentTime - target) <= 0.25;
     };
     try { audio.currentTime = startPosition; } catch { /* metadata is not available yet */ }
     let readySettled = false;
     let readyTimer;
+    let watchTimer;
     let resolveReady;
     const finishStart = () => {
       if (readySettled) return;
@@ -859,22 +866,38 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
       audio.removeEventListener('loadedmetadata', resetStart);
       audio.removeEventListener('durationchange', resetStart);
       audio.removeEventListener('canplay', resetStart);
-      if (pendingStartCleanup === cancelStart) pendingStartCleanup = undefined;
+      resolveReady?.();
+    };
+    const cleanupStart = () => {
+      clearTimeout(readyTimer);
+      clearInterval(watchTimer);
+      audio.removeEventListener('loadedmetadata', resetStart);
+      audio.removeEventListener('durationchange', resetStart);
+      audio.removeEventListener('canplay', resetStart);
+      audio.removeEventListener('seeked', verifyStart);
+      if (pendingStartCleanup === cleanupStart) pendingStartCleanup = undefined;
       resolveReady?.();
     };
     const resetStart = () => {
-      if (token !== playbackToken) { finishStart(); return; }
-      if (applyStartPosition()) finishStart();
+      if (token !== playbackToken) { cleanupStart(); return; }
+      applyStartPosition();
+      finishStart();
     };
-    const cancelStart = () => finishStart();
+    const verifyStart = () => {
+      if (token !== playbackToken) { cleanupStart(); return; }
+      if (!startPositionMatches()) applyStartPosition();
+    };
     const ready = new Promise(resolve => {
       resolveReady = resolve;
-      pendingStartCleanup = cancelStart;
+      pendingStartCleanup = cleanupStart;
       readyTimer = setTimeout(() => { if (token === playbackToken) applyStartPosition(); finishStart(); }, 3000);
     });
     audio.addEventListener('loadedmetadata', resetStart);
     audio.addEventListener('durationchange', resetStart);
     audio.addEventListener('canplay', resetStart);
+    // WebKitGTK can report metadata before GStreamer has completed the seek.
+    // Verify the target again when the media pipeline confirms that seek.
+    audio.addEventListener('seeked', verifyStart);
     audio.load();
     if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) queueMicrotask(resetStart);
     renderCurrent(); renderTracks(); updateProgress();
@@ -885,13 +908,26 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
       applyStartPosition();
       await audio.play();
       // Some WebKitGTK versions apply a pending seek again during play().
-      // Correct that one last time before allowing position persistence.
+      // Correct it immediately and keep watching briefly for a late reset.
       if (token !== playbackToken) return;
-      if (startPosition === 0 && audio.currentTime > 0.25) applyStartPosition();
+      if (!startPositionMatches()) applyStartPosition();
       readyTrackId = id;
+      const watchStartedAt = performance.now();
+      const watchStartPosition = () => {
+        if (token !== playbackToken || audio.paused || audio.ended) { cleanupStart(); return; }
+        const elapsed = (performance.now() - watchStartedAt) / 1000;
+        if (elapsed >= 1.5) { cleanupStart(); return; }
+        const currentPosition = audio.currentTime;
+        const playbackRate = Number.isFinite(audio.playbackRate) && audio.playbackRate > 0 ? audio.playbackRate : 1;
+        const expectedPosition = getStartTarget() + elapsed * playbackRate;
+        if (Number.isFinite(currentPosition) && Math.abs(currentPosition - expectedPosition) > 1) applyStartPosition();
+      };
+      watchTimer = setInterval(watchStartPosition, 180);
+      watchStartPosition();
     }
   } catch (error) {
     if (token === playbackToken) {
+      pendingStartCleanup?.(); pendingStartCleanup = undefined;
       loadedId = null; readyTrackId = null;
       if (error.name !== 'AbortError') toast('Audio belum dapat diputar. Coba file MP3, WAV, atau OGG yang valid.');
     }

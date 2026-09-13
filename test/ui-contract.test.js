@@ -37,6 +37,9 @@ test('Linux playback avoids the fragile Web Audio path and starts from zero', ()
   assert.match(appSource, /readyTrackId = null/);
   assert.match(appSource, /audio\.currentTime = 0/);
   assert.match(appSource, /audio\.addEventListener\('canplay', resetStart\)/);
+  assert.match(appSource, /audio\.addEventListener\('seeked', verifyStart\)/);
+  assert.match(appSource, /const watchStartPosition = \(\) =>/);
+  assert.match(appSource, /setInterval\(watchStartPosition, 180\)/);
   assert.match(appSource, /readyTrackId === state\.currentId/);
   assert.match(appSource, /selectTrack\(state\.currentId, false, 0\)/);
   assert.match(appSource, /const blob = await nativeAudioBlob\(track\.nativePath\)/);
