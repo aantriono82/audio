@@ -89,6 +89,8 @@ try {
   await until(() => evaluate('return document.querySelector("#welcome-dialog")?.open'), 'first launch onboarding');
   await click('#welcome-demo');
   await click('#play');
+  await until(() => evaluate('return !document.querySelector("#audio").paused'), 'demo playback started');
+  assert.ok(await evaluate('return document.querySelector("#audio").currentTime < 0.5'), 'demo playback must start near zero');
   await until(() => evaluate('return document.querySelector("#audio").currentTime > 0.5'), 'demo playback');
   await click('#play');
   assert.equal(await evaluate('return !!window.__TAURI_INTERNALS__'), true);
@@ -113,6 +115,8 @@ try {
   await rename(music, path.join(directory, 'original-moved'));
   await evaluate('const search=document.querySelector("#search"); search.value="Desktop smoke"; search.dispatchEvent(new Event("input",{bubbles:true})); return true;');
   await click(`#tracks [data-id="${track.id}"] .track-name`);
+  await until(() => evaluate('return !document.querySelector("#audio").paused'), 'imported playback started');
+  assert.ok(await evaluate('return document.querySelector("#audio").currentTime < 0.5'), 'imported playback must start near zero');
   await until(() => evaluate('return document.querySelector("#audio").currentTime > 0.5'), 'imported copy playback');
   await click(`#tracks [data-id="${track.id}"] [data-action="favorite"]`);
   await click('#play');

@@ -34,6 +34,10 @@ test('critical CSS is owned by the module entry and startup needs no remote font
 test('Linux playback avoids the fragile Web Audio path and starts from zero', () => {
   assert.match(appSource, /const nativeDirectPlayback = desktop && \/linux\/i/);
   assert.match(appSource, /directAudio = nativeDirectPlayback/);
+  assert.match(appSource, /readyTrackId = null/);
+  assert.match(appSource, /audio\.currentTime = 0/);
+  assert.match(appSource, /audio\.addEventListener\('canplay', resetStart\)/);
+  assert.match(appSource, /readyTrackId === state\.currentId/);
   assert.match(appSource, /selectTrack\(state\.currentId, false, 0\)/);
   assert.match(appSource, /const blob = await nativeAudioBlob\(track\.nativePath\)/);
 });

@@ -347,7 +347,7 @@ const audio = $('#audio');
 // native media element; the browser build retains EQ/DSP and analyser output.
 const nativeDirectPlayback = desktop && /linux/i.test(navigator.platform || navigator.userAgent);
 state.playlists = state.playlists.filter(playlist => !['after-hours', 'slow-living'].includes(playlist.id));
-let context, analyser, analyserL, analyserR, filters = [], compressor, masterGain, panner, db, loadedId, pendingStartupPosition = 0, playbackToken = 0, lastSavedSecond = -1, directAudio = nativeDirectPlayback;
+let context, analyser, analyserL, analyserR, filters = [], compressor, masterGain, panner, db, loadedId, readyTrackId = null, pendingStartupPosition = 0, playbackToken = 0, lastSavedSecond = -1, directAudio = nativeDirectPlayback;
 let pendingStartCleanup;
 let dspBassFilter, dspEchoDelay, dspEchoFeedback, dspEchoGain, dspReverbConvolver, dspReverbGain, dspChorusDelay, dspChorusGain, dspChorusLfo, dspVoiceDryGain, dspVoiceWetGain, dspVoiceSplitter, dspVoiceMerger, dspVoiceInvGain, dspSumGain;
 let giantVolKnob, deckVolKnob, balKnob, preampKnob, bassKnob, trebleKnob;
@@ -434,8 +434,12 @@ function applySavedState(nextSaved) {
 }
 function persist() {
   try {
-    if (state.currentId && Number.isFinite(audio.currentTime)) state.positions[state.currentId] = Math.max(0, audio.currentTime);
-    const snapshot = { ...state, tracks: undefined, favorites: [...state.favorites], position: audio.currentTime, currentId: state.currentId };
+    // A pause/timeupdate event can arrive while a new source is still loading.
+    // Never attribute that old element position to the newly selected track.
+    const canPersistPosition = state.currentId && loadedId === state.currentId && readyTrackId === state.currentId && Number.isFinite(audio.currentTime);
+    const position = canPersistPosition ? Math.max(0, audio.currentTime) : 0;
+    if (canPersistPosition) state.positions[state.currentId] = position;
+    const snapshot = { ...state, tracks: undefined, favorites: [...state.favorites], position, currentId: state.currentId };
     if (desktop) {
       if (nativeSettingsWritable) void nativeSettings.save(snapshot).catch(() => toast('Pengaturan belum tersimpan. Periksa ruang penyimpanan perangkat.'));
     } else localStorage.setItem('atiga-state', JSON.stringify(snapshot));
@@ -799,16 +803,25 @@ function renderModes() {
 function render() { renderNav(); renderGrouping(); renderTracks(); renderCurrent(); renderModes(); }
 async function selectTrack(id, autoplay = true, requestedPosition) {
   const track = findTrack(id); if (!track) return;
-  const token = ++playbackToken;
   pendingStartCleanup?.(); pendingStartCleanup = undefined;
   const previousLoadedId = loadedId;
-  audio.pause(); clearTimeout(crossfadeTimer); crossfadeStarted = false; state.currentId = id; loadedId = id;
+  // Stop the previous element before changing state. WebKitGTK can emit a
+  // delayed pause/timeupdate event; keeping the old currentTime until after
+  // this point would make it look like the newly selected file starts there.
+  audio.pause();
+  try { audio.currentTime = 0; } catch { /* source may not be seekable yet */ }
+  const token = ++playbackToken;
+  clearTimeout(crossfadeTimer); crossfadeStarted = false; state.currentId = id; loadedId = id; readyTrackId = null;
   if (previousLoadedId && previousLoadedId !== id) releaseTrackURL(previousLoadedId);
   state.playCounts[id] = (state.playCounts[id] || 0) + (autoplay ? 1 : 0);
+  // Clicking a track is an explicit navigation action. Do not carry a
+  // position saved from an earlier session or an earlier click into it.
+  if (autoplay) delete state.positions[id];
   // Restoring the selected track must not read the whole audio file while the
   // window is starting. Load it only after the user presses Play.
   if (!autoplay && Number.isFinite(requestedPosition)) {
     loadedId = null;
+    readyTrackId = null;
     pendingStartupPosition = Math.max(0, requestedPosition);
     renderCurrent(); renderTracks(); updateProgress();
     return;
@@ -827,25 +840,62 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
     const startPosition = Number.isFinite(requestedPosition) ? Math.max(0, requestedPosition) : 0;
     audio.pause(); audio.removeAttribute('src'); audio.load();
     audio.src = url; audio.preload = state.gapless ? 'auto' : 'metadata';
-    let initialized = false;
-    const cleanupStart = () => {
+    // Set the target immediately when the engine permits it, then repeat it
+    // after metadata/canplay. GStreamer may expose a stale seek position until
+    // one of those events has fired.
+    const applyStartPosition = () => {
+      const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : track.duration;
+      const target = Number.isFinite(duration) && duration > 0 ? Math.min(startPosition, Math.max(0, duration - 0.25)) : startPosition;
+      try { audio.currentTime = target; return true; } catch { return false; }
+    };
+    try { audio.currentTime = startPosition; } catch { /* metadata is not available yet */ }
+    let readySettled = false;
+    let readyTimer;
+    let resolveReady;
+    const finishStart = () => {
+      if (readySettled) return;
+      readySettled = true;
+      clearTimeout(readyTimer);
       audio.removeEventListener('loadedmetadata', resetStart);
-      if (pendingStartCleanup === cleanupStart) pendingStartCleanup = undefined;
+      audio.removeEventListener('durationchange', resetStart);
+      audio.removeEventListener('canplay', resetStart);
+      if (pendingStartCleanup === cancelStart) pendingStartCleanup = undefined;
+      resolveReady?.();
     };
     const resetStart = () => {
-      if (token !== playbackToken || initialized) return;
-      initialized = true;
-      cleanupStart();
-      const duration = Number.isFinite(audio.duration) ? audio.duration : track.duration;
-      audio.currentTime = Math.min(startPosition, Math.max(0, duration - 0.25));
+      if (token !== playbackToken) { finishStart(); return; }
+      if (applyStartPosition()) finishStart();
     };
-    audio.addEventListener('loadedmetadata', resetStart, { once: true });
-    pendingStartCleanup = cleanupStart;
+    const cancelStart = () => finishStart();
+    const ready = new Promise(resolve => {
+      resolveReady = resolve;
+      pendingStartCleanup = cancelStart;
+      readyTimer = setTimeout(() => { if (token === playbackToken) applyStartPosition(); finishStart(); }, 3000);
+    });
+    audio.addEventListener('loadedmetadata', resetStart);
+    audio.addEventListener('durationchange', resetStart);
+    audio.addEventListener('canplay', resetStart);
     audio.load();
-    if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) resetStart();
+    if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) queueMicrotask(resetStart);
     renderCurrent(); renderTracks(); updateProgress();
-    if (autoplay) { setupAudio(); applyAudioSettings(); if (context) await context.resume(); if (token !== playbackToken) return; await audio.play(); }
-  } catch (error) { if (token === playbackToken && error.name !== 'AbortError') toast('Audio belum dapat diputar. Coba file MP3, WAV, atau OGG yang valid.'); }
+    if (autoplay) {
+      setupAudio(); applyAudioSettings(); if (context) await context.resume();
+      await ready;
+      if (token !== playbackToken) return;
+      applyStartPosition();
+      await audio.play();
+      // Some WebKitGTK versions apply a pending seek again during play().
+      // Correct that one last time before allowing position persistence.
+      if (token !== playbackToken) return;
+      if (startPosition === 0 && audio.currentTime > 0.25) applyStartPosition();
+      readyTrackId = id;
+    }
+  } catch (error) {
+    if (token === playbackToken) {
+      loadedId = null; readyTrackId = null;
+      if (error.name !== 'AbortError') toast('Audio belum dapat diputar. Coba file MP3, WAV, atau OGG yang valid.');
+    }
+  }
 }
 function maybeCrossfade() {
   if (!state.crossfade || crossfadeStarted || !loadedId || !Number.isFinite(audio.duration) || audio.duration - audio.currentTime > state.crossfade) return;
@@ -1495,9 +1545,12 @@ async function removeTrack(id) {
     else if (db && !track.demo) await dbAction('readwrite', store => store.delete(id));
   } catch { toast('Lagu gagal dihapus dari penyimpanan. Koleksi dipertahankan.'); return; }
   if (state.currentId === id) {
+    pendingStartCleanup?.(); pendingStartCleanup = undefined;
     playbackToken++;
-    audio.pause(); audio.removeAttribute('src'); audio.load();
-    loadedId = null; state.currentId = null;
+    audio.pause();
+    try { audio.currentTime = 0; } catch { /* source may already be gone */ }
+    audio.removeAttribute('src'); audio.load();
+    loadedId = null; readyTrackId = null; state.currentId = null;
   }
   releaseTrackURL(id);
   const artUrl = artUrls.get(id); if (artUrl) { URL.revokeObjectURL(artUrl); artUrls.delete(id); }
