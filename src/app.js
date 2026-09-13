@@ -856,7 +856,12 @@ function maybeCrossfade() {
   crossfadeTimer = setTimeout(() => { advance(1, true); setTimeout(() => { if (masterGain) { masterGain.gain.cancelScheduledValues(context.currentTime); applyAudioSettings(); } }, 80); }, Math.max(50, state.crossfade * 700));
 }
 async function togglePlay() {
-  if (!loadedId) return selectTrack(current()?.id, true, pendingStartupPosition);
+  if (!loadedId) {
+    // A fresh install has no current track yet. Play should still provide a
+    // useful first action by selecting the first visible library track.
+    const track = current() || baseTracks(state)[0] || state.tracks[0];
+    return selectTrack(track?.id, true, pendingStartupPosition);
+  }
   if (!audio.paused) {
     if (state.dsp?.fadePause && masterGain && context) {
       masterGain.gain.setTargetAtTime(0.0001, context.currentTime, 0.08);

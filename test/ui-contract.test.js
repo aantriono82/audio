@@ -38,6 +38,11 @@ test('Linux playback avoids the fragile Web Audio path and starts from zero', ()
   assert.match(appSource, /const url = nativeURL\(track\.nativePath\)/);
 });
 
+test('Play selects the first track on a fresh install', () => {
+  assert.match(appSource, /const track = current\(\) \|\| baseTracks\(state\)\[0\] \|\| state\.tracks\[0\]/);
+  assert.match(appSource, /return selectTrack\(track\?\.id, true, pendingStartupPosition\)/);
+});
+
 test('native window close is not intercepted by the WebView', () => {
   assert.doesNotMatch(desktopSource, /onCloseRequested/);
 });
