@@ -35,7 +35,7 @@ test('Linux playback avoids the fragile Web Audio path and starts from zero', ()
   assert.match(appSource, /const nativeDirectPlayback = desktop && \/linux\/i/);
   assert.match(appSource, /directAudio = nativeDirectPlayback/);
   assert.match(appSource, /selectTrack\(state\.currentId, false, 0\)/);
-  assert.match(appSource, /const url = nativeURL\(track\.nativePath\)/);
+  assert.match(appSource, /const blob = await nativeAudioBlob\(track\.nativePath\)/);
 });
 
 test('Play selects the first track on a fresh install', () => {

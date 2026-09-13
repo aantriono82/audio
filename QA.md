@@ -15,7 +15,7 @@ Pemeriksaan otomatis terakhir dijalankan pada 13 September 2026 di workspace Lin
 | Metadata `.deb` | Lulus; WebKitGTK, GTK, dan lima plugin GStreamer tercantum |
 | Smoke test binary Tauri | Belum dijalankan; membutuhkan `Xvfb` dan `WebKitWebDriver` |
 
-Regresi yang diuji oleh UI contract mencakup mode playback Linux tanpa Web Audio, posisi awal selalu nol setelah membuka aplikasi, URL asset protocol untuk streaming native, tidak adanya intersepsi penutupan WebView, dan otorisasi path pada native drag-and-drop.
+Regresi yang diuji oleh UI contract mencakup mode playback Linux tanpa Web Audio, posisi awal selalu nol setelah membuka aplikasi, pemutaran native melalui Blob URL yang diambil dari asset protocol, tidak adanya intersepsi penutupan WebView, dan otorisasi path pada native drag-and-drop.
 
 ## Artefak Linux lokal
 

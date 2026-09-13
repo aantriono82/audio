@@ -1,6 +1,6 @@
 import { esc, formatTime, demoBlob, demoTracks, baseTracks, visibleTracks, queueIndexAtVisibleIndex } from './library.js';
 import { isAudioFile, metadataFromFilename, readEmbeddedMetadata } from './import.js';
-import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, saveNativeTrack, removeNativeTrack, nativeURL } from './desktop.js';
+import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, nativeAudioBlob, saveNativeTrack, removeNativeTrack, nativeURL } from './desktop.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -639,11 +639,12 @@ function applyAudioSettings() {
 }
 async function sourceURL(track) {
   if (urls.has(track.id)) return urls.get(track.id);
-  // Let the asset protocol stream native files and honor HTTP range requests.
-  // Fetching the complete file into a Blob makes every played track resident
-  // in WebKit memory and can freeze the window on larger collections.
+  // WebKitGTK may reject the Tauri asset URL as a media source even though
+  // fetch() accepts it. Read the selected file asynchronously and keep only
+  // the active track's Blob URL; this also avoids the blocking IPC byte copy.
   if (desktop && track.nativePath) {
-    const url = nativeURL(track.nativePath);
+    const blob = await nativeAudioBlob(track.nativePath);
+    const url = URL.createObjectURL(blob);
     urls.set(track.id, url);
     return url;
   }

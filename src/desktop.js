@@ -35,6 +35,12 @@ export async function readNativeAudio(entry) {
   return file;
 }
 
+// WebKitGTK can reject Tauri's asset://-style media URL even when the same
+// URL works for fetch(). Keep the media element on a same-origin Blob URL.
+export async function nativeAudioBlob(path) {
+  return nativeBlob(path);
+}
+
 export async function saveNativeTrack(path, track) {
   const { cover } = track;
   const metadata = { ...track };
