@@ -126,7 +126,93 @@ function addAdvancedUI() {
   if (!dialog) {
     dialog = document.createElement('dialog');
     dialog.id = 'settings-dialog';
-    dialog.innerHTML = `<form method="dialog" class="dialog-heading"><div><div class="eyebrow">ATIGA AMP / RUANG KENDALI</div><h2>Pengaturan<span>.</span></h2></div><button class="icon-button" aria-label="Tutup">×</button></form><section class="theme-section" aria-labelledby="theme-heading"><div class="settings-section-heading"><span id="theme-heading">Pilih tampilan</span><small>Perubahan langsung diterapkan</small></div><div class="theme-picker" role="radiogroup" aria-label="Pilih tema"><button type="button" class="theme-skin skin-ember" data-theme="ember" role="radio" aria-label="Bara"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Bara</strong><small>Studio hangat</small></button><button type="button" class="theme-skin skin-neon" data-theme="neon" role="radio" aria-label="Neon"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Neon</strong><small>Klub malam</small></button><button type="button" class="theme-skin skin-ocean" data-theme="ocean" role="radio" aria-label="Samudra"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Samudra</strong><small>Biru dalam</small></button><button type="button" class="theme-skin skin-violet" data-theme="violet" role="radio" aria-label="Violet"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Violet</strong><small>Nuansa tengah malam</small></button><button type="button" class="theme-skin skin-mono" data-theme="mono" role="radio" aria-label="Monokrom"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Monokrom</strong><small>Kontras murni</small></button></div></section><div class="settings-grid"><label>Pudar silang <output id="crossfade-value"></output><input id="crossfade" type="range" min="0" max="12" step="1"></label><label>Penguat awal <output id="preamp-value"></output><input id="preamp" type="range" min="-12" max="12" step="1"></label><label>Keseimbangan <output id="balance-value"></output><input id="balance" type="range" min="-1" max="1" step=".01"></label><label>Keluaran<select id="output-device"><option value="default">Keluaran bawaan peramban</option></select></label></div><label class="setting-check"><input id="resume-playback" type="checkbox"> Lanjutkan posisi terakhir saat membuka aplikasi</label><label class="setting-check"><input id="gapless" type="checkbox"> Siapkan lagu berikutnya</label><label class="setting-check"><input id="replay-gain" type="checkbox"> ReplayGain jika tag tersedia</label><label class="setting-check"><input id="glow" type="checkbox"> Efek CRT / cahaya</label><label class="setting-check"><input id="notifications" type="checkbox"> Beri tahu lagu berikutnya</label><div class="settings-actions"><button type="button" class="text-button" id="scan-folder">Pindai ulang folder</button><button type="button" class="text-button" id="request-notifications">Izinkan notifikasi</button><span class="dialog-note">Panel dapat dipindahkan dengan seret dan lepas.</span></div><div class="format-support" id="format-support"></div>`;
+    dialog.innerHTML = `
+      <form method="dialog" class="dialog-heading">
+        <div class="dialog-title-copy">
+          <div class="eyebrow">ATIGA AMP / RUANG KENDALI</div>
+          <h2>Pengaturan<span>.</span></h2>
+          <p>Atur tampilan dan perilaku pemutar sesuai kebiasaan Anda.</p>
+        </div>
+        <button class="icon-button dialog-close" aria-label="Tutup">×</button>
+      </form>
+
+      <section class="settings-section theme-section" aria-labelledby="theme-heading">
+        <div class="settings-section-heading">
+          <div>
+            <span id="theme-heading">Pilih tampilan</span>
+            <small>Perubahan langsung diterapkan</small>
+          </div>
+          <span class="section-status"><i></i> LANGSUNG</span>
+        </div>
+        <div class="theme-picker" role="radiogroup" aria-label="Pilih tema">
+          <button type="button" class="theme-skin skin-ember" data-theme="ember" role="radio" aria-label="Bara">
+            <span class="skin-preview"><i></i><i></i><i></i></span>
+            <span class="theme-copy"><strong>Bara</strong><small>Studio hangat</small></span>
+          </button>
+          <button type="button" class="theme-skin skin-neon" data-theme="neon" role="radio" aria-label="Neon">
+            <span class="skin-preview"><i></i><i></i><i></i></span>
+            <span class="theme-copy"><strong>Neon</strong><small>Klub malam</small></span>
+          </button>
+          <button type="button" class="theme-skin skin-ocean" data-theme="ocean" role="radio" aria-label="Samudra">
+            <span class="skin-preview"><i></i><i></i><i></i></span>
+            <span class="theme-copy"><strong>Samudra</strong><small>Biru dalam</small></span>
+          </button>
+          <button type="button" class="theme-skin skin-violet" data-theme="violet" role="radio" aria-label="Violet">
+            <span class="skin-preview"><i></i><i></i><i></i></span>
+            <span class="theme-copy"><strong>Violet</strong><small>Nuansa malam</small></span>
+          </button>
+          <button type="button" class="theme-skin skin-mono" data-theme="mono" role="radio" aria-label="Monokrom">
+            <span class="skin-preview"><i></i><i></i><i></i></span>
+            <span class="theme-copy"><strong>Monokrom</strong><small>Kontras murni</small></span>
+          </button>
+        </div>
+      </section>
+
+      <section class="settings-section audio-section" aria-labelledby="audio-settings-heading">
+        <div class="settings-section-heading">
+          <div>
+            <span id="audio-settings-heading">Audio &amp; pemutaran</span>
+            <small>Sesuaikan karakter suara dan perangkat keluaran</small>
+          </div>
+        </div>
+        <div class="settings-grid">
+          <label>Pudar silang <output id="crossfade-value"></output><input id="crossfade" type="range" min="0" max="12" step="1"></label>
+          <label>Penguat awal <output id="preamp-value"></output><input id="preamp" type="range" min="-12" max="12" step="1"></label>
+          <label>Keseimbangan <output id="balance-value"></output><input id="balance" type="range" min="-1" max="1" step=".01"></label>
+          <label>Keluaran<select id="output-device"><option value="default">Keluaran bawaan peramban</option></select></label>
+        </div>
+      </section>
+
+      <section class="settings-section playback-section" aria-labelledby="playback-settings-heading">
+        <div class="settings-section-heading">
+          <div>
+            <span id="playback-settings-heading">Perilaku pemutar</span>
+            <small>Pengaturan yang bekerja otomatis saat Anda mendengarkan</small>
+          </div>
+        </div>
+        <div class="settings-check-grid">
+          <label class="setting-check"><input id="resume-playback" type="checkbox"><span class="setting-check-copy"><strong>Lanjutkan posisi terakhir</strong><small>Saat membuka aplikasi kembali</small></span></label>
+          <label class="setting-check"><input id="gapless" type="checkbox"><span class="setting-check-copy"><strong>Siapkan lagu berikutnya</strong><small>Perpindahan antar lagu terasa lebih mulus</small></span></label>
+          <label class="setting-check"><input id="replay-gain" type="checkbox"><span class="setting-check-copy"><strong>ReplayGain</strong><small>Gunakan level volume dari tag bila tersedia</small></span></label>
+          <label class="setting-check"><input id="glow" type="checkbox"><span class="setting-check-copy"><strong>Efek CRT / cahaya</strong><small>Tambahkan karakter visual pada panel</small></span></label>
+          <label class="setting-check"><input id="notifications" type="checkbox"><span class="setting-check-copy"><strong>Notifikasi lagu berikutnya</strong><small>Beri tahu saat antrean berpindah</small></span></label>
+        </div>
+      </section>
+
+      <section class="settings-section library-section" aria-labelledby="library-settings-heading">
+        <div class="settings-section-heading">
+          <div>
+            <span id="library-settings-heading">Perpustakaan &amp; data</span>
+            <small>Kelola koleksi dan cadangan pengaturan</small>
+          </div>
+        </div>
+        <div class="settings-actions">
+          <button type="button" class="text-button" id="scan-folder">Pindai ulang folder</button>
+          <button type="button" class="text-button" id="request-notifications">Izinkan notifikasi</button>
+          <span class="dialog-note">Cadangan mencakup metadata, playlist, dan pengaturan. File audio tetap berada di perangkat.</span>
+        </div>
+        <div class="format-support" id="format-support"></div>
+      </section>`;
     document.body.append(dialog);
     dialog.querySelector('#output-device')?.setAttribute('id', 'settings-output-device');
     const updateSettingLabel = (id, text) => {
@@ -271,7 +357,7 @@ function addAdvancedUI() {
 }
 function syncSettings() {
   const set = (id, value) => { const el = $(`#${id}`); if (!el) return; if (el.type === 'checkbox') el.checked = value; else el.value = value; };
-  set('crossfade', state.crossfade); set('preamp', state.preamp); set('balance', state.balance); set('resume-playback', state.resumePlayback); set('gapless', state.gapless); set('replay-gain', state.replayGain); set('glow', state.glow); set('notifications', state.notifications); set('output-device', state.outputDevice);
+  set('crossfade', state.crossfade); set('preamp', state.preamp); set('balance', state.balance); set('resume-playback', state.resumePlayback); set('gapless', state.gapless); set('replay-gain', state.replayGain); set('glow', state.glow); set('notifications', state.notifications); set('output-device', state.outputDevice); set('settings-output-device', state.outputDevice);
   applyTheme();
   const crossfadeVal = $('#crossfade-value');
   if (crossfadeVal) crossfadeVal.textContent = `${state.crossfade}s`;
@@ -297,27 +383,30 @@ async function applyOutputDevice(deviceId = state.outputDevice, notify = false) 
   }
 }
 async function refreshOutputDevices() {
-  const select = $('#output-device');
-  if (!select || !navigator.mediaDevices?.enumerateDevices) return;
+  const selects = ['#output-device', '#settings-output-device'].map(selector => $(selector)).filter(Boolean);
+  if (!selects.length || !navigator.mediaDevices?.enumerateDevices) return;
   let devices;
   try {
     devices = await navigator.mediaDevices.enumerateDevices();
   } catch {
-    select.innerHTML = '<option value="default">Keluaran bawaan peramban</option>';
+    selects.forEach(select => { select.innerHTML = '<option value="default">Keluaran bawaan peramban</option>'; });
     state.outputDevice = 'default';
-    select.value = 'default';
+    selects.forEach(select => { select.value = 'default'; });
     return;
   }
   const outputs = devices.filter(device => device.kind === 'audiooutput');
-  select.innerHTML = '<option value="default">Keluaran bawaan peramban</option>' + outputs.map(device => `<option value="${esc(device.deviceId)}">${esc(device.label || `Keluaran ${device.deviceId.slice(0, 5)}`)}</option>`).join('');
-  select.value = state.outputDevice;
-  if (select.value !== state.outputDevice) state.outputDevice = 'default';
-  select.value = state.outputDevice;
-  select.onchange = async event => {
-    await applyOutputDevice(event.target.value, true);
+  const options = '<option value="default">Keluaran bawaan peramban</option>' + outputs.map(device => `<option value="${esc(device.deviceId)}">${esc(device.label || `Keluaran ${device.deviceId.slice(0, 5)}`)}</option>`).join('');
+  selects.forEach(select => {
+    select.innerHTML = options;
     select.value = state.outputDevice;
-    persist();
-  };
+    if (select.value !== state.outputDevice) state.outputDevice = 'default';
+    select.value = state.outputDevice;
+    select.onchange = async event => {
+      await applyOutputDevice(event.target.value, true);
+      selects.forEach(outputSelect => { outputSelect.value = state.outputDevice; });
+      persist();
+    };
+  });
 }
 async function filesFromDirectory(handle) { const files = []; async function walk(directory) { for await (const entry of directory.values()) { if (entry.kind === 'file') files.push(await entry.getFile()); else if (entry.kind === 'directory') await walk(entry); } } await walk(handle); return files; }
 async function chooseFolder() { if (desktop) { await importNativeSelection('folder'); return; } if (!('showDirectoryPicker' in window)) { $('#folder-input').click(); return; } try { const handle = await window.showDirectoryPicker({ mode: 'read' }); if (db) await directoryAction('readwrite', store => store.put({ id: 'music-root', handle })); const files = await filesFromDirectory(handle); await importFiles(files); toast(`${files.length} file dipindai dari folder.`); } catch (error) { if (error.name !== 'AbortError') toast('Folder tidak dapat dipindai.'); } }
@@ -1197,7 +1286,7 @@ function applyRuntimeCapabilities() {
     '#aimp-slider-bass', '#aimp-slider-stereo', '#aimp-slider-speed', '#aimp-slider-tempo', '#aimp-slider-pitch',
     '#aimp-check-voice-remover', '#aimp-check-fade-pause', '#aimp-check-fade-nav',
     '#aimp-slider-preamp', '#aimp-slider-balance', '#aimp-check-replaygain', '#aimp-slider-crossfade',
-    '#output-device', '#preamp', '#balance', '#crossfade', '#replay-gain'
+    '#output-device', '#settings-output-device', '#preamp', '#balance', '#crossfade', '#replay-gain'
   ];
   const unavailableMessage = 'Tidak tersedia pada mode playback stabil Linux.';
   if (nativeDirectPlayback) {
