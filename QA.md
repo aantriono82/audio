@@ -1,6 +1,6 @@
-# Pemeriksaan Atiga Amp 0.1.8
+# Pemeriksaan Atiga Amp 0.1.9
 
-Pemeriksaan source dijalankan pada 14 September 2026 di workspace Linux x64. Native smoke test dan build paket distribusi belum dijalankan karena `Xvfb` dan `WebKitWebDriver` tidak terpasang; matriks penerimaan `.deb`/`.AppImage` tetap menjadi release gate sebelum tag dibuat.
+Pemeriksaan source, build `.deb`, dan native smoke test dijalankan pada 14 September 2026 di workspace Linux x64. Smoke test memakai MP3 lokal nyata dan mencakup pemutaran pertama, pemilihan ulang lagu, serta pembukaan ulang aplikasi.
 
 ## Hasil otomatis
 
@@ -8,19 +8,20 @@ Pemeriksaan source dijalankan pada 14 September 2026 di workspace Linux x64. Nat
 | --- | --- |
 | ESLint dan unit/regresi JavaScript (`npm run lint`, `npm test`) | Lulus, 47 tes |
 | TypeScript dan Vite production (`npm run build`) | Lulus |
-| Konsistensi versi (`npm run version:check`) | Lulus; `0.1.8` |
+| Konsistensi versi (`npm run version:check`) | Lulus; `0.1.9` |
 | Rust format dan Clippy dengan warning sebagai error (`npm run desktop:check`) | Lulus |
 | Unit test penyimpanan native (`npm run desktop:test`) | Lulus, 6 tes |
-| Native smoke test Linux | Belum dijalankan; membutuhkan `Xvfb` dan `WebKitWebDriver` |
+| Native smoke test Linux | Lulus; MP3 lokal nyata mulai dekat detik 0, tetap sinkron setelah 3,5 detik, saat dipilih ulang, dan setelah restart |
 
-Regresi yang diuji oleh UI contract mencakup mode playback Linux tanpa Web Audio, pilihan resume yang mati secara bawaan tanpa autoplay, pemutaran native melalui Blob URL yang diambil dari asset protocol, mode Rack/Koleksi, onboarding demo, lifecycle playlist, ringkasan impor, tidak adanya intersepsi penutupan WebView, dan otorisasi path pada native drag-and-drop.
+Regresi yang diuji oleh UI contract mencakup mode playback Linux tanpa Web Audio, reset sumber MP3 tanpa seek nol yang terlambat, pilihan resume yang mati secara bawaan tanpa autoplay, pemutaran native melalui Blob URL yang diambil dari asset protocol, mode Rack/Koleksi, onboarding demo, lifecycle playlist, ringkasan impor, tidak adanya intersepsi penutupan WebView, dan otorisasi path pada native drag-and-drop.
 
-Build paket Linux dan uji penerimaan visual pada 1280×800 belum diklaim lulus oleh catatan ini. Jalankan keduanya setelah dependensi desktop dan runner native tersedia.
+Build paket `.deb` Linux dan smoke test native lulus. Uji penerimaan visual manual pada 1280×800 belum dijalankan.
 
 ## Artefak Linux lokal
 
 | Paket | Ukuran | SHA-256 |
 | --- | ---: | --- |
+| `Atiga Amp_0.1.9_amd64.deb` | 3.562.086 byte | `d6dca76e7c1a4e58d332a5951d3f274df4251d1d664e4ed99d1840da0c356352` |
 | `Atiga Amp_0.1.6_amd64.deb` | 3.555.018 byte | `5ec2252b7b565c16ad17384868b5a706962935836782c5ca2817bf72fda094f0` |
 
 Paket `.deb` membutuhkan `gstreamer1.0-plugins-base`, `gstreamer1.0-plugins-good`, `gstreamer1.0-plugins-bad`, `gstreamer1.0-plugins-ugly`, dan `gstreamer1.0-libav`, selain WebKitGTK dan GTK. Konfigurasi AppImage memakai `bundleMediaFramework`; artefak dan target distro tetap perlu smoke test.

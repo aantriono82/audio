@@ -37,9 +37,15 @@ test('Linux playback avoids the fragile Web Audio path and starts from zero', ()
   assert.match(appSource, /const nativeDirectPlayback = capabilities\.nativeDirectPlayback/);
   assert.match(appSource, /directAudio = nativeDirectPlayback/);
   assert.match(appSource, /readyTrackId = null/);
-  assert.match(appSource, /audio\.currentTime = 0/);
+  assert.match(appSource, /function resetNativePlaybackElement\(\)/);
+  assert.match(appSource, /audio\.removeAttribute\('src'\)/);
+  assert.match(appSource, /sourceURL\(track, nativeDirectPlayback && Boolean\(track\.nativePath\)\)/);
+  assert.match(appSource, /const requiresSeek = startPosition > 0\.25/);
+  assert.match(appSource, /if \(requiresSeek\) \{\s*try \{ audio\.currentTime = startPosition/s);
+  assert.match(appSource, /if \(nativeDirectPlayback && state\.currentId\) selectTrack\(state\.currentId, false, 0\)/);
+  assert.match(appSource, /if \(automatic && state\.repeat === 2\) \{ selectTrack\(state\.currentId, true, 0\)/);
   assert.match(appSource, /audio\.addEventListener\('canplay', resetStart\)/);
-  assert.match(appSource, /audio\.addEventListener\('seeked', verifyStart\)/);
+  assert.match(appSource, /if \(requiresSeek\) audio\.addEventListener\('seeked', verifyStart\)/);
   assert.match(appSource, /const watchStartPosition = \(\) =>/);
   assert.match(appSource, /setInterval\(watchStartPosition, 180\)/);
   assert.match(appSource, /readyTrackId === state\.currentId/);

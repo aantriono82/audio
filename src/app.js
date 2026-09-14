@@ -469,6 +469,12 @@ function releaseTrackURL(id) {
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
   urls.delete(id);
 }
+function resetNativePlaybackElement() {
+  if (!nativeDirectPlayback) return;
+  audio.pause();
+  audio.removeAttribute('src');
+  audio.load();
+}
 let metadataWorker;
 let metadataRequestId = 0;
 const metadataRequests = new Map();
@@ -758,7 +764,8 @@ function applyAudioSettings() {
   }
   applyDspSettings();
 }
-async function sourceURL(track) {
+async function sourceURL(track, fresh = false) {
+  if (fresh) releaseTrackURL(track.id);
   if (urls.has(track.id)) return urls.get(track.id);
   // WebKitGTK may reject the Tauri asset URL as a media source even though
   // fetch() accepts it. Read the selected file asynchronously and keep only
@@ -927,11 +934,16 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
   const track = findTrack(id); if (!track) return;
   pendingStartCleanup?.(); pendingStartCleanup = undefined;
   const previousLoadedId = loadedId;
-  // Stop the previous element before changing state. WebKitGTK can emit a
-  // delayed pause/timeupdate event; keeping the old currentTime until after
-  // this point would make it look like the newly selected file starts there.
-  audio.pause();
-  try { audio.currentTime = 0; } catch { /* source may not be seekable yet */ }
+  // A new media element gives WebKitGTK/GStreamer a fresh decoder pipeline.
+  // Seeking an MP3 to zero while metadata is still loading can leave its
+  // JavaScript clock at zero while decoded audio resumes from an old segment.
+  if (nativeDirectPlayback) {
+    persist();
+    resetNativePlaybackElement();
+  } else {
+    audio.pause();
+    try { audio.currentTime = 0; } catch { /* source may not be seekable yet */ }
+  }
   const token = ++playbackToken;
   clearTimeout(crossfadeTimer); crossfadeStarted = false; state.currentId = id; loadedId = id; readyTrackId = null;
   if (previousLoadedId && previousLoadedId !== id) releaseTrackURL(previousLoadedId);
@@ -942,6 +954,7 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
   // Restoring the selected track must not read the whole audio file while the
   // window is starting. Load it only after the user presses Play.
   if (!autoplay && Number.isFinite(requestedPosition)) {
+    if (nativeDirectPlayback) releaseTrackURL(id);
     loadedId = null;
     readyTrackId = null;
     pendingStartupPosition = Math.max(0, requestedPosition);
@@ -950,7 +963,9 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
   }
   pendingStartupPosition = 0;
   try {
-    const url = await sourceURL(track);
+    // A fresh Blob URL prevents WebKitGTK from reusing an MP3 media resource
+    // whose internal GStreamer segment has already advanced.
+    const url = await sourceURL(track, nativeDirectPlayback && Boolean(track.nativePath));
     if (token !== playbackToken) {
       // A fast second click can finish this request after another track was
       // selected. Do not retain a URL that no active player can use.
@@ -962,21 +977,26 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
     const startPosition = Number.isFinite(requestedPosition) ? Math.max(0, requestedPosition) : 0;
     audio.pause(); audio.removeAttribute('src'); audio.load();
     audio.src = url; audio.preload = state.gapless ? 'auto' : 'metadata';
-    // Set the target immediately when the engine permits it, then repeat it
-    // after metadata/canplay. Keep verifying until the media pipeline reports
-    // that the seek itself has completed.
+    // A newly loaded source already starts at zero. Do not seek MP3 files to
+    // zero during setup: on WebKitGTK that seek can complete late and resume
+    // an old decoder segment. Non-zero resume positions still require a seek.
+    const requiresSeek = startPosition > 0.25;
     const getStartTarget = () => {
       const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : track.duration;
       return Number.isFinite(duration) && duration > 0 ? Math.min(startPosition, Math.max(0, duration - 0.25)) : startPosition;
     };
     const applyStartPosition = () => {
+      if (!requiresSeek) return true;
       try { audio.currentTime = getStartTarget(); return true; } catch { return false; }
     };
     const startPositionMatches = () => {
+      if (!requiresSeek) return true;
       const target = getStartTarget();
       return Number.isFinite(audio.currentTime) && Math.abs(audio.currentTime - target) <= 0.25;
     };
-    try { audio.currentTime = startPosition; } catch { /* metadata is not available yet */ }
+    if (requiresSeek) {
+      try { audio.currentTime = startPosition; } catch { /* metadata is not available yet */ }
+    }
     let readySettled = false;
     let readyTimer;
     let watchTimer;
@@ -1019,7 +1039,7 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
     audio.addEventListener('canplay', resetStart);
     // WebKitGTK can report metadata before GStreamer has completed the seek.
     // Verify the target again when the media pipeline confirms that seek.
-    audio.addEventListener('seeked', verifyStart);
+    if (requiresSeek) audio.addEventListener('seeked', verifyStart);
     audio.load();
     if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) queueMicrotask(resetStart);
     renderCurrent(); renderTracks(); updateProgress();
@@ -1029,8 +1049,8 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
       if (token !== playbackToken) return;
       applyStartPosition();
       await audio.play();
-      // Some WebKitGTK versions apply a pending seek again during play().
-      // Correct it immediately and keep watching briefly for a late reset.
+      // Resume seeks can complete again during play(), so verify non-zero
+      // targets briefly. A zero start intentionally has no pending seek.
       if (token !== playbackToken) return;
       if (!startPositionMatches()) applyStartPosition();
       readyTrackId = id;
@@ -1042,7 +1062,7 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
         const currentPosition = audio.currentTime;
         const playbackRate = Number.isFinite(audio.playbackRate) && audio.playbackRate > 0 ? audio.playbackRate : 1;
         const expectedPosition = getStartTarget() + elapsed * playbackRate;
-        if (Number.isFinite(currentPosition) && Math.abs(currentPosition - expectedPosition) > 1) applyStartPosition();
+        if (requiresSeek && Number.isFinite(currentPosition) && Math.abs(currentPosition - expectedPosition) > 1) applyStartPosition();
       };
       watchTimer = setInterval(watchStartPosition, 180);
       watchStartPosition();
@@ -1071,6 +1091,7 @@ async function togglePlay() {
     const track = current() || baseTracks(state)[0] || state.tracks[0];
     return selectTrack(track?.id, true, pendingStartupPosition);
   }
+  if (audio.ended && state.currentId) return selectTrack(state.currentId, true, 0);
   if (!audio.paused) {
     if (state.dsp?.fadePause && masterGain && context) {
       masterGain.gain.setTargetAtTime(0.0001, context.currentTime, 0.08);
@@ -1097,14 +1118,22 @@ async function togglePlay() {
   catch { toast('Audio belum dapat diputar. Coba pilih lagu atau impor file lain.'); }
 }
 function advance(direction = 1, automatic = false) {
-  if (automatic && state.repeat === 2) { audio.currentTime = 0; togglePlay(); return; }
-  if (direction === -1 && audio.currentTime > 3) { audio.currentTime = 0; return; }
+  if (automatic && state.repeat === 2) { selectTrack(state.currentId, true, 0); return; }
+  if (direction === -1 && audio.currentTime > 3) {
+    if (nativeDirectPlayback) selectTrack(state.currentId, !audio.paused, 0);
+    else audio.currentTime = 0;
+    return;
+  }
   if (direction === 1 && state.queue.length) { const id = state.queue.shift(); persist(); selectTrack(id); return; }
   let list = baseTracks(state); if (!list.length) list = state.tracks;
   if (!list.length) return;
   let index = list.findIndex(t => t.id === state.currentId);
   if (state.shuffle && list.length > 1) { const alternatives = list.filter(t => t.id !== state.currentId); selectTrack(alternatives[Math.floor(Math.random() * alternatives.length)].id); return; }
-  if (automatic && index === list.length - 1 && state.repeat === 0) { audio.pause(); return; }
+  if (automatic && index === list.length - 1 && state.repeat === 0) {
+    if (nativeDirectPlayback) selectTrack(state.currentId, false, 0);
+    else audio.pause();
+    return;
+  }
   index = (index + direction + list.length) % list.length; selectTrack(list[index].id);
 }
 function favorite(id) { state.favorites.has(id) ? state.favorites.delete(id) : state.favorites.add(id); persist(); render(); }
@@ -1114,9 +1143,16 @@ function updateProgress() {
   const percent = duration ? audio.currentTime / duration * 100 : 0; $('#seek').value = percent; $('#seek').style.setProperty('--fill',`${percent}%`);
   updateTapeCounter();
 }
-audio.addEventListener('timeupdate', () => { updateProgress(); maybeCrossfade(); const second = Math.floor(audio.currentTime); if (second % 5 === 0 && second !== lastSavedSecond) { lastSavedSecond = second; persist(); } });
-audio.addEventListener('loadedmetadata', () => { if (loadedId && Number.isFinite(audio.duration)) current().duration = audio.duration; updateProgress(); renderTracks(); });
-audio.addEventListener('play', () => {
+function handleAudioTimeUpdate() {
+  updateProgress(); maybeCrossfade();
+  const second = Math.floor(audio.currentTime);
+  if (second % 5 === 0 && second !== lastSavedSecond) { lastSavedSecond = second; persist(); }
+}
+function handleAudioMetadata() {
+  if (loadedId && Number.isFinite(audio.duration)) current().duration = audio.duration;
+  updateProgress(); renderTracks();
+}
+function handleAudioPlay() {
   scheduleSpectrum();
   $('#app')?.classList.add('is-playing');
   $('#cassette-door-bay')?.classList.add('is-playing');
@@ -1130,8 +1166,8 @@ audio.addEventListener('play', () => {
   state.recent = [state.currentId, ...state.recent.filter(id => id !== state.currentId)].slice(0,100); persist();
   notifyTrack(current());
   if (state.view === 'recent') renderTracks(); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-});
-audio.addEventListener('pause', () => {
+}
+function handleAudioPause() {
   scheduleSpectrum();
   $('#app')?.classList.remove('is-playing');
   $('#cassette-door-bay')?.classList.remove('is-playing');
@@ -1146,17 +1182,28 @@ audio.addEventListener('pause', () => {
   if (spectrumStatus) spectrumStatus.textContent = 'STANDBY';
   persist();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
-});
-audio.addEventListener('ended', () => {
+}
+function handleAudioEnded() {
   // Do not restore a completed track from its final timestamp after restart.
   // WebKitGTK can report the ended position slightly before or after duration.
   if (state.currentId) state.positions[state.currentId] = 0;
-  audio.currentTime = 0;
+  if (!nativeDirectPlayback) audio.currentTime = 0;
   persist();
   $('#pause-btn')?.classList.remove('active');
   advance(1, true);
-});
-audio.addEventListener('error', () => { if (audio.src) toast('Format audio tidak didukung atau file rusak. Silakan coba file lain.'); });
+}
+function handleAudioError() {
+  if (audio.src) toast('Format audio tidak didukung atau file rusak. Silakan coba file lain.');
+}
+function bindAudioEvents(element) {
+  element.addEventListener('timeupdate', handleAudioTimeUpdate);
+  element.addEventListener('loadedmetadata', handleAudioMetadata);
+  element.addEventListener('play', handleAudioPlay);
+  element.addEventListener('pause', handleAudioPause);
+  element.addEventListener('ended', handleAudioEnded);
+  element.addEventListener('error', handleAudioError);
+}
+bindAudioEvents(audio);
 
 function bindRotaryKnob(element, { min, max, initial, step = 1, angleMin = -135, angleMax = 135, onChange, disabled = false }) {
   if (!element) return { setVal: () => {}, getVal: () => initial };
@@ -1416,9 +1463,12 @@ function setupRackControls() {
   const stopBtn = $('#stop-btn');
   if (stopBtn) {
     stopBtn.onclick = () => {
-      audio.pause();
-      audio.currentTime = 0;
-      updateProgress();
+      if (nativeDirectPlayback && state.currentId) selectTrack(state.currentId, false, 0);
+      else {
+        audio.pause();
+        audio.currentTime = 0;
+        updateProgress();
+      }
       toast('Cassette playback stopped.');
     };
   }
@@ -1443,8 +1493,11 @@ function setupRackControls() {
   const resetBtn = $('#counter-reset-btn');
   if (resetBtn) {
     resetBtn.onclick = () => {
-      audio.currentTime = 0;
-      updateProgress();
+      if (nativeDirectPlayback && state.currentId) selectTrack(state.currentId, !audio.paused, 0);
+      else {
+        audio.currentTime = 0;
+        updateProgress();
+      }
       toast('Tape counter reset.');
     };
   }
