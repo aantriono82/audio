@@ -6,6 +6,7 @@ import { copyFile, mkdtemp, mkdir, writeFile, readdir, readFile, rename } from '
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
+import { demoBlob, demoTracks } from '../src/library.js';
 const binaryArgument = process.argv[2] || 'src-tauri/target/release/atiga-amp';
 let binary;
 if (binaryArgument === '--appimage') {
@@ -36,9 +37,14 @@ const appData = path.join(data, 'com.atiga.amp');
 const music = path.join(directory, 'Album 日本');
 await mkdir(appData, { recursive: true });
 await mkdir(music);
-const mp3Fixture = path.join(music, 'Atiga - Desktop smoke.mp3');
-if (process.env.NATIVE_SMOKE_MP3) await copyFile(process.env.NATIVE_SMOKE_MP3, mp3Fixture);
-else await generateMp3(mp3Fixture);
+const fixtureFormat = (process.env.NATIVE_SMOKE_FORMAT || 'mp3').toLowerCase();
+if (fixtureFormat === 'wav') {
+  await writeFile(path.join(music, 'Atiga - Desktop smoke.wav'), new Uint8Array(await demoBlob(demoTracks[0]).arrayBuffer()));
+} else {
+  const mp3Fixture = path.join(music, 'Atiga - Desktop smoke.mp3');
+  if (process.env.NATIVE_SMOKE_MP3) await copyFile(process.env.NATIVE_SMOKE_MP3, mp3Fixture);
+  else await generateMp3(mp3Fixture);
+}
 await writeFile(path.join(music, 'ignore.txt'), 'Not audio');
 // Simulate the folder remembered after the user chose it in the system dialog.
 await writeFile(path.join(appData, 'music-folder.json'), JSON.stringify(music));

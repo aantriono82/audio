@@ -45,10 +45,15 @@ jobs:
         run: npm run desktop:build -- --ci
         env:
           APPIMAGE_EXTRACT_AND_RUN: '1'
+      - name: Smoke test Linux desktop binary with MP3
+        run: node scripts/native-smoke.mjs src-tauri/target/release/atiga-amp
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: '1'
       - name: Smoke test Linux AppImage
         run: node scripts/native-smoke.mjs --appimage
         env:
           APPIMAGE_EXTRACT_AND_RUN: '1'
+          NATIVE_SMOKE_FORMAT: wav
       - run: npm run desktop:checksums
       - uses: actions/upload-artifact@v4
         with:
