@@ -70,7 +70,7 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
 
 /* TOP TITLEBAR */
 .rack-titlebar {
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 6px 22px;
@@ -78,6 +78,28 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
   border-bottom: 1px solid #33363b;
   box-shadow: 0 2px 8px rgba(0,0,0,0.6);
   z-index: 10;
+}
+.mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid #3c3e42;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, .24);
+}
+.mode-switch-button {
+  min-height: 28px;
+  padding: 4px 9px;
+  border-radius: 2px;
+  color: #8d9298;
+  font: 700 10px var(--mono);
+  letter-spacing: .25px;
+}
+.mode-switch-button:hover,
+.mode-switch-button.active {
+  color: #111214;
+  background: #d8b86d;
 }
 .rack-brand {
   display: flex;
@@ -1061,7 +1083,8 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
   border: 1.5px solid #1c1e20;
   box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 1px #fff;
   position: relative;
-  cursor: pointer;
+  cursor: default;
+  pointer-events: none;
 }
 .counter-knob-notch {
   position: absolute;
@@ -3179,6 +3202,24 @@ dialog::backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
 .welcome-card p { margin: 0; color: #bfc3c8; line-height: 1.6; }
 .welcome-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .welcome-actions .primary-button { min-height: 40px; }
+.welcome-choice {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #3c4148;
+  border-radius: 5px;
+}
+.welcome-choice legend {
+  padding: 0 4px;
+  color: #aeb5bb;
+  font: 700 10px var(--mono);
+  letter-spacing: .5px;
+}
+.welcome-choice label,
+.welcome-card .setting-check { display: flex; align-items: center; gap: 8px; }
+.welcome-choice input,
+.welcome-card .setting-check input { accent-color: #00e676; }
 
 .import-progress {
   display: grid;
@@ -3191,8 +3232,22 @@ dialog::backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
 .import-progress-heading output { margin-left: auto; font: 10px var(--mono); color: #716b60; }
 .import-progress-heading .text-button { padding: 2px 0; color: #8b302b; }
 .import-progress progress { width: 100%; height: 5px; accent-color: #00a85a; }
+.import-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 22px;
+  background: rgba(0, 168, 90, .08);
+  border-top: 1px solid rgba(40, 37, 30, .15);
+  color: #4e4a43;
+  font-size: 11px;
+}
+.import-summary strong { font: 700 10px var(--mono); letter-spacing: .4px; }
+.import-summary span { flex: 1; }
+.import-summary .text-button { padding: 2px 0; color: #716b60; }
 .storage-usage { margin-top: 10px; color: #716b60; font: 10px var(--mono); }
 .settings-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.legacy-audio-setting { display: none !important; }
 
 @media (max-width: 640px) {
   .app.teac-rack-app.compact .hifi-rack-container { padding-inline: 0; }
@@ -3861,6 +3916,18 @@ dialog.aimp-dsp-dialog::backdrop {
 .pl-search-box { width: clamp(180px, 20vw, 250px); }
 .pl-view-select { min-width: 118px; }
 .pl-tool-btn { min-width: 32px; min-height: 30px; }
+.playlist-action {
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 1px solid rgba(40, 37, 30, 0.25);
+  border-radius: 4px;
+  color: #5f5b52;
+  background: rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+}
+.playlist-action:hover:not(:disabled) { background: rgba(255, 255, 255, .75); color: #18191b; }
+.playlist-action.danger { color: #8b302b; }
+.playlist-action:disabled { opacity: .45; }
 
 #play-session {
   padding-inline: 11px;
@@ -3887,6 +3954,12 @@ dialog.aimp-dsp-dialog::backdrop {
 .giant-metal-knob:hover {
   filter: brightness(1.06) saturate(1.04);
 }
+.knob-metal-body.disabled,
+.knob-metal-body.disabled:hover {
+  cursor: not-allowed;
+  filter: grayscale(.55);
+  opacity: .52;
+}
 
 .rotary-knob:active,
 .knob-metal-body:active,
@@ -3906,20 +3979,25 @@ dialog.aimp-dsp-dialog::backdrop {
 @media (max-width: 640px) {
   .app.teac-rack-app { width: 100%; }
   .rack-titlebar { padding-inline: 14px; }
+  .rack-titlebar { align-items: flex-start; gap: 8px; }
+  .rack-titlebar .rack-brand { min-width: 0; }
+  .rack-titlebar .title-actions { flex-wrap: wrap; justify-content: flex-end; }
+  .rack-titlebar .local-indicator { display: none; }
+  .mode-switch-button { min-height: 26px; padding-inline: 7px; }
   .title-motto { display: none; }
   .teac-unit-playlist { border-left: 0; border-right: 0; }
   .playlist-deck-header { padding: 14px; }
   .playlist-deck-tabs { gap: 16px; }
   .playlist-deck-tools {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
+    display: flex;
+    flex-wrap: wrap;
     gap: 7px;
   }
   .pl-search-box {
-    grid-column: 1 / -1;
+    flex: 1 1 100%;
     width: 100%;
   }
-  .pl-view-select { width: 100%; }
+  .pl-view-select { width: auto; flex: 1 1 150px; }
   #play-session { padding-inline: 9px; }
   .track-table { display: block; }
   .track-table thead { display: none; }

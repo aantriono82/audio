@@ -1,6 +1,7 @@
 import { esc, formatTime, demoBlob, demoTracks, baseTracks, visibleTracks, queueIndexAtVisibleIndex } from './library.js';
 import { isAudioFile, metadataFromFilename, readEmbeddedMetadata } from './import.js';
 import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, nativeAudioBlob, saveNativeTrack, removeNativeTrack, nativeURL } from './desktop.js';
+import { playbackCapabilities } from './capabilities.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -71,7 +72,7 @@ function addAdvancedUI() {
     settingsButton.className = 'icon-button pl-tool-btn';
     settingsButton.id = 'settings';
     settingsButton.title = 'Pengaturan audio dan tampilan';
-    settingsButton.ariaLabel = settingsButton.title;
+    settingsButton.setAttribute('aria-label', settingsButton.title);
     settingsButton.textContent = '⚙';
     const helpBtn = $('#help');
     if (helpBtn && helpBtn.parentElement === actions) {
@@ -85,7 +86,7 @@ function addAdvancedUI() {
     const group = document.createElement('select');
     group.id = 'group-by';
     group.title = 'Kelompokkan koleksi';
-    group.ariaLabel = 'Kelompokkan koleksi';
+    group.setAttribute('aria-label', 'Kelompokkan koleksi');
     group.innerHTML = '<option value="">Semua lagu</option><option value="artist">Artis</option><option value="album">Album</option><option value="genre">Genre</option>';
     const tableActions = $('.table-actions');
     const sortBtn = $('#sort');
@@ -125,8 +126,21 @@ function addAdvancedUI() {
   if (!dialog) {
     dialog = document.createElement('dialog');
     dialog.id = 'settings-dialog';
-    dialog.innerHTML = `<form method="dialog" class="dialog-heading"><div><div class="eyebrow">ATIGA AMP / RUANG KENDALI</div><h2>Pengaturan<span>.</span></h2></div><button class="icon-button" aria-label="Tutup">×</button></form><section class="theme-section" aria-labelledby="theme-heading"><div class="settings-section-heading"><span id="theme-heading">Pilih tampilan</span><small>Perubahan langsung diterapkan</small></div><div class="theme-picker" role="radiogroup" aria-label="Pilih tema"><button type="button" class="theme-skin skin-ember" data-theme="ember" role="radio" aria-label="Bara"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Bara</strong><small>Studio hangat</small></button><button type="button" class="theme-skin skin-neon" data-theme="neon" role="radio" aria-label="Neon"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Neon</strong><small>Klub malam</small></button><button type="button" class="theme-skin skin-ocean" data-theme="ocean" role="radio" aria-label="Samudra"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Samudra</strong><small>Biru dalam</small></button><button type="button" class="theme-skin skin-violet" data-theme="violet" role="radio" aria-label="Violet"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Violet</strong><small>Nuansa tengah malam</small></button><button type="button" class="theme-skin skin-mono" data-theme="mono" role="radio" aria-label="Monokrom"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Monokrom</strong><small>Kontras murni</small></button></div></section><div class="settings-grid"><label>Pudar silang <output id="crossfade-value"></output><input id="crossfade" type="range" min="0" max="12" step="1"></label><label>Penguat awal <output id="preamp-value"></output><input id="preamp" type="range" min="-12" max="12" step="1"></label><label>Keseimbangan <output id="balance-value"></output><input id="balance" type="range" min="-1" max="1" step=".01"></label><label>Keluaran<select id="output-device"><option value="default">Keluaran bawaan peramban</option></select></label></div><label class="setting-check"><input id="gapless" type="checkbox"> Tanpa jeda / siapkan lagu berikutnya</label><label class="setting-check"><input id="replay-gain" type="checkbox"> ReplayGain jika tag tersedia</label><label class="setting-check"><input id="glow" type="checkbox"> Efek CRT / cahaya</label><label class="setting-check"><input id="notifications" type="checkbox"> Beri tahu lagu berikutnya</label><div class="settings-actions"><button type="button" class="text-button" id="scan-folder">Pindai ulang folder</button><button type="button" class="text-button" id="request-notifications">Izinkan notifikasi</button><span class="dialog-note">Panel dapat dipindahkan dengan seret dan lepas.</span></div><div class="format-support" id="format-support"></div>`;
+    dialog.innerHTML = `<form method="dialog" class="dialog-heading"><div><div class="eyebrow">ATIGA AMP / RUANG KENDALI</div><h2>Pengaturan<span>.</span></h2></div><button class="icon-button" aria-label="Tutup">×</button></form><section class="theme-section" aria-labelledby="theme-heading"><div class="settings-section-heading"><span id="theme-heading">Pilih tampilan</span><small>Perubahan langsung diterapkan</small></div><div class="theme-picker" role="radiogroup" aria-label="Pilih tema"><button type="button" class="theme-skin skin-ember" data-theme="ember" role="radio" aria-label="Bara"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Bara</strong><small>Studio hangat</small></button><button type="button" class="theme-skin skin-neon" data-theme="neon" role="radio" aria-label="Neon"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Neon</strong><small>Klub malam</small></button><button type="button" class="theme-skin skin-ocean" data-theme="ocean" role="radio" aria-label="Samudra"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Samudra</strong><small>Biru dalam</small></button><button type="button" class="theme-skin skin-violet" data-theme="violet" role="radio" aria-label="Violet"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Violet</strong><small>Nuansa tengah malam</small></button><button type="button" class="theme-skin skin-mono" data-theme="mono" role="radio" aria-label="Monokrom"><span class="skin-preview"><i></i><i></i><i></i></span><strong>Monokrom</strong><small>Kontras murni</small></button></div></section><div class="settings-grid"><label>Pudar silang <output id="crossfade-value"></output><input id="crossfade" type="range" min="0" max="12" step="1"></label><label>Penguat awal <output id="preamp-value"></output><input id="preamp" type="range" min="-12" max="12" step="1"></label><label>Keseimbangan <output id="balance-value"></output><input id="balance" type="range" min="-1" max="1" step=".01"></label><label>Keluaran<select id="output-device"><option value="default">Keluaran bawaan peramban</option></select></label></div><label class="setting-check"><input id="resume-playback" type="checkbox"> Lanjutkan posisi terakhir saat membuka aplikasi</label><label class="setting-check"><input id="gapless" type="checkbox"> Siapkan lagu berikutnya</label><label class="setting-check"><input id="replay-gain" type="checkbox"> ReplayGain jika tag tersedia</label><label class="setting-check"><input id="glow" type="checkbox"> Efek CRT / cahaya</label><label class="setting-check"><input id="notifications" type="checkbox"> Beri tahu lagu berikutnya</label><div class="settings-actions"><button type="button" class="text-button" id="scan-folder">Pindai ulang folder</button><button type="button" class="text-button" id="request-notifications">Izinkan notifikasi</button><span class="dialog-note">Panel dapat dipindahkan dengan seret dan lepas.</span></div><div class="format-support" id="format-support"></div>`;
     document.body.append(dialog);
+    dialog.querySelector('#output-device')?.setAttribute('id', 'settings-output-device');
+    const updateSettingLabel = (id, text) => {
+      const input = dialog.querySelector(`#${id}`);
+      const label = input?.closest('label');
+      const textNode = label && [...label.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+      if (textNode) textNode.textContent = ` ${text}`;
+    };
+    updateSettingLabel('crossfade', 'Transisi pudar (browser)');
+    updateSettingLabel('gapless', 'Siapkan audio lagu aktif');
+    ['crossfade', 'preamp', 'balance', 'gapless', 'replay-gain'].forEach(id => {
+      dialog.querySelector(`#${id}`)?.closest('label')?.classList.add('legacy-audio-setting');
+    });
+    dialog.querySelector('#settings-output-device')?.closest('label')?.classList.add('legacy-audio-setting');
   }
 
   const settingsBtn = $('#settings');
@@ -143,6 +157,8 @@ function addAdvancedUI() {
   if (preampInput) preampInput.oninput = event => { state.preamp = Number(event.target.value); applyAudioSettings(); syncSettings(); persist(); };
   const balanceInput = dialog.querySelector('#balance');
   if (balanceInput) balanceInput.oninput = event => { state.balance = Number(event.target.value); applyAudioSettings(); syncSettings(); persist(); };
+  const resumeInput = dialog.querySelector('#resume-playback');
+  if (resumeInput) resumeInput.onchange = event => { state.resumePlayback = event.target.checked; persist(); };
   const gaplessInput = dialog.querySelector('#gapless');
   if (gaplessInput) gaplessInput.onchange = event => { state.gapless = event.target.checked; audio.preload = state.gapless ? 'auto' : 'metadata'; persist(); };
   const replayGainInput = dialog.querySelector('#replay-gain');
@@ -215,7 +231,7 @@ function addAdvancedUI() {
       exportedAt: new Date().toISOString(),
       tracks: state.tracks.filter(track => !track.demo).map(({ id, fingerprint, title, artist, album, genre, format, duration }) => ({ id, fingerprint, title, artist, album, genre, format, duration })),
       favorites: [...state.favorites], playlists: state.playlists, recent: state.recent, queue: state.queue, positions: state.positions,
-      settings: { theme: state.theme, glow: state.glow, gapless: state.gapless, compact: state.compact, shuffle: state.shuffle, repeat: state.repeat, volume: state.volume, eq: state.eq, preset: state.preset, crossfade: state.crossfade, preamp: state.preamp, balance: state.balance, replayGain: state.replayGain, notifications: state.notifications, outputDevice: state.outputDevice }
+      settings: { theme: state.theme, glow: state.glow, gapless: state.gapless, compact: state.compact, viewMode: state.viewMode, resumePlayback: state.resumePlayback, shuffle: state.shuffle, repeat: state.repeat, volume: state.volume, eq: state.eq, preset: state.preset, crossfade: state.crossfade, preamp: state.preamp, balance: state.balance, replayGain: state.replayGain, notifications: state.notifications, outputDevice: state.outputDevice }
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const link = document.createElement('a'); const url = URL.createObjectURL(blob); link.href = url; link.download = `atiga-amp-backup-${new Date().toISOString().slice(0, 10)}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 0);
@@ -237,13 +253,14 @@ function addAdvancedUI() {
       state.positions = Object.fromEntries(Object.entries(backup.positions || {}).map(([id, value]) => { const resolved = resolveId(id); return resolved ? [resolved, Number(value) || 0] : null; }).filter(Boolean));
       const settings = backup.settings || {};
       if (typeof settings.theme === 'string') state.theme = settings.theme;
-      ['glow', 'gapless', 'compact', 'shuffle', 'replayGain', 'notifications'].forEach(key => { if (typeof settings[key] === 'boolean') state[key] = settings[key]; });
+      ['glow', 'gapless', 'compact', 'resumePlayback', 'shuffle', 'replayGain', 'notifications'].forEach(key => { if (typeof settings[key] === 'boolean') state[key] = settings[key]; });
+      if (settings.viewMode === 'rack' || settings.viewMode === 'collection') state.viewMode = settings.viewMode;
       ['volume', 'crossfade', 'preamp', 'balance'].forEach(key => { if (Number.isFinite(settings[key])) state[key] = settings[key]; });
       if ([0, 1, 2].includes(settings.repeat)) state.repeat = settings.repeat;
       if (Array.isArray(settings.eq) && settings.eq.length === 10 && settings.eq.every(value => Number.isFinite(value))) state.eq = settings.eq;
       if (typeof settings.preset === 'string') state.preset = settings.preset;
       if (typeof settings.outputDevice === 'string') state.outputDevice = settings.outputDevice;
-      applyTheme(); applyCompactState(); render(); syncSettings(); await applyOutputDevice(); persist();
+      applyTheme(); applyViewMode(); render(); syncSettings(); await applyOutputDevice(); persist();
       const available = backup.tracks.filter(track => byId.has(track.id) || byFingerprint.has(track.fingerprint)).length;
       toast(`Cadangan dipulihkan. ${available} dari ${backup.tracks.length} lagu tersedia.`);
     } catch (error) { toast(`Cadangan gagal diimpor: ${error instanceof Error ? error.message : 'format tidak valid.'}`); }
@@ -254,7 +271,7 @@ function addAdvancedUI() {
 }
 function syncSettings() {
   const set = (id, value) => { const el = $(`#${id}`); if (!el) return; if (el.type === 'checkbox') el.checked = value; else el.value = value; };
-  set('crossfade', state.crossfade); set('preamp', state.preamp); set('balance', state.balance); set('gapless', state.gapless); set('replay-gain', state.replayGain); set('glow', state.glow); set('notifications', state.notifications); set('output-device', state.outputDevice);
+  set('crossfade', state.crossfade); set('preamp', state.preamp); set('balance', state.balance); set('resume-playback', state.resumePlayback); set('gapless', state.gapless); set('replay-gain', state.replayGain); set('glow', state.glow); set('notifications', state.notifications); set('output-device', state.outputDevice);
   applyTheme();
   const crossfadeVal = $('#crossfade-value');
   if (crossfadeVal) crossfadeVal.textContent = `${state.crossfade}s`;
@@ -317,7 +334,10 @@ const state = {
   eq: Array.isArray(saved.eq) && saved.eq.length === 10 ? saved.eq.map(n => Number.isFinite(n) ? Math.max(-12,Math.min(12,n)) : 0) : Array(10).fill(0),
   preset: saved.preset || 'Flat',
   theme: saved.theme || 'ember', glow: saved.glow !== false, gapless: saved.gapless !== false,
-  compact: saved.compact ?? (window.matchMedia?.('(max-width: 640px)').matches ?? false), onboarded: saved.onboarded === true,
+  compact: saved.compact ?? (window.matchMedia?.('(max-width: 640px)').matches ?? false),
+  viewMode: saved.viewMode === 'collection' || saved.compact === true ? 'collection' : 'rack',
+  resumePlayback: saved.resumePlayback === true,
+  onboarded: saved.onboarded === true,
   crossfade: Number.isFinite(saved.crossfade) ? Math.max(0, Math.min(12, saved.crossfade)) : 0,
   preamp: Number.isFinite(saved.preamp) ? Math.max(-12, Math.min(12, saved.preamp)) : 0,
   balance: Number.isFinite(saved.balance) ? Math.max(-1, Math.min(1, saved.balance)) : 0,
@@ -345,12 +365,13 @@ const audio = $('#audio');
 // WebKitGTK/GStreamer has a known failure mode when a media element is routed
 // through a complex Web Audio graph. Keep Linux desktop playback on the
 // native media element; the browser build retains EQ/DSP and analyser output.
-const nativeDirectPlayback = desktop && /linux/i.test(navigator.platform || navigator.userAgent);
+const capabilities = playbackCapabilities({ desktop, platform: navigator.platform || navigator.userAgent });
+const nativeDirectPlayback = capabilities.nativeDirectPlayback;
 state.playlists = state.playlists.filter(playlist => !['after-hours', 'slow-living'].includes(playlist.id));
 let context, analyser, analyserL, analyserR, filters = [], compressor, masterGain, panner, db, loadedId, readyTrackId = null, pendingStartupPosition = 0, playbackToken = 0, lastSavedSecond = -1, directAudio = nativeDirectPlayback;
 let pendingStartCleanup;
 let dspBassFilter, dspEchoDelay, dspEchoFeedback, dspEchoGain, dspReverbConvolver, dspReverbGain, dspChorusDelay, dspChorusGain, dspChorusLfo, dspVoiceDryGain, dspVoiceWetGain, dspVoiceSplitter, dspVoiceMerger, dspVoiceInvGain, dspSumGain;
-let giantVolKnob, deckVolKnob, balKnob, preampKnob, bassKnob, trebleKnob;
+let giantVolKnob, deckVolKnob, balKnob, preampKnob, bassKnob, trebleKnob, trueBassKnob, enhancerKnob, reverbKnob;
 let crossfadeTimer, crossfadeStarted = false;
 const urls = new Map();
 const artUrls = new Map();
@@ -407,6 +428,8 @@ function applySavedState(nextSaved) {
   state.glow = nextSaved.glow !== false;
   state.gapless = nextSaved.gapless !== false;
   state.compact = typeof nextSaved.compact === 'boolean' ? nextSaved.compact : state.compact;
+  state.viewMode = nextSaved.viewMode === 'collection' || nextSaved.compact === true ? 'collection' : 'rack';
+  state.resumePlayback = nextSaved.resumePlayback === true;
   state.onboarded = nextSaved.onboarded === true;
   state.crossfade = Number.isFinite(nextSaved.crossfade) ? Math.max(0, Math.min(12, nextSaved.crossfade)) : 0;
   state.preamp = Number.isFinite(nextSaved.preamp) ? Math.max(-12, Math.min(12, nextSaved.preamp)) : 0;
@@ -489,6 +512,11 @@ function createReverbImpulse(ctx, duration = 1.2, decay = 2.0) {
 
 function applyPlaybackRates() {
   if (!audio) return;
+  if (nativeDirectPlayback) {
+    audio.playbackRate = 1;
+    if ('preservesPitch' in audio) audio.preservesPitch = true;
+    return;
+  }
   const speed = (state.dsp?.speed || 100) / 100;
   const tempo = (state.dsp?.tempo || 100) / 100;
   const pitchSemitones = state.dsp?.pitch || 0;
@@ -673,7 +701,7 @@ function applyArt(element, track) {
 }
 function row(track, index) {
   const playing = track.id === state.currentId;
-  return `<tr class="track-row${playing ? ' current' : ''}" data-id="${esc(track.id)}" data-index="${index}" draggable="true" tabindex="0" aria-label="Putar ${esc(track.title)}"><td>${playing ? '<span class="equal-bars"><i></i><i></i><i></i></span>' : String(index+1).padStart(2,'0')}</td><td><div class="track-cell"><div class="mini-art" data-track-id="${esc(track.id)}" data-art="${track.art}" data-cover="${track.cover ? 'true' : 'false'}"><span>AA</span></div><div class="track-info"><span class="track-name">${esc(track.title)}</span><span class="track-artist">${esc(track.artist)}${track.genre ? ` · ${esc(track.genre)}` : ''}${track.demo ? ' · Demo' : ''}</span></div></div></td><td class="track-album">${esc(track.album)}</td><td class="track-format"><span class="format-tag">${esc(track.format)}</span></td><td class="track-duration">${formatTime(track.duration)}</td><td><div class="row-actions"><button class="icon-button favorite${state.favorites.has(track.id) ? ' active' : ''}" data-action="favorite" aria-label="${state.favorites.has(track.id) ? 'Hapus favorit' : 'Favoritkan'} ${esc(track.title)}" aria-pressed="${state.favorites.has(track.id)}">${icon('heart')}</button><button class="icon-button" data-action="more" aria-label="Opsi ${esc(track.title)}">${icon('more')}</button></div></td></tr>`;
+  return `<tr class="track-row${playing ? ' current' : ''}" data-id="${esc(track.id)}" data-index="${index}" draggable="true" tabindex="0" aria-label="Putar ${esc(track.title)}"><td headers="head-number">${playing ? '<span class="equal-bars"><i></i><i></i><i></i></span>' : String(index+1).padStart(2,'0')}</td><td headers="head-title"><div class="track-cell"><div class="mini-art" data-track-id="${esc(track.id)}" data-art="${track.art}" data-cover="${track.cover ? 'true' : 'false'}"><span>AA</span></div><div class="track-info"><span class="track-name">${esc(track.title)}</span><span class="track-artist">${esc(track.artist)}${track.genre ? ` · ${esc(track.genre)}` : ''}${track.demo ? ' · Demo' : ''}</span></div></div></td><td headers="head-album" class="track-album">${esc(track.album)}</td><td headers="head-format" class="track-format"><span class="format-tag">${esc(track.format)}</span></td><td headers="head-duration" class="track-duration">${formatTime(track.duration)}</td><td headers="head-actions"><div class="row-actions"><button class="icon-button favorite${state.favorites.has(track.id) ? ' active' : ''}" data-action="favorite" aria-label="${state.favorites.has(track.id) ? 'Hapus favorit' : 'Favoritkan'} ${esc(track.title)}" aria-pressed="${state.favorites.has(track.id)}">${icon('heart')}</button><button class="icon-button" data-action="more" aria-label="Opsi ${esc(track.title)}">${icon('more')}</button></div></td></tr>`;
 }
 function renderTracks() {
   const tracks = visibleTracks(state);
@@ -717,6 +745,11 @@ function renderNav() {
     ).join('');
     viewSelect.value = state.view;
   }
+  const selectedPlaylist = state.playlists.find(playlist => playlist.id === state.view);
+  const renamePlaylist = $('#rename-playlist');
+  const deletePlaylist = $('#delete-playlist');
+  if (renamePlaylist) renamePlaylist.disabled = !selectedPlaylist;
+  if (deletePlaylist) deletePlaylist.disabled = !selectedPlaylist;
 }
 function nextTrack() {
   if (state.queue.length) return findTrack(state.queue[0]);
@@ -934,7 +967,7 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
   }
 }
 function maybeCrossfade() {
-  if (!state.crossfade || crossfadeStarted || !loadedId || !Number.isFinite(audio.duration) || audio.duration - audio.currentTime > state.crossfade) return;
+  if (nativeDirectPlayback || !state.crossfade || crossfadeStarted || !loadedId || !Number.isFinite(audio.duration) || audio.duration - audio.currentTime > state.crossfade) return;
   const upcoming = nextTrack(); if (!upcoming || state.repeat === 2) return;
   crossfadeStarted = true;
   const start = context?.currentTime || 0;
@@ -1036,7 +1069,7 @@ audio.addEventListener('ended', () => {
 });
 audio.addEventListener('error', () => { if (audio.src) toast('Format audio tidak didukung atau file rusak. Silakan coba file lain.'); });
 
-function bindRotaryKnob(element, { min, max, initial, step = 1, angleMin = -135, angleMax = 135, onChange }) {
+function bindRotaryKnob(element, { min, max, initial, step = 1, angleMin = -135, angleMax = 135, onChange, disabled = false }) {
   if (!element) return { setVal: () => {}, getVal: () => initial };
   let currentVal = initial;
 
@@ -1060,6 +1093,13 @@ function bindRotaryKnob(element, { min, max, initial, step = 1, angleMin = -135,
   element.setAttribute('aria-valuemax', String(max));
   element.setAttribute('aria-valuenow', String(initial));
   element.setAttribute('aria-label', element.title || element.dataset.param || 'Kontrol');
+  if (disabled) {
+    element.setAttribute('aria-disabled', 'true');
+    element.removeAttribute('tabindex');
+    element.classList.add('disabled');
+    setVal(initial, false);
+    return { setVal, getVal: () => currentVal };
+  }
   setVal(initial, false);
 
   let startY = 0;
@@ -1151,6 +1191,38 @@ function setAudioTreble(db) {
   trebleKnob?.setVal(db, false);
 }
 
+function applyRuntimeCapabilities() {
+  const linuxDspControls = [
+    '#aimp-slider-echo', '#aimp-slider-reverb', '#aimp-slider-flanger', '#aimp-slider-chorus',
+    '#aimp-slider-bass', '#aimp-slider-stereo', '#aimp-slider-speed', '#aimp-slider-tempo', '#aimp-slider-pitch',
+    '#aimp-check-voice-remover', '#aimp-check-fade-pause', '#aimp-check-fade-nav',
+    '#aimp-slider-preamp', '#aimp-slider-balance', '#aimp-check-replaygain', '#aimp-slider-crossfade',
+    '#output-device', '#preamp', '#balance', '#crossfade', '#replay-gain'
+  ];
+  const unavailableMessage = 'Tidak tersedia pada mode playback stabil Linux.';
+  if (nativeDirectPlayback) {
+    linuxDspControls.forEach(selector => {
+      const element = $(selector);
+      if (!element) return;
+      element.disabled = true;
+      element.setAttribute('aria-disabled', 'true');
+      element.title = unavailableMessage;
+    });
+    ['#eq-bands input', '#aimp-eq-grid input'].forEach(selector => $$(selector).forEach(element => {
+      element.disabled = true;
+      element.setAttribute('aria-disabled', 'true');
+      element.title = unavailableMessage;
+    }));
+  }
+  ['#aimp-check-skip-silence', '#aimp-slider-silence'].forEach(selector => {
+    const element = $(selector);
+    if (!element) return;
+    element.disabled = true;
+    element.setAttribute('aria-disabled', 'true');
+    element.title = 'Lewati hening belum tersedia.';
+  });
+}
+
 function toggleMute() {
   audio.muted = !audio.muted;
   const isMuted = Boolean(audio.muted || !state.volume);
@@ -1189,14 +1261,14 @@ function toggleDrawer(forceState) {
 function setupRackControls() {
   giantVolKnob = bindRotaryKnob($('#giant-master-volume'), { min: 0, max: 1, initial: state.volume, step: 0.01, angleMin: -140, angleMax: 140, onChange: setMasterVolume });
   deckVolKnob = bindRotaryKnob($('#deck-volume-knob'), { min: 0, max: 1, initial: state.volume, step: 0.01, onChange: setMasterVolume });
-  balKnob = bindRotaryKnob($('#knob-balance'), { min: -1, max: 1, initial: state.balance, step: 0.02, angleMin: -144, angleMax: 144, onChange: setAudioBalance });
-  preampKnob = bindRotaryKnob($('#knob-preamp'), { min: -12, max: 12, initial: state.preamp, step: 1, angleMin: -144, angleMax: 144, onChange: setAudioPreamp });
-  bassKnob = bindRotaryKnob($('#knob-bass'), { min: -12, max: 12, initial: state.eq[0], step: 1, angleMin: -144, angleMax: 144, onChange: setAudioBass });
-  trebleKnob = bindRotaryKnob($('#knob-treble'), { min: -12, max: 12, initial: state.eq[9], step: 1, angleMin: -144, angleMax: 144, onChange: setAudioTreble });
+  balKnob = bindRotaryKnob($('#knob-balance'), { min: -1, max: 1, initial: state.balance, step: 0.02, angleMin: -144, angleMax: 144, disabled: nativeDirectPlayback, onChange: setAudioBalance });
+  preampKnob = bindRotaryKnob($('#knob-preamp'), { min: -12, max: 12, initial: state.preamp, step: 1, angleMin: -144, angleMax: 144, disabled: nativeDirectPlayback, onChange: setAudioPreamp });
+  bassKnob = bindRotaryKnob($('#knob-bass'), { min: -12, max: 12, initial: state.eq[0], step: 1, angleMin: -144, angleMax: 144, disabled: nativeDirectPlayback, onChange: setAudioBass });
+  trebleKnob = bindRotaryKnob($('#knob-treble'), { min: -12, max: 12, initial: state.eq[9], step: 1, angleMin: -144, angleMax: 144, disabled: nativeDirectPlayback, onChange: setAudioTreble });
 
-  bindRotaryKnob($('#knob-true-bass'), { min: 0, max: 10, initial: 3, step: 1, angleMin: -140, angleMax: 140, onChange: v => toast(`True Bass: ${v}`) });
-  bindRotaryKnob($('#knob-enhancer'), { min: 0, max: 10, initial: 5, step: 1, angleMin: -140, angleMax: 140, onChange: v => toast(`Enhancer: ${v}`) });
-  bindRotaryKnob($('#knob-reverb'), { min: 0, max: 10, initial: 2, step: 1, angleMin: -140, angleMax: 140, onChange: v => toast(`Reverb: ${v}`) });
+  trueBassKnob = bindRotaryKnob($('#knob-true-bass'), { min: 0, max: 10, initial: Math.max(0, Math.min(10, state.dsp.bass / 1.2)), step: 1, angleMin: -140, angleMax: 140, disabled: nativeDirectPlayback, onChange: v => { state.dsp.bass = Math.round(v * 1.2); applyDspSettings(); syncDspUi(); persist(); } });
+  enhancerKnob = bindRotaryKnob($('#knob-enhancer'), { min: 0, max: 10, initial: state.dsp.stereo / 10, step: 1, angleMin: -140, angleMax: 140, onChange: v => { $('#knob-enhancer')?.setAttribute('aria-valuetext', `Tampilan enhancer ${v}`); persist(); } });
+  reverbKnob = bindRotaryKnob($('#knob-reverb'), { min: 0, max: 10, initial: state.dsp.reverb / 10, step: 1, angleMin: -140, angleMax: 140, disabled: nativeDirectPlayback, onChange: v => { state.dsp.reverb = Math.round(v * 10); applyDspSettings(); syncDspUi(); persist(); } });
 
   const tapeButtons = $$('#btn-tape-normal, #btn-tape-cro2, #btn-tape-metal');
   const sourceRotary = $('#deck-source-rotary');
@@ -1228,7 +1300,7 @@ function setupRackControls() {
       sourceKnob.style.transform = `rotate(${(sourcePos - 1) * 45}deg)`;
     }
 
-    if (showToast) toast(`Tape Bias/EQ: ${selectedMode.toUpperCase()}`);
+    if (showToast) toast(`Tampilan tape: ${selectedMode.toUpperCase()}`);
   };
 
   tapeButtons.forEach((button, index) => {
@@ -1239,7 +1311,7 @@ function setupRackControls() {
     sourceRotary.onclick = () => {
       sourcePos = (sourcePos + 1) % tapeModes.length;
       selectTapeMode(tapeModes[sourcePos], false);
-      toast(`Source Channel: ${['A', 'B', 'C'][sourcePos]} · Tape ${tapeModes[sourcePos].toUpperCase()}`);
+      toast(`Tampilan source: ${['A', 'B', 'C'][sourcePos]} · Tape ${tapeModes[sourcePos].toUpperCase()}`);
     };
   }
 
@@ -1318,6 +1390,11 @@ function setupRackControls() {
 
   const dbxBadge = $('#dbx-badge');
   if (dbxBadge) {
+    if (nativeDirectPlayback) {
+      dbxBadge.disabled = true;
+      dbxBadge.title = 'Pengaturan DSP tidak tersedia pada mode playback stabil Linux';
+      dbxBadge.setAttribute('aria-disabled', 'true');
+    }
     dbxBadge.onclick = (e) => {
       e?.stopPropagation?.();
       openDspDialog('general');
@@ -1360,8 +1437,7 @@ function setupRackControls() {
   if (ampMute) ampMute.onclick = toggleMute;
 
   const openEQ = () => {
-    $('#eq-dialog')?.showModal();
-    $('#eq-toggle')?.setAttribute('aria-expanded', 'true');
+    openDspDialog('equalizer');
   };
   $$('#switch-eq-dsp, #eq-toggle, #player-eq').forEach(el => {
     if (el) el.onclick = openEQ;
@@ -1393,10 +1469,22 @@ function setupRackControls() {
 
   const btnDsp = $('#btn-dsp');
   if (btnDsp) {
+    if (nativeDirectPlayback) {
+      btnDsp.disabled = true;
+      btnDsp.title = 'DSP tidak tersedia pada mode playback stabil Linux';
+      btnDsp.setAttribute('aria-disabled', 'true');
+    }
     btnDsp.onclick = (e) => {
       e?.stopPropagation?.();
       openDspDialog('general');
     };
+  }
+
+  const matrixDsp = $('#matrix-lbl-dsp');
+  if (matrixDsp && nativeDirectPlayback) {
+    matrixDsp.disabled = true;
+    matrixDsp.title = 'DSP tidak tersedia pada mode playback stabil Linux';
+    matrixDsp.setAttribute('aria-disabled', 'true');
   }
 
   // Plaque legend labels click-through
@@ -1427,6 +1515,11 @@ function setupRackControls() {
   const btnAmpEq = $('#btn-amp-eq');
   const btnAmpDsp = $('#btn-amp-dsp');
   if (btnAmpEq) {
+    if (nativeDirectPlayback) {
+      btnAmpEq.disabled = true;
+      btnAmpEq.title = 'EQ tidak tersedia pada mode playback stabil Linux';
+      btnAmpEq.setAttribute('aria-disabled', 'true');
+    }
     btnAmpEq.setAttribute('aria-pressed', String(btnAmpEq.classList.contains('active')));
     btnAmpEq.onclick = (e) => {
       e.stopPropagation();
@@ -1439,6 +1532,11 @@ function setupRackControls() {
     };
   }
   if (btnAmpDsp) {
+    if (nativeDirectPlayback) {
+      btnAmpDsp.disabled = true;
+      btnAmpDsp.title = 'DSP tidak tersedia pada mode playback stabil Linux';
+      btnAmpDsp.setAttribute('aria-disabled', 'true');
+    }
     btnAmpDsp.setAttribute('aria-pressed', String(btnAmpDsp.classList.contains('active')));
     btnAmpDsp.onclick = (e) => {
       e.stopPropagation();
@@ -1519,7 +1617,7 @@ const sortBtn = $('#sort');
 if (sortBtn) {
   sortBtn.onclick = () => { if (state.queueView) { toast('Tarik lagu untuk mengurutkan antrean.'); return; } state.sortAsc = !state.sortAsc; sortBtn.classList.toggle('active', state.sortAsc); renderTracks(); };
 }
-function showQueue() { state.queueView = true; renderTracks(); if ($('#app')?.classList.contains('compact')) $('#app')?.classList.remove('compact'); toggleDrawer(true); }
+function showQueue() { state.queueView = true; renderTracks(); toggleDrawer(true); }
 $$('#queue-tab, #show-queue, #player-queue').forEach(el => el.onclick = showQueue);
 
 window.addEventListener('keydown', (e) => {
@@ -1575,7 +1673,10 @@ function showTrackOptions(id, index) {
 }
 async function removeTrack(id) {
   const track = findTrack(id);
-  if (!track || !window.confirm(`Hapus “${track.title}” dari koleksi?`)) return;
+  const consequence = track?.nativePath
+    ? 'Salinan audio di data aplikasi akan dihapus; file asal tidak diubah.'
+    : 'File asal di perangkat tidak diubah.';
+  if (!track || !window.confirm(`Hapus “${track.title}” dari koleksi? ${consequence}`)) return;
   try {
     if (track.nativePath) await removeNativeTrack(id);
     else if (db && !track.demo) await dbAction('readwrite', store => store.delete(id));
@@ -1611,9 +1712,37 @@ $('#tracks')?.addEventListener('drop', event => {
   if (!ids) { toast('Urutan manual tersedia di playlist dan antrean.'); return; }
   const targetIndex = Number(target.dataset.index); const [id] = ids.splice(draggedIndex,1); ids.splice(targetIndex,0,id); render(); persist();
 });
-const newPlaylistBtn = $('#new-playlist');
+const newPlaylistBtn = $('#new-playlist-visible') || $('#new-playlist');
 if (newPlaylistBtn) {
   newPlaylistBtn.onclick = () => { $('#playlist-dialog')?.showModal(); $('#playlist-name')?.focus(); };
+}
+const renamePlaylistBtn = $('#rename-playlist');
+if (renamePlaylistBtn) {
+  renamePlaylistBtn.onclick = () => {
+    const playlist = state.playlists.find(item => item.id === state.view);
+    if (!playlist) return;
+    const name = window.prompt('Nama baru daftar putar', playlist.name)?.trim();
+    if (!name || name === playlist.name) return;
+    playlist.name = name;
+    render();
+    persist();
+    toast('Nama daftar putar diperbarui.');
+  };
+}
+const deletePlaylistBtn = $('#delete-playlist');
+if (deletePlaylistBtn) {
+  deletePlaylistBtn.onclick = () => {
+    const index = state.playlists.findIndex(item => item.id === state.view);
+    if (index < 0) return;
+    const playlist = state.playlists[index];
+    if (!window.confirm(`Hapus daftar putar “${playlist.name}”? Lagu di koleksi tetap aman.`)) return;
+    state.playlists.splice(index, 1);
+    state.view = 'all';
+    state.queueView = false;
+    render();
+    persist();
+    toast('Daftar putar dihapus. Lagu tetap berada di koleksi.');
+  };
 }
 const closePlaylistBtn = $('#close-playlist');
 if (closePlaylistBtn) {
@@ -1641,23 +1770,63 @@ if (playlistForm) {
   };
 }
 const compactBtn = $('#compact');
+function removeDemoTracks() {
+  const demoIds = new Set(state.tracks.filter(track => track.demo).map(track => track.id));
+  if (!demoIds.size) return;
+  state.tracks = state.tracks.filter(track => !demoIds.has(track.id));
+  state.playlists.forEach(playlist => { playlist.ids = playlist.ids.filter(id => !demoIds.has(id)); });
+  state.queue = state.queue.filter(id => !demoIds.has(id));
+  state.recent = state.recent.filter(id => !demoIds.has(id));
+  demoIds.forEach(id => { state.favorites.delete(id); delete state.playCounts[id]; delete state.positions[id]; releaseTrackURL(id); });
+  if (demoIds.has(state.currentId)) {
+    pendingStartCleanup?.();
+    pendingStartCleanup = undefined;
+    playbackToken++;
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+    loadedId = null;
+    readyTrackId = null;
+    state.currentId = null;
+  }
+}
 function applyCompactState() {
   const app = $('#app');
   if (!app) return;
   app.classList.toggle('compact', Boolean(state.compact));
   if (compactBtn) {
     compactBtn.setAttribute('aria-pressed', String(state.compact));
-    compactBtn.title = state.compact ? 'Kembali ke tampilan penuh' : 'Mode ringkas';
+    compactBtn.title = state.compact ? 'Beralih ke mode Rack' : 'Beralih ke mode Koleksi';
+    compactBtn.setAttribute('aria-label', compactBtn.title);
   }
+}
+function applyViewMode() {
+  const app = $('#app');
+  if (!app) return;
+  const collection = state.viewMode === 'collection';
+  state.compact = collection;
+  app.classList.toggle('mode-rack', !collection);
+  app.classList.toggle('mode-collection', collection);
+  const rackButton = $('#mode-rack');
+  const collectionButton = $('#mode-collection');
+  rackButton?.classList.toggle('active', !collection);
+  rackButton?.setAttribute('aria-pressed', String(!collection));
+  collectionButton?.classList.toggle('active', collection);
+  collectionButton?.setAttribute('aria-pressed', String(collection));
+  const drawer = $('#tape-drawer');
+  if (drawer) drawer.classList.toggle('open', collection);
+  applyCompactState();
 }
 if (compactBtn) {
   compactBtn.onclick = () => {
-    state.compact = !state.compact;
-    applyCompactState();
+    state.viewMode = state.viewMode === 'collection' ? 'rack' : 'collection';
+    applyViewMode();
     persist();
   };
 }
-applyCompactState();
+$('#mode-rack')?.addEventListener('click', () => { state.viewMode = 'rack'; applyViewMode(); persist(); });
+$('#mode-collection')?.addEventListener('click', () => { state.viewMode = 'collection'; applyViewMode(); persist(); });
+applyViewMode();
 
 const compactPrevious = $('#compact-previous');
 if (compactPrevious) compactPrevious.onclick = () => advance(-1);
@@ -1667,20 +1836,28 @@ const compactPlay = $('#compact-play');
 if (compactPlay) compactPlay.onclick = () => togglePlay();
 
 const welcomeDialog = $('#welcome-dialog');
-function finishWelcome(openImport = false) {
+function finishWelcome() {
+  const selectedMode = document.querySelector('input[name="welcome-mode"]:checked')?.value;
+  state.viewMode = selectedMode === 'collection' ? 'collection' : 'rack';
+  state.resumePlayback = Boolean($('#welcome-resume')?.checked);
   state.onboarded = true;
-  const compactPreference = $('#welcome-compact');
-  if (compactPreference) state.compact = compactPreference.checked;
-  applyCompactState();
+  removeDemoTracks();
+  applyViewMode();
   persist();
   welcomeDialog?.close();
-  if (openImport) $('#file-input')?.click();
 }
 if (welcomeDialog) {
-  $('#welcome-demo')?.addEventListener('click', () => finishWelcome(false));
-  $('#welcome-import')?.addEventListener('click', () => finishWelcome(true));
+  $('#welcome-demo')?.addEventListener('click', () => {
+    const demo = state.tracks.find(track => track.demo);
+    if (demo) void selectTrack(demo.id, true);
+  });
+  $('#welcome-import')?.addEventListener('click', () => $('#file-input')?.click());
+  $('#welcome-finish')?.addEventListener('click', finishWelcome);
+  welcomeDialog.addEventListener('cancel', event => {
+    if (!state.onboarded) event.preventDefault();
+  });
   welcomeDialog.addEventListener('close', () => {
-    if (!state.onboarded) finishWelcome(false);
+    if (!state.onboarded) queueMicrotask(() => welcomeDialog.showModal());
   });
 }
 const helpBtn = $('#help');
@@ -1720,7 +1897,7 @@ if (eqResetBtn) {
   eqResetBtn.onclick = () => { state.eq = Array(10).fill(0); state.preset = 'Flat'; syncEQ(); };
 }
 $$('#eq-toggle, #player-eq').forEach(el => {
-  if (el) el.onclick = () => { $('#eq-dialog')?.showModal(); $('#eq-toggle')?.setAttribute('aria-expanded','true'); };
+  if (el) el.onclick = () => openDspDialog('equalizer');
 });
 $('#eq-dialog')?.addEventListener('close', () => $('#eq-toggle')?.setAttribute('aria-expanded','false'));
 const importBtn = $('#import');
@@ -1757,6 +1934,10 @@ const importProgressBar = $('#import-progress-bar');
 const importProgressLabel = $('#import-progress-label');
 const importProgressValue = $('#import-progress-value');
 const cancelImport = $('#cancel-import');
+const importSummary = $('#import-summary');
+const importSummaryText = $('#import-summary-text');
+const dismissImportSummary = $('#dismiss-import-summary');
+if (dismissImportSummary) dismissImportSummary.onclick = () => { if (importSummary) importSummary.hidden = true; };
 function updateImportProgress(processed, total, label = 'Mengimpor musik…') {
   if (importProgress) importProgress.hidden = false;
   if (importProgressBar) { importProgressBar.max = Math.max(1, total); importProgressBar.value = processed; }
@@ -1812,11 +1993,17 @@ async function importFiles(files) {
     const wasCancelled = importCancelled;
     state.search = ''; $('#search').value = ''; state.queueView = false; if (['favorites','recent'].includes(state.view)) state.view = 'all';
     render(); persist();
-    const summary = added ? `${added} lagu ditambahkan.` : 'Tidak ada lagu baru.';
-    const duplicateNote = duplicates ? ` ${duplicates} duplikat dilewati.` : '';
-    toast(`${summary}${duplicateNote}${unsupported ? ` ${unsupported} file tidak didukung.` : ''}${unreadable ? ` ${unreadable} file gagal dibaca.` : ''}${unsaved ? ` ${unsaved} lagu hanya tersedia selama sesi ini; penyimpanan penuh/tidak tersedia.` : ''}${wasCancelled ? ' Impor dibatalkan.' : ''}`);
+    const resultSummary = [
+      `${added} ditambahkan`, `${duplicates} duplikat`, `${unsupported} tidak didukung`,
+      `${unreadable} gagal dibaca`, `${unsaved} belum tersimpan`, `${wasCancelled ? accepted.length - processed : 0} dibatalkan`
+    ].join(' · ');
+    if (importSummaryText) importSummaryText.textContent = resultSummary;
+    if (importSummary) importSummary.hidden = false;
+    toast(`Impor selesai: ${resultSummary}.`);
   } catch (error) {
     console.error('Atiga Amp import failed', error);
+    if (importSummaryText) importSummaryText.textContent = `Gagal: ${error instanceof Error ? error.message : 'file tidak dapat diproses.'}`;
+    if (importSummary) importSummary.hidden = false;
     toast(`Impor gagal: ${error instanceof Error ? error.message : 'file tidak dapat diproses.'}`);
   } finally {
     importing = false;
@@ -2076,8 +2263,9 @@ function paintSpectrum(timestamp) {
   const isStereo = speakerStereo?.classList.contains('active') ?? true;
   const showPeak = displayPeak?.classList.contains('active') ?? true;
 
-  const valL = isStereo ? smoothedL : (smoothedL + smoothedR) / 2;
-  const valR = isStereo ? smoothedR : (smoothedL + smoothedR) / 2;
+  const stereoDisplay = 1 + (state.dsp?.stereo || 0) / 200;
+  const valL = isStereo ? Math.min(1, smoothedL * stereoDisplay) : (smoothedL + smoothedR) / 2;
+  const valR = isStereo ? Math.min(1, smoothedR * stereoDisplay) : (smoothedL + smoothedR) / 2;
 
   const litL = spkL ? Math.min(12, Math.round(valL * 12)) : 0;
   const litR = spkR ? Math.min(12, Math.round(valR * 12)) : 0;
@@ -2157,6 +2345,9 @@ function syncDspUi() {
   setVal('aimp-slider-speed', state.dsp.speed);
   setVal('aimp-slider-tempo', state.dsp.tempo);
   setVal('aimp-slider-pitch', state.dsp.pitch);
+  trueBassKnob?.setVal(Math.max(0, Math.min(10, state.dsp.bass / 1.2)), false);
+  enhancerKnob?.setVal(Math.max(0, Math.min(10, state.dsp.stereo / 10)), false);
+  reverbKnob?.setVal(Math.max(0, Math.min(10, state.dsp.reverb / 10)), false);
 
   const checkVoice = $('#aimp-check-voice-remover');
   if (checkVoice) checkVoice.checked = Boolean(state.dsp.voiceRemover);
@@ -2191,6 +2382,10 @@ let dspDialogReady = false;
 function openDspDialog(tab = 'general') {
   const dialog = $('#dsp-dialog');
   if (!dialog) return;
+  if (nativeDirectPlayback) {
+    toast('EQ dan DSP tidak tersedia pada mode playback stabil Linux.');
+    return;
+  }
 
   if (!dspDialogReady) {
     setupDspDialog();
@@ -2203,6 +2398,8 @@ function openDspDialog(tab = 'general') {
 
   setupAudio();
   syncDspUi();
+  void refreshOutputDevices();
+  void applyOutputDevice();
 
   try {
     if (typeof dialog.showModal === 'function') {
@@ -2283,6 +2480,7 @@ function setupDspDialog() {
     if (!slider) return;
     slider.dataset.key = key;
     slider.dataset.default = String(def);
+    slider.setAttribute('aria-label', key === 'stereo' ? 'Tampilan stereo meter' : key);
 
     slider.oninput = (e) => {
       const val = Number(e.target.value);
@@ -2363,6 +2561,7 @@ function setupDspDialog() {
       </label>
     `).join('');
     aimpEqGrid.querySelectorAll('input').forEach(input => {
+      input.setAttribute('aria-label', `Gain ${frequencies[Number(input.dataset.band)]} Hz`);
       input.oninput = (e) => {
         const idx = Number(e.target.dataset.band);
         const val = Number(e.target.value);
@@ -2383,30 +2582,31 @@ function setupDspDialog() {
   }
 
   const aimpEqPreset = $('#aimp-eq-preset');
-  if (aimpEqPreset) {
-    aimpEqPreset.value = state.preset || 'Flat';
-    aimpEqPreset.onchange = (e) => {
-      const preset = e.target.value;
-      const mainPreset = $('#eq-preset');
-      if (mainPreset) {
-        mainPreset.value = preset;
-        mainPreset.dispatchEvent(new Event('change'));
+      if (aimpEqPreset) {
+        aimpEqPreset.value = state.preset || 'Flat';
+        aimpEqPreset.onchange = (e) => {
+          const preset = e.target.value;
+          if (presets[preset]) state.eq = [...presets[preset]];
+          state.preset = preset;
+          syncEQ();
+          syncDspUi();
+        };
       }
-      syncDspUi();
-    };
-  }
 
-  const aimpEqReset = $('#aimp-eq-reset-btn');
-  if (aimpEqReset) {
-    aimpEqReset.onclick = () => {
-      $('#eq-reset')?.click();
-      syncDspUi();
-    };
-  }
+      const aimpEqReset = $('#aimp-eq-reset-btn');
+      if (aimpEqReset) {
+        aimpEqReset.onclick = () => {
+          state.eq = Array(10).fill(0);
+          state.preset = 'Flat';
+          syncEQ();
+          syncDspUi();
+        };
+      }
 
   // Subpanel: Volume in DSP Manager
   const aimpPreamp = $('#aimp-slider-preamp');
   if (aimpPreamp) {
+    aimpPreamp.setAttribute('aria-label', 'Preamp');
     aimpPreamp.oninput = (e) => {
       state.preamp = Number(e.target.value);
       if ($('#aimp-preamp-val')) $('#aimp-preamp-val').textContent = `${state.preamp > 0 ? `+${state.preamp}` : state.preamp} dB`;
@@ -2417,6 +2617,7 @@ function setupDspDialog() {
   }
   const aimpBalance = $('#aimp-slider-balance');
   if (aimpBalance) {
+    aimpBalance.setAttribute('aria-label', 'Keseimbangan');
     aimpBalance.oninput = (e) => {
       state.balance = Number(e.target.value);
       if ($('#aimp-balance-val')) $('#aimp-balance-val').textContent = state.balance === 0 ? '0 (Center)' : (state.balance < 0 ? `L ${Math.abs(Math.round(state.balance * 100))}%` : `R ${Math.round(state.balance * 100)}%`);
@@ -2438,6 +2639,7 @@ function setupDspDialog() {
   // Subpanel: Mixing in DSP Manager
   const aimpCrossfade = $('#aimp-slider-crossfade');
   if (aimpCrossfade) {
+    aimpCrossfade.setAttribute('aria-label', 'Transisi pudar');
     aimpCrossfade.oninput = (e) => {
       state.crossfade = Number(e.target.value);
       if ($('#aimp-crossfade-val')) $('#aimp-crossfade-val').textContent = `${state.crossfade} s`;
@@ -2464,6 +2666,7 @@ function setupDspDialog() {
   }
   const aimpSilence = $('#aimp-slider-silence');
   if (aimpSilence) {
+    aimpSilence.setAttribute('aria-label', 'Ambang hening');
     aimpSilence.oninput = (e) => {
       if ($('#aimp-silence-thresh-val')) $('#aimp-silence-thresh-val').textContent = `${e.target.value} dB`;
     };
@@ -2484,8 +2687,10 @@ async function init() {
       toast(`Pengaturan tidak dapat dibaca; file dipertahankan: ${error}`);
     }
   }
-  addAdvancedUI(); applyTheme(); applyPanelOrder(); applyCompactState();
+  if (state.onboarded) removeDemoTracks();
+  addAdvancedUI(); applyTheme(); applyPanelOrder(); applyViewMode();
   setupRackControls();
+  applyRuntimeCapabilities();
   render();
   if (desktop) {
     try {
@@ -2502,16 +2707,20 @@ async function init() {
       const directory = await directoryAction('readonly', store => store.get('music-root'));
       if (directory?.handle && (await directory.handle.queryPermission({ mode: 'read' })) === 'granted') await importFiles(await filesFromDirectory(directory.handle));
     }
-  } catch { if (!desktop) toast('Penyimpanan lokal tidak tersedia. Musik impor hanya tersimpan untuk sesi ini.'); }
-  state.playlists.forEach(playlist => { playlist.ids = playlist.ids.filter(findTrack); });
+      } catch { if (!desktop) toast('Penyimpanan lokal tidak tersedia. Musik impor hanya tersimpan untuk sesi ini.'); }
+      if (state.onboarded) removeDemoTracks();
+      state.playlists.forEach(playlist => { playlist.ids = playlist.ids.filter(findTrack); });
   if (!findTrack(state.currentId)) state.currentId = null;
   state.queue = state.queue.filter(findTrack); state.recent = state.recent.filter(findTrack);
   render();
   if ($('#eq-preset')) $('#eq-preset').value = state.preset;
   if ($('#preset-label')) $('#preset-label').textContent = presetLabels[state.preset] || state.preset;
-  // Reopening the application selects the last song without restoring its
-  // playback timestamp. A newly opened player always starts at the beginning.
-  if (state.currentId) await selectTrack(state.currentId, false, 0);
+  // Reopening the application selects the last song while remaining paused.
+  // Position restoration is explicit and disabled by default.
+  if (state.currentId) {
+    const savedPosition = state.resumePlayback ? Number(state.positions[state.currentId]) : 0;
+    await selectTrack(state.currentId, false, Number.isFinite(savedPosition) ? savedPosition : 0);
+  }
   await applyOutputDevice();
   if (!state.onboarded && welcomeDialog && !welcomeDialog.open) welcomeDialog.showModal();
 }

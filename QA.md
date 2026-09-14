@@ -1,21 +1,21 @@
-# Pemeriksaan Atiga Amp 0.1.7 — perbaikan posisi playback Linux
+# Pemeriksaan Atiga Amp 0.1.8
 
-Pemeriksaan otomatis terakhir dijalankan pada 13 September 2026 di GitHub Actions pada Ubuntu 22.04 x64. Smoke test native lokal tetap tidak tersedia pada workspace ini karena `Xvfb` dan `WebKitWebDriver` tidak terpasang.
+Pemeriksaan source dijalankan pada 14 September 2026 di workspace Linux x64. Native smoke test dan build paket distribusi belum dijalankan karena `Xvfb` dan `WebKitWebDriver` tidak terpasang; matriks penerimaan `.deb`/`.AppImage` tetap menjadi release gate sebelum tag dibuat.
 
 ## Hasil otomatis
 
 | Pemeriksaan | Hasil |
 | --- | --- |
-| ESLint dan unit/regresi JavaScript (`npm run lint`, `npm test`) | Lulus, 45 tes |
+| ESLint dan unit/regresi JavaScript (`npm run lint`, `npm test`) | Lulus, 47 tes |
 | TypeScript dan Vite production (`npm run build`) | Lulus |
-| Konsistensi versi (`npm run version:check`) | Lulus; `0.1.7` |
+| Konsistensi versi (`npm run version:check`) | Lulus; `0.1.8` |
 | Rust format dan Clippy dengan warning sebagai error (`npm run desktop:check`) | Lulus |
 | Unit test penyimpanan native (`npm run desktop:test`) | Lulus, 6 tes |
-| Build Linux `.deb` | Lulus |
-| Metadata `.deb` | Lulus; WebKitGTK, GTK, dan lima plugin GStreamer tercantum |
-| Smoke test AppImage Tauri | Lulus di GitHub Actions; playback, impor native, restart, dan posisi awal diuji |
+| Native smoke test Linux | Belum dijalankan; membutuhkan `Xvfb` dan `WebKitWebDriver` |
 
-Regresi yang diuji oleh UI contract mencakup mode playback Linux tanpa Web Audio, posisi awal selalu nol setelah membuka aplikasi atau memilih lagu lokal, pemutaran native melalui Blob URL yang diambil dari asset protocol, tidak adanya intersepsi penutupan WebView, dan otorisasi path pada native drag-and-drop.
+Regresi yang diuji oleh UI contract mencakup mode playback Linux tanpa Web Audio, pilihan resume yang mati secara bawaan tanpa autoplay, pemutaran native melalui Blob URL yang diambil dari asset protocol, mode Rack/Koleksi, onboarding demo, lifecycle playlist, ringkasan impor, tidak adanya intersepsi penutupan WebView, dan otorisasi path pada native drag-and-drop.
+
+Build paket Linux dan uji penerimaan visual pada 1280×800 belum diklaim lulus oleh catatan ini. Jalankan keduanya setelah dependensi desktop dan runner native tersedia.
 
 ## Artefak Linux lokal
 

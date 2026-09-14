@@ -5,14 +5,18 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
     <div class="title-motto">AMP STEREO CASSETTE DECK &amp; DC SERVO AMPLIFIER</div>
     <div class="title-actions">
       <span class="local-indicator"><i></i> HIGH FIDELITY</span>
+      <div class="mode-switch" role="group" aria-label="Pilih mode tampilan">
+        <button type="button" class="mode-switch-button active" id="mode-rack" aria-pressed="true">Rack</button>
+        <button type="button" class="mode-switch-button" id="mode-collection" aria-pressed="false">Koleksi</button>
+      </div>
       <button class="icon-button" id="toggle-drawer-top" title="Buka / Tutup Arsip Kaset" aria-label="Buka arsip kaset" data-icon="library"></button>
-      <button class="icon-button" id="compact" title="Mode ringkas" aria-label="Mode ringkas" data-icon="minimize"></button>
+      <button class="icon-button" id="compact" title="Ganti mode Rack / Koleksi" aria-label="Ganti mode Rack / Koleksi" data-icon="minimize"></button>
       <button class="icon-button" id="help" title="Panduan dan pintasan" aria-label="Panduan dan pintasan" data-icon="help"></button>
     </div>
   </header>
 
   <!-- MAIN HI-FI RACK STACK -->
-  <div class="hifi-rack-container" id="hifi-rack">
+  <main class="hifi-rack-container" id="hifi-rack">
     
     <!-- ========================================================= -->
     <!-- UNIT 1: TEAC V-3RX STEREO CASSETTE DECK                   -->
@@ -47,7 +51,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
             <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
           </div>
 
-          <div class="rotary-switch-block" id="deck-source-rotary" title="Source Selector">
+          <div class="rotary-switch-block" id="deck-source-rotary" title="Tampilan source kaset">
             <div class="rotary-labels">
               <span>A</span><span>B</span><span>C</span>
             </div>
@@ -160,13 +164,13 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
                 <div class="chart-col-head">SYSTEM</div>
                 <button type="button" class="chart-col-cell" id="matrix-lbl-menu" title="Buka / Tutup Daftar Lagu">MENU</button>
                 <button type="button" class="chart-col-cell" id="matrix-lbl-amplifier" title="Tampilkan / Sembunyikan Amplifier">AMPLIFIER</button>
-                <button type="button" class="chart-col-cell" id="matrix-lbl-dsp" title="Buka AIMP Sound Effects DSP">DSP</button>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-dsp" title="Buka Pengaturan Audio">DSP</button>
               </div>
               <div class="chart-row chart-row-bottom">
                 <div class="chart-col-head">TAPE (BIAS/EQ)</div>
-                <button type="button" class="chart-col-cell" id="matrix-lbl-normal" title="Pilih Tape Normal">NORMAL</button>
-                <button type="button" class="chart-col-cell" id="matrix-lbl-cro2" title="Pilih Tape CrO₂">Co (CrO₂)</button>
-                <button type="button" class="chart-col-cell" id="matrix-lbl-metal" title="Pilih Tape Metal">METAL</button>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-normal" title="Tampilkan profil tape Normal">NORMAL</button>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-cro2" title="Tampilkan profil tape CrO₂">Co (CrO₂)</button>
+                <button type="button" class="chart-col-cell" id="matrix-lbl-metal" title="Tampilkan profil tape Metal">METAL</button>
               </div>
             </div>
 
@@ -174,13 +178,13 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
             <div class="matrix-btn-row matrix-btn-row-bottom">
               <div class="matrix-spacer"></div>
               <div class="matrix-btn-cell">
-                <button class="matrix-btn active" id="btn-tape-normal" aria-label="Tape Normal" aria-pressed="true" title="Normal Bias/EQ"></button>
+                <button class="matrix-btn active" id="btn-tape-normal" aria-label="Tampilkan profil tape Normal" aria-pressed="true" title="Tampilan profil tape Normal"></button>
               </div>
               <div class="matrix-btn-cell">
-                <button class="matrix-btn" id="btn-tape-cro2" aria-label="Tape CrO2" aria-pressed="false" title="CrO2 Bias/EQ"></button>
+                <button class="matrix-btn" id="btn-tape-cro2" aria-label="Tampilkan profil tape CrO2" aria-pressed="false" title="Tampilan profil tape CrO2"></button>
               </div>
               <div class="matrix-btn-cell">
-                <button class="matrix-btn" id="btn-tape-metal" aria-label="Tape Metal" aria-pressed="false" title="Metal Bias/EQ"></button>
+                <button class="matrix-btn" id="btn-tape-metal" aria-label="Tampilkan profil tape Metal" aria-pressed="false" title="Tampilan profil tape Metal"></button>
               </div>
             </div>
           </div>
@@ -539,15 +543,15 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
               <div class="speaker-btn-group">
                 <div class="bezel-btn-cell">
                   <span class="bezel-btn-label">LEFT</span>
-                  <button class="bezel-push-tab active" id="spk-left" aria-label="Speaker Left"></button>
+                <button class="bezel-push-tab active" id="spk-left" aria-label="Tampilan meter kiri"></button>
                 </div>
                 <div class="bezel-btn-cell">
                   <span class="bezel-btn-label">RIGHT</span>
-                  <button class="bezel-push-tab active" id="spk-right" aria-label="Speaker Right"></button>
+                <button class="bezel-push-tab active" id="spk-right" aria-label="Tampilan meter kanan"></button>
                 </div>
                 <div class="bezel-btn-cell">
                   <span class="bezel-btn-label">STEREO</span>
-                  <button class="bezel-push-tab active" id="spk-stereo" aria-label="Speaker Stereo"></button>
+                <button class="bezel-push-tab active" id="spk-stereo" aria-label="Tampilan meter stereo"></button>
                 </div>
                 <span class="btn-group-title">SPEAKERS</span>
               </div>
@@ -555,11 +559,11 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
                 <span class="btn-group-title">DISPLAY</span>
                 <div class="bezel-btn-cell">
                   <span class="bezel-btn-label">VU</span>
-                  <button class="bezel-push-tab" id="dsp-vu" aria-label="Display VU"></button>
+                  <button class="bezel-push-tab" id="dsp-vu" aria-label="Tampilkan meter VU"></button>
                 </div>
                 <div class="bezel-btn-cell">
                   <span class="bezel-btn-label">PEAK</span>
-                  <button class="bezel-push-tab active" id="dsp-peak" aria-label="Display Peak"></button>
+                  <button class="bezel-push-tab active" id="dsp-peak" aria-label="Tampilkan peak meter"></button>
                 </div>
               </div>
             </div>
@@ -717,7 +721,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
               <div class="mini-dial-ticks">
                 <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
               </div>
-              <div class="knob-metal-body knob-small" id="knob-true-bass" data-param="truebass" title="True Bass Enhancer">
+              <div class="knob-metal-body knob-small" id="knob-true-bass" data-param="truebass" title="Penguat bas">
                 <div class="knob-indicator-line"></div>
               </div>
               <div class="knob-sub-signs mini-signs"><span>−</span><span>+</span></div>
@@ -729,7 +733,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
               <div class="mini-dial-ticks">
                 <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
               </div>
-              <div class="knob-metal-body knob-small" id="knob-enhancer" data-param="enhancer" title="Sound Enhancer / Clarity">
+              <div class="knob-metal-body knob-small" id="knob-enhancer" data-param="enhancer" title="Tampilan stereo meter">
                 <div class="knob-indicator-line"></div>
               </div>
               <div class="knob-sub-signs mini-signs"><span>−</span><span>+</span></div>
@@ -741,7 +745,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
               <div class="mini-dial-ticks">
                 <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
               </div>
-              <div class="knob-metal-body knob-small" id="knob-reverb" data-param="reverb" title="Studio Reverb Effect">
+              <div class="knob-metal-body knob-small" id="knob-reverb" data-param="reverb" title="Reverb browser">
                 <div class="knob-indicator-line"></div>
               </div>
               <div class="knob-sub-signs mini-signs"><span>−</span><span>+</span></div>
@@ -845,6 +849,9 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           <button type="button" class="icon-button pl-tool-btn" id="sort" aria-label="Urutkan lagu berdasarkan judul" title="Urutkan berdasarkan judul" data-icon="sort"></button>
           <button type="button" class="icon-button pl-tool-btn" id="play-session" aria-label="Tambah musik" title="Tambah musik" data-icon="plus"></button>
           <button type="button" class="icon-button pl-tool-btn" id="import-folder" aria-label="Tambah folder musik" title="Tambah folder musik" data-icon="folder-plus"></button>
+          <button type="button" class="text-button playlist-action" id="new-playlist-visible">Playlist +</button>
+          <button type="button" class="text-button playlist-action" id="rename-playlist" disabled>Ubah nama</button>
+          <button type="button" class="text-button playlist-action danger" id="delete-playlist" disabled>Hapus playlist</button>
         </div>
       </div>
 
@@ -853,12 +860,12 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
         <table class="track-table">
           <thead>
             <tr>
-              <th class="number-col">#</th>
-              <th class="title-col">JUDUL LAGU</th>
-              <th class="album-col">ALBUM</th>
-              <th class="format-col">FORMAT</th>
-              <th class="duration-col"><span data-icon="clock" aria-label="Durasi"></span></th>
-              <th class="actions-col"></th>
+              <th id="head-number" scope="col" class="number-col">#</th>
+              <th id="head-title" scope="col" class="title-col">JUDUL LAGU</th>
+              <th id="head-album" scope="col" class="album-col">ALBUM</th>
+              <th id="head-format" scope="col" class="format-col">FORMAT</th>
+              <th id="head-duration" scope="col" class="duration-col">DURASI</th>
+              <th id="head-actions" scope="col" class="actions-col" aria-label="Aksi"></th>
             </tr>
           </thead>
           <tbody id="tracks"></tbody>
@@ -893,6 +900,11 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
         </div>
         <progress id="import-progress-bar" value="0" max="1" aria-label="Kemajuan impor">0%</progress>
       </div>
+      <div class="import-summary" id="import-summary" hidden role="status" aria-live="polite">
+        <strong id="import-summary-title">Ringkasan impor</strong>
+        <span id="import-summary-text"></span>
+        <button type="button" class="text-button" id="dismiss-import-summary">Tutup</button>
+      </div>
 
       <!-- Hidden interop container for secondary bindings -->
       <div class="legacy-bindings" hidden style="display:none !important;" aria-hidden="true">
@@ -918,7 +930,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
       </div>
     </section>
 
-  </div>
+  </main>
 
   <!-- Standard Hidden Controls for App Engine Interop -->
   <footer class="player hidden-player" style="display:none;" aria-hidden="true">
@@ -976,36 +988,17 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
       <button type="button" class="primary-button" id="welcome-import">Tambah musik</button>
       <button type="button" class="text-button" id="welcome-demo">Jelajahi audio demo</button>
     </div>
-    <label class="setting-check"><input type="checkbox" id="welcome-compact" /> Gunakan mode ringkas dengan player yang selalu terlihat</label>
+    <fieldset class="welcome-choice">
+      <legend>Pilih tampilan awal</legend>
+      <label><input type="radio" name="welcome-mode" value="rack" checked /> Rack vintage</label>
+      <label><input type="radio" name="welcome-mode" value="collection" /> Koleksi dengan player selalu terlihat</label>
+    </fieldset>
+    <label class="setting-check"><input type="checkbox" id="welcome-resume" /> Tawarkan melanjutkan posisi terakhir</label>
+    <button type="button" class="primary-button" id="welcome-finish">Selesai dan masuk ke Atiga Amp</button>
   </form>
 </dialog>
 
-<!-- Dialogs: Equalizer, Playlist, Track Options, Help -->
-<dialog id="eq-dialog">
-  <form method="dialog" class="dialog-heading">
-    <div>
-      <div class="eyebrow">ATIGA / TONE CONTROL &amp; DSP</div>
-      <h2>Ekualiser Grafis<span>.</span></h2>
-    </div>
-    <button class="icon-button" aria-label="Tutup ekualiser" data-icon="close"></button>
-  </form>
-  <div class="eq-controls">
-    <label>Prasetel
-      <select id="eq-preset">
-        <option value="Flat">Datar</option>
-        <option value="Warm">Hangat</option>
-        <option value="Bass Boost">Penguat bas</option>
-        <option value="Vocal">Vokal</option>
-        <option value="Bright">Cerah</option>
-        <option value="Custom">Kustom</option>
-      </select>
-    </label>
-    <button class="text-button" id="eq-reset">Atur ulang</button>
-  </div>
-  <div class="eq-bands" id="eq-bands"></div>
-  <p class="dialog-note">Sesuaikan respon frekuensi 10-band. Karakter suara langsung diterapkan saat audio diputar.</p>
-</dialog>
-
+<!-- Dialogs: Playlist, Track Options, Help -->
 <dialog id="playlist-dialog">
   <form id="playlist-form">
     <div class="dialog-heading">
@@ -1041,19 +1034,19 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
   <p>Semua file audio yang diimpor diproses lokal di peramban Anda.</p>
 </dialog>
 
-<!-- AIMP Sound Effects / DSP Manager Dialog -->
+<!-- Atiga Audio Settings / DSP Manager Dialog -->
 <dialog id="dsp-dialog" class="aimp-dsp-dialog" aria-labelledby="aimp-dialog-title">
   <!-- Window Titlebar -->
   <div class="aimp-titlebar" id="aimp-titlebar">
-    <div class="aimp-titlebar-text" id="aimp-dialog-title">Sound Effects</div>
-    <button type="button" class="aimp-titlebar-close" id="aimp-close-x" aria-label="Close Sound Effects">
+    <div class="aimp-titlebar-text" id="aimp-dialog-title">Pengaturan Audio</div>
+    <button type="button" class="aimp-titlebar-close" id="aimp-close-x" aria-label="Tutup Pengaturan Audio">
       <svg viewBox="0 0 10 10" width="10" height="10">
         <path d="M1.5 1.5L8.5 8.5M8.5 1.5L1.5 8.5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
       </svg>
     </button>
   </div>
 
-  <!-- AIMP Header -->
+  <!-- Atiga Audio Header -->
   <div class="aimp-header">
     <div class="aimp-logo">
       <svg class="aimp-logo-icon" viewBox="0 0 40 40" width="32" height="32" aria-hidden="true">
@@ -1063,11 +1056,11 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
       </svg>
       <span class="aimp-logo-text">ATIGA AMP</span>
     </div>
-    <div class="aimp-subtitle">DSP Manager</div>
+    <div class="aimp-subtitle">Pengaturan Audio</div>
   </div>
 
   <!-- Tabs Navigation -->
-  <nav class="aimp-tabs" role="tablist" aria-label="DSP Manager Tabs">
+  <nav class="aimp-tabs" role="tablist" aria-label="Bagian Pengaturan Audio">
     <button type="button" class="aimp-tab active" data-tab="general" role="tab" aria-selected="true" id="aimp-tab-general">General</button>
     <button type="button" class="aimp-tab" data-tab="equalizer" role="tab" aria-selected="false" id="aimp-tab-equalizer">Equalizer</button>
     <button type="button" class="aimp-tab" data-tab="volume" role="tab" aria-selected="false" id="aimp-tab-volume">Volume</button>
@@ -1154,7 +1147,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           </div>
           <!-- Stereo enhancer -->
           <div class="aimp-slider-group" data-slider="stereo-enhancer">
-            <div class="aimp-slider-label">Stereo enhancer</div>
+            <div class="aimp-slider-label">Stereo display</div>
             <div class="aimp-slider-track-wrap">
               <div class="aimp-ticks aimp-ticks-top">
                 <span></span><span></span><span></span><span></span><span></span>
@@ -1171,7 +1164,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
         <div class="aimp-slider-col">
           <!-- Speed -->
           <div class="aimp-slider-group" data-slider="speed">
-            <div class="aimp-slider-label">Speed</div>
+            <div class="aimp-slider-label">Kecepatan</div>
             <div class="aimp-slider-track-wrap">
               <div class="aimp-ticks aimp-ticks-top">
                 <span></span><span></span><span></span><span></span><span></span>
@@ -1184,7 +1177,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           </div>
           <!-- Tempo -->
           <div class="aimp-slider-group" data-slider="tempo">
-            <div class="aimp-slider-label">Tempo</div>
+            <div class="aimp-slider-label">Tempo (browser)</div>
             <div class="aimp-slider-track-wrap">
               <div class="aimp-ticks aimp-ticks-top">
                 <span></span><span></span><span></span><span></span><span></span>
@@ -1197,7 +1190,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           </div>
           <!-- Pitch -->
           <div class="aimp-slider-group" data-slider="pitch">
-            <div class="aimp-slider-label">Pitch</div>
+            <div class="aimp-slider-label">Pitch (browser)</div>
             <div class="aimp-slider-track-wrap">
               <div class="aimp-ticks aimp-ticks-top">
                 <span></span><span></span><span></span><span></span><span></span>
@@ -1270,6 +1263,10 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           <input type="checkbox" id="aimp-check-replaygain" checked />
           <span class="aimp-checkbox-text">Apply ReplayGain if available</span>
         </label>
+        <label class="aimp-sub-slider-item">
+          <span class="aimp-sub-slider-header"><span>Keluaran audio</span></span>
+          <select id="output-device" class="aimp-sub-select"><option value="default">Keluaran bawaan</option></select>
+        </label>
       </div>
     </div>
 
@@ -1277,15 +1274,15 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
     <div class="aimp-panel" id="aimp-panel-mixing" role="tabpanel" aria-labelledby="aimp-tab-mixing" hidden>
       <div class="aimp-subpanel-stack">
         <div class="aimp-sub-slider-item">
-          <div class="aimp-sub-slider-header">
-            <span>Crossfade</span>
+            <div class="aimp-sub-slider-header">
+            <span>Transisi pudar</span>
             <span id="aimp-crossfade-val">0 s</span>
           </div>
           <input type="range" class="aimp-slider" id="aimp-slider-crossfade" min="0" max="12" value="0" step="1" />
         </div>
         <label class="aimp-checkbox-item">
           <input type="checkbox" id="aimp-check-gapless" checked />
-          <span class="aimp-checkbox-text">Gapless playback / preload next track</span>
+          <span class="aimp-checkbox-text">Siapkan lagu aktif sebelum diputar</span>
         </label>
       </div>
     </div>
@@ -1295,7 +1292,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
       <div class="aimp-subpanel-stack">
         <label class="aimp-checkbox-item">
           <input type="checkbox" id="aimp-check-skip-silence" />
-          <span class="aimp-checkbox-text">Remove silence at head and tail of tracks</span>
+          <span class="aimp-checkbox-text">Lewati hening (belum tersedia)</span>
         </label>
         <div class="aimp-sub-slider-item">
           <div class="aimp-sub-slider-header">
@@ -1310,8 +1307,8 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 
   <!-- Bottom Footer Bar -->
   <div class="aimp-footer">
-    <button type="button" class="aimp-btn" id="aimp-reset-all">Reset to Defaults</button>
-    <button type="button" class="aimp-btn" id="aimp-close-btn">Close</button>
+    <button type="button" class="aimp-btn" id="aimp-reset-all">Kembalikan bawaan</button>
+    <button type="button" class="aimp-btn" id="aimp-close-btn">Tutup</button>
   </div>
 </dialog>
 

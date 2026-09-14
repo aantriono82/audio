@@ -18,15 +18,17 @@ Penyimpanan browser terpisah per origin, termasuk port. Gunakan kembali port seb
 
 ## Fitur
 
-- Enam audio demo instrumental asli yang dibangkitkan di perangkat, tanpa unduhan rekaman.
+- Enam audio demo instrumental asli untuk preview onboarding, dibangkitkan di perangkat tanpa unduhan rekaman.
 - Impor banyak file, folder, atau drag-and-drop file audio.
 - Playback, seek, volume, mute, shuffle, repeat semua / satu lagu.
+- Mode Rack dan Koleksi dapat dipilih saat onboarding atau dari titlebar; Koleksi menyediakan transport yang selalu terlihat.
 - Pencarian, favorit, riwayat, playlist khusus, dan antrean eksplisit.
+- Demo audio hanya tersedia sebagai preview onboarding dan dibersihkan setelah onboarding selesai.
 - Menu tiga titik pada lagu untuk menambah ke playlist atau antrean; drag untuk mengurutkan playlist dan antrean ketika pencarian dan pengurutan judul dimatikan.
 - Equalizer sepuluh band, preset, serta spectrum dari audio yang sedang diputar.
 - Crossfade, preload gapless, ReplayGain dari tag, preamp, balance, output device, tema, CRT/glow, dan panel drag-and-drop.
 - Metadata ID3 dasar, embedded cover, pengelompokan artis/album/genre, smart playlist, waveform, notifikasi, dan pemindaian ulang folder.
-- Desktop: dialog sistem untuk file/folder, pemindaian ulang folder, serta drag-and-drop file/folder; audio disalin ke direktori data aplikasi dan pengaturan disimpan dalam JSON secara atomik. Browser: IndexedDB dan localStorage. Tidak otomatis memutar setelah dibuka kembali.
+- Desktop: dialog sistem untuk file/folder, pemindaian ulang folder, serta drag-and-drop file/folder; audio disalin ke direktori data aplikasi dan pengaturan disimpan dalam JSON secara atomik. Browser: IndexedDB dan localStorage. Tidak otomatis memutar setelah dibuka kembali; pilihan melanjutkan posisi terakhir tersedia dan mati secara bawaan.
 - Pada Linux desktop, mode kompatibilitas memutar melalui elemen media native agar stabil di WebKitGTK/GStreamer; pemrosesan EQ/DSP dan visualisasi Web Audio dinonaktifkan pada mode ini.
 - Mode compact, layout responsif, kontrol keyboard, dan Media Session pada browser yang mendukung.
 - PWA shell cache agar antarmuka dapat dibuka kembali saat offline; audio impor tetap dibaca dari penyimpanan lokal perangkat.
@@ -34,6 +36,8 @@ Penyimpanan browser terpisah per origin, termasuk port. Gunakan kembali port seb
 ## Batas versi ini
 
 Aplikasi memiliki backend desktop, paket Linux, serta workflow GitHub Release berbasis tag. Status build dan pengujian aktual dicatat di [QA.md](QA.md). Dukungan codec mengikuti WebKitGTK/GStreamer di Linux. File yang gagal dibaca dilewati dengan pemberitahuan. Impor membaca tag ID3 dasar jika tersedia. File tanpa tag memakai pola nama `Artis - Judul.ext` dan nama folder sebagai album.
+
+Arah produk, ruang lingkup rilis 0.1.8/0.2.0, dan keputusan perilaku utama dicatat di [PRD](docs/PRD.md). Turunannya yang siap dijadikan GitHub Issues berada di [backlog PRD](docs/ISSUES.md). Implementasi yang disetujui untuk rilis 0.1.8 sudah diterapkan pada source; pekerjaan perubahan model data 0.2.0 tetap dipisahkan dari release stabilisasi ini.
 
 Audio desktop disalin ke data aplikasi, sehingga membutuhkan ruang tambahan sebesar file impor. Menghapus lagu dari koleksi menghapus salinan tersebut, tanpa menghapus file asal. Data browser tetap memiliki batas kuota; data desktop lama di IndexedDB tetap dibaca jika tersedia. Koleksi browser pada origin lain tidak otomatis berpindah ke desktop. Font disertakan di paket; file musik tidak diunggah. Gapless/crossfade, codec, pemilihan output, dan notifikasi masih mengikuti kemampuan WebView. Pemindaian ulang desktop dijalankan dari Pengaturan; bila folder asal dipindahkan, pilih folder baru.
 

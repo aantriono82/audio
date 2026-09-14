@@ -40,7 +40,7 @@ Untuk rilis, perbarui versi di `package.json`, `package-lock.json`, `src-tauri/C
 | --- | --- |
 | Linux | `${XDG_DATA_HOME:-$HOME/.local/share}/com.atiga.amp` |
 
-- `settings.json`: playlist, favorit, antrean, EQ, tema, volume, posisi terakhir; penulisan berurutan dan penggantian file atomik.
+- `settings.json`: playlist, favorit, antrean, EQ, tema, volume, posisi terakhir, dan preferensi resume; penulisan berurutan dan penggantian file atomik.
 - `library/<UUID>/`: salinan audio, `track.json`, dan cover jika tersedia. Penyalinan diselesaikan dalam direktori sementara sebelum lagu dimasukkan ke koleksi.
 - `music-folder.json`: folder terakhir yang dipilih pengguna, untuk pemindaian ulang.
 
@@ -59,7 +59,7 @@ Sebelum rilis publik, uji pada distro Linux sasaran:
 3. Pilih beberapa file dan folder bersarang dengan nama Unicode; batalkan dialog; drag file dan folder dari pengelola berkas.
 4. Pindai ulang: file baru ditambahkan dan file lama tidak terduplikasi. Uji file rusak, folder hilang, izin ditolak, serta pembatalan impor.
 5. Putar MP3/WAV/OGG/FLAC, seek, jeda, dan pindah lagu; di browser uji EQ, sedangkan Linux desktop memakai mode playback kompatibilitas tanpa pemrosesan Web Audio.
-6. Simpan favorit, playlist, volume dan posisi; tutup lalu buka kembali tanpa autoplay. Pindahkan file asli dan pastikan salinan impor tetap diputar.
+6. Simpan favorit, playlist, volume dan posisi; tutup lalu buka kembali tanpa autoplay. Uji preferensi melanjutkan posisi dalam keadaan mati dan hidup, lalu pastikan pemutaran tetap pause saat startup. Pindahkan file asli dan pastikan salinan impor tetap diputar.
 7. Hapus lagu dari koleksi dan pastikan file asli masih ada. Uji upgrade, uninstall, dan install ulang sesuai kebijakan data yang ingin dirilis.
 
 Setelah uji manual selesai, catat hasilnya bersama versi distro, arsitektur, jenis paket, codec yang diuji, serta checksum aset pada release. Publikasikan rilis hanya jika build tag, smoke test Linux, dan uji penerimaan manual semuanya lulus.
