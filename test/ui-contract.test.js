@@ -38,6 +38,11 @@ test('Linux playback avoids the fragile Web Audio path and starts from zero', ()
   assert.match(appSource, /directAudio = nativeDirectPlayback/);
   assert.match(appSource, /readyTrackId = null/);
   assert.match(appSource, /function resetNativePlaybackElement\(\)/);
+  assert.match(appSource, /let audio = \$\('#audio'\)/);
+  assert.match(appSource, /function unbindAudioEvents\(element\)/);
+  assert.match(appSource, /const replacement = previous\.cloneNode\(false\)/);
+  assert.match(appSource, /previous\.replaceWith\(replacement\)/);
+  assert.match(appSource, /audio = replacement/);
   assert.match(appSource, /audio\.removeAttribute\('src'\)/);
   assert.match(appSource, /sourceURL\(track, nativeDirectPlayback && Boolean\(track\.nativePath\)\)/);
   assert.match(appSource, /const requiresSeek = startPosition > 0\.25/);

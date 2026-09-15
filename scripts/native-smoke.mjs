@@ -8,15 +8,8 @@ import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { demoBlob, demoTracks } from '../src/library.js';
 const binaryArgument = process.argv[2] || 'src-tauri/target/release/atiga-amp';
+const packageVersion = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')).version;
 let binary;
-if (binaryArgument === '--appimage') {
-  const appImageDirectory = path.resolve('src-tauri/target/release/bundle/appimage');
-  const appImage = (await readdir(appImageDirectory)).find(file => file.endsWith('.AppImage'));
-  assert.ok(appImage, `AppImage tidak ditemukan di ${appImageDirectory}`);
-  binary = path.join(appImageDirectory, appImage);
-} else {
-  binary = path.resolve(binaryArgument);
-}
 async function generateMp3(target) {
   await new Promise((resolve, reject) => {
     const child = spawn(process.env.GST_LAUNCH || 'gst-launch-1.0', [
@@ -31,13 +24,39 @@ async function generateMp3(target) {
     child.on('exit', code => code === 0 ? resolve() : reject(new Error(`MP3 fixture generation failed (${code}): ${errorOutput}`)));
   });
 }
+async function extractDebPackage(packagePath, target) {
+  await new Promise((resolve, reject) => {
+    const child = spawn('dpkg-deb', ['--extract', packagePath, target], { stdio: ['ignore', 'ignore', 'pipe'] });
+    let errorOutput = '';
+    child.stderr.on('data', chunk => { errorOutput += chunk; });
+    child.on('error', reject);
+    child.on('exit', code => code === 0 ? resolve() : reject(new Error(`DEB extraction failed (${code}): ${errorOutput}`)));
+  });
+}
 const directory = await mkdtemp(path.join(tmpdir(), 'atiga-smoke-'));
 const data = path.join(directory, 'data');
 const appData = path.join(data, 'com.atiga.amp');
 const music = path.join(directory, 'Album 日本');
 await mkdir(appData, { recursive: true });
 await mkdir(music);
+if (binaryArgument === '--appimage') {
+  const appImageDirectory = path.resolve('src-tauri/target/release/bundle/appimage');
+  const appImage = (await readdir(appImageDirectory)).find(file => file.endsWith('.AppImage') && file.includes(`_${packageVersion}_`));
+  assert.ok(appImage, `AppImage tidak ditemukan di ${appImageDirectory}`);
+  binary = path.join(appImageDirectory, appImage);
+} else if (binaryArgument === '--deb') {
+  const debDirectory = path.resolve('src-tauri/target/release/bundle/deb');
+  const deb = (await readdir(debDirectory)).find(file => file.endsWith('.deb') && file.includes(`_${packageVersion}_`));
+  assert.ok(deb, `Paket DEB tidak ditemukan di ${debDirectory}`);
+  const extracted = path.join(directory, 'deb-extract');
+  await mkdir(extracted, { recursive: true });
+  await extractDebPackage(path.join(debDirectory, deb), extracted);
+  binary = path.join(extracted, 'usr', 'bin', 'atiga-amp');
+} else {
+  binary = path.resolve(binaryArgument);
+}
 const fixtureFormat = (process.env.NATIVE_SMOKE_FORMAT || 'mp3').toLowerCase();
+const fixtureLabel = fixtureFormat.toUpperCase();
 if (fixtureFormat === 'wav') {
   await writeFile(path.join(music, 'Atiga - Desktop smoke.wav'), new Uint8Array(await demoBlob(demoTracks[0]).arrayBuffer()));
 } else {
@@ -139,20 +158,24 @@ try {
   assert.equal((await ipc('load_audio_library')).value.tracks.length, 1);
   await rename(music, path.join(directory, 'original-moved'));
   await evaluate('const search=document.querySelector("#search"); search.value="Desktop smoke"; search.dispatchEvent(new Event("input",{bubbles:true})); return true;');
+  await evaluate('window.__atigaAudioBeforeImport = document.querySelector("#audio"); return true;');
   await domClick(`#tracks [data-id="${track.id}"] .track-name`);
   await until(() => evaluate('return !document.querySelector("#audio").paused'), 'imported playback started');
-  assert.ok(await evaluate('return document.querySelector("#audio").currentTime < 0.5'), 'imported playback must start near zero');
+  assert.equal(await evaluate('return window.__atigaAudioBeforeImport !== document.querySelector("#audio")'), true, 'native playback must replace the media element');
+  assert.ok(await evaluate('return document.querySelector("#audio").currentTime < 0.5'), `${fixtureLabel} playback must start near zero`);
   await evaluate('window.__atigaSmokeStartedAt = performance.now(); return true;');
   await delay(3500);
   const firstProgress = await evaluate('return { elapsed: (performance.now() - window.__atigaSmokeStartedAt) / 1000, media: document.querySelector("#audio").currentTime }');
-  assert.ok(firstProgress.media > firstProgress.elapsed - 1 && firstProgress.media < firstProgress.elapsed + 1, `imported MP3 clock jumped: ${JSON.stringify(firstProgress)}`);
+  assert.ok(firstProgress.media > firstProgress.elapsed - 1 && firstProgress.media < firstProgress.elapsed + 1, `imported ${fixtureLabel} clock jumped: ${JSON.stringify(firstProgress)}`);
+  await evaluate('window.__atigaAudioBeforeReselect = document.querySelector("#audio"); return true;');
   await domClick(`#tracks [data-id="${track.id}"] .track-name`);
   await until(() => evaluate('return !document.querySelector("#audio").paused'), 'reselected MP3 playback started');
-  assert.ok(await evaluate('return document.querySelector("#audio").currentTime < 0.5'), 'reselected MP3 must start near zero');
+  assert.equal(await evaluate('return window.__atigaAudioBeforeReselect !== document.querySelector("#audio")'), true, 'reselecting a native track must replace the media element');
+  assert.ok(await evaluate('return document.querySelector("#audio").currentTime < 0.5'), `reselected ${fixtureLabel} must start near zero`);
   await evaluate('window.__atigaSmokeStartedAt = performance.now(); return true;');
   await delay(3500);
   const replayProgress = await evaluate('return { elapsed: (performance.now() - window.__atigaSmokeStartedAt) / 1000, media: document.querySelector("#audio").currentTime }');
-  assert.ok(replayProgress.media > replayProgress.elapsed - 1 && replayProgress.media < replayProgress.elapsed + 1, `reselected MP3 clock jumped: ${JSON.stringify(replayProgress)}`);
+  assert.ok(replayProgress.media > replayProgress.elapsed - 1 && replayProgress.media < replayProgress.elapsed + 1, `reselected ${fixtureLabel} clock jumped: ${JSON.stringify(replayProgress)}`);
   await domClick(`#tracks [data-id="${track.id}"] [data-action="favorite"]`);
   await evaluate('document.querySelector("#audio").pause(); return true;');
   await until(async () => {
@@ -169,11 +192,11 @@ try {
   assert.equal(await evaluate('return document.querySelector("#audio").currentTime'), 0);
   await domClick('#play');
   await until(() => evaluate('return !document.querySelector("#audio").paused'), 'restored MP3 playback started');
-  assert.ok(await evaluate('return document.querySelector("#audio").currentTime < 0.5'), 'restored MP3 must start near zero');
+  assert.ok(await evaluate('return document.querySelector("#audio").currentTime < 0.5'), `restored ${fixtureLabel} must start near zero`);
   await evaluate('window.__atigaSmokeStartedAt = performance.now(); return true;');
   await delay(3500);
   const restoredProgress = await evaluate('return { elapsed: (performance.now() - window.__atigaSmokeStartedAt) / 1000, media: document.querySelector("#audio").currentTime }');
-  assert.ok(restoredProgress.media > restoredProgress.elapsed - 1 && restoredProgress.media < restoredProgress.elapsed + 1, `restored MP3 clock jumped: ${JSON.stringify(restoredProgress)}`);
+  assert.ok(restoredProgress.media > restoredProgress.elapsed - 1 && restoredProgress.media < restoredProgress.elapsed + 1, `restored ${fixtureLabel} clock jumped: ${JSON.stringify(restoredProgress)}`);
   await evaluate('document.querySelector("#audio").pause(); return true;');
   assert.equal(await evaluate(`return document.querySelector('#tracks [data-id="${track.id}"] [data-action="favorite"]').getAttribute('aria-pressed')`), 'true');
   const screenshot = await request('GET', endpoint('/screenshot'));

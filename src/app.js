@@ -450,7 +450,7 @@ const state = {
     fadeNav: saved.dsp?.fadeNav !== false
   }
 };
-const audio = $('#audio');
+let audio = $('#audio');
 // WebKitGTK/GStreamer has a known failure mode when a media element is routed
 // through a complex Web Audio graph. Keep Linux desktop playback on the
 // native media element; the browser build retains EQ/DSP and analyser output.
@@ -471,9 +471,22 @@ function releaseTrackURL(id) {
 }
 function resetNativePlaybackElement() {
   if (!nativeDirectPlayback) return;
-  audio.pause();
-  audio.removeAttribute('src');
-  audio.load();
+  const previous = audio;
+  if (!previous) return;
+  // WebKitGTK can keep a GStreamer segment alive after src is cleared. A
+  // separate element guarantees a new media pipeline for every native load.
+  unbindAudioEvents(previous);
+  previous.pause();
+  previous.removeAttribute('src');
+  previous.load();
+  const replacement = previous.cloneNode(false);
+  previous.replaceWith(replacement);
+  audio = replacement;
+  bindAudioEvents(audio);
+  audio.volume = state.volume;
+  audio.muted = previous.muted;
+  audio.playbackRate = 1;
+  if ('preservesPitch' in audio) audio.preservesPitch = true;
 }
 let metadataWorker;
 let metadataRequestId = 0;
@@ -1195,13 +1208,19 @@ function handleAudioEnded() {
 function handleAudioError() {
   if (audio.src) toast('Format audio tidak didukung atau file rusak. Silakan coba file lain.');
 }
+const audioEventHandlers = {
+  timeupdate: handleAudioTimeUpdate,
+  loadedmetadata: handleAudioMetadata,
+  play: handleAudioPlay,
+  pause: handleAudioPause,
+  ended: handleAudioEnded,
+  error: handleAudioError
+};
 function bindAudioEvents(element) {
-  element.addEventListener('timeupdate', handleAudioTimeUpdate);
-  element.addEventListener('loadedmetadata', handleAudioMetadata);
-  element.addEventListener('play', handleAudioPlay);
-  element.addEventListener('pause', handleAudioPause);
-  element.addEventListener('ended', handleAudioEnded);
-  element.addEventListener('error', handleAudioError);
+  Object.entries(audioEventHandlers).forEach(([event, handler]) => element.addEventListener(event, handler));
+}
+function unbindAudioEvents(element) {
+  Object.entries(audioEventHandlers).forEach(([event, handler]) => element.removeEventListener(event, handler));
 }
 bindAudioEvents(audio);
 
@@ -1826,9 +1845,12 @@ async function removeTrack(id) {
   if (state.currentId === id) {
     pendingStartCleanup?.(); pendingStartCleanup = undefined;
     playbackToken++;
-    audio.pause();
-    try { audio.currentTime = 0; } catch { /* source may already be gone */ }
-    audio.removeAttribute('src'); audio.load();
+    if (nativeDirectPlayback) resetNativePlaybackElement();
+    else {
+      audio.pause();
+      try { audio.currentTime = 0; } catch { /* source may already be gone */ }
+      audio.removeAttribute('src'); audio.load();
+    }
     loadedId = null; readyTrackId = null; state.currentId = null;
   }
   releaseTrackURL(id);
@@ -1924,9 +1946,12 @@ function removeDemoTracks() {
     pendingStartCleanup?.();
     pendingStartCleanup = undefined;
     playbackToken++;
-    audio.pause();
-    audio.removeAttribute('src');
-    audio.load();
+    if (nativeDirectPlayback) resetNativePlaybackElement();
+    else {
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+    }
     loadedId = null;
     readyTrackId = null;
     state.currentId = null;

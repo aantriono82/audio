@@ -9,13 +9,13 @@ Tujuan produk: unduh paket, instal, dan jalankan musik lokal tanpa Node.js, Rust
 | Ubuntu/Debian/Linux Mint x64 | `.deb` | Instal melalui pengelola paket; dependensi runtime dipenuhi olehnya |
 | Linux x64 | `.AppImage` | Paket portabel; beri izin executable lalu jalankan |
 
-Runner Linux memakai Ubuntu 22.04 sebagai baseline build; paket yang dibangun lokal di Mint 22.3/Ubuntu 24.04 dapat membutuhkan glibc yang lebih baru. AppImage bukan jaminan kompatibilitas seluruh distro. RPM, ARM, dan paket Windows belum masuk target distribusi.
+Runner Linux memakai Ubuntu 22.04 sebagai baseline build dan menjalankan compatibility smoke pada Ubuntu 24.04; paket yang dibangun lokal di Mint 22.3/Ubuntu 24.04 dapat membutuhkan glibc yang lebih baru. AppImage bukan jaminan kompatibilitas seluruh distro. RPM, ARM, dan paket Windows belum masuk target distribusi.
 
 AppImage mengaktifkan `bundleMediaFramework` untuk audio sesuai [panduan multimedia Tauri](https://v2.tauri.app/distribute/appimage/). Instalasi `.deb` dapat membutuhkan internet ketika dependensi sistem belum tersedia. AppImage dapat memerlukan FUSE; alternatifnya gunakan `--appimage-extract-and-run` jika didukung paket tersebut.
 
 ## Pengembangan dan build
 
-Pasang Node.js 22.13+, Rust stable, dan [prasyarat Tauri untuk OS build](https://v2.tauri.app/start/prerequisites/). Linux membutuhkan GTK/WebKitGTK development libraries, plugin GStreamer, dan `patchelf` untuk AppImage. Bangun paket pada Linux.
+Pasang Node.js 22.13+, Rust stable, dan [prasyarat Tauri untuk OS build](https://v2.tauri.app/start/prerequisites/). Linux membutuhkan GTK/WebKitGTK development libraries, plugin GStreamer, `gstreamer1.0-tools` untuk fixture smoke MP3, dan `patchelf` untuk AppImage. Bangun paket pada Linux.
 
 ```sh
 npm ci
@@ -25,6 +25,8 @@ npm run build
 npm run desktop:check
 npm run desktop:test
 npm run desktop:build -- --ci
+npm run desktop:smoke:deb
+npm run desktop:smoke:appimage
 npm run desktop:checksums
 ```
 
@@ -64,4 +66,4 @@ Sebelum rilis publik, uji pada distro Linux sasaran:
 
 Setelah uji manual selesai, catat hasilnya bersama versi distro, arsitektur, jenis paket, codec yang diuji, serta checksum aset pada release. Publikasikan rilis hanya jika build tag, smoke test Linux, dan uji penerimaan manual semuanya lulus.
 
-Tes integrasi Linux dapat dijalankan dengan `node scripts/native-smoke.mjs /path/to/atiga-amp` setelah tersedia `Xvfb` dan `WebKitWebDriver`. Variabel `XVFB` dan `WEBKIT_DRIVER` dapat menunjuk executable alternatif. Tes memakai data sementara, menguji IPC sebenarnya, pemindaian folder tersimpan, pemutaran, dan restart. Tes ini tidak mengotomatisasi dialog file OS, drag fisik, atau proses instalasi; bagian tersebut tetap memerlukan uji penerimaan. Hasil aktual ada di [QA.md](../QA.md).
+Tes integrasi Linux dapat dijalankan dengan `node scripts/native-smoke.mjs --deb` dan `node scripts/native-smoke.mjs --appimage` setelah tersedia `Xvfb`, `WebKitWebDriver`, `dpkg-deb`, dan `gstreamer1.0-tools`. Variabel `XVFB` dan `WEBKIT_DRIVER` dapat menunjuk executable alternatif. Kedua jalur memakai fixture MP3 yang sama, data sementara, menguji IPC sebenarnya, pemindaian folder tersimpan, pemutaran dari awal, pemilihan ulang lagu, penggantian elemen media, dan restart. Tes ini tidak mengotomatisasi dialog file OS, drag fisik, atau proses instalasi; bagian tersebut tetap memerlukan uji penerimaan. Hasil aktual ada di [QA.md](../QA.md).
