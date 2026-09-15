@@ -176,6 +176,10 @@ try {
   await delay(3500);
   const replayProgress = await evaluate('return { elapsed: (performance.now() - window.__atigaSmokeStartedAt) / 1000, media: document.querySelector("#audio").currentTime }');
   assert.ok(replayProgress.media > replayProgress.elapsed - 1 && replayProgress.media < replayProgress.elapsed + 1, `reselected ${fixtureLabel} clock jumped: ${JSON.stringify(replayProgress)}`);
+  await domClick('#stop-btn');
+  await until(() => evaluate('return document.querySelector("#audio").paused'), 'stop playback');
+  assert.equal(await evaluate('return document.querySelector("#app").classList.contains("is-playing")'), false, 'stop must clear app playback state');
+  assert.equal(await evaluate('return document.querySelector("#cassette-door-bay").classList.contains("is-playing")'), false, 'stop must stop cassette reels');
   await domClick(`#tracks [data-id="${track.id}"] [data-action="favorite"]`);
   await evaluate('document.querySelector("#audio").pause(); return true;');
   await until(async () => {

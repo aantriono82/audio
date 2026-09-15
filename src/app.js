@@ -469,6 +469,21 @@ function releaseTrackURL(id) {
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
   urls.delete(id);
 }
+function setPlaybackIndicator(playing) {
+  $('#app')?.classList.toggle('is-playing', playing);
+  $('#cassette-door-bay')?.classList.toggle('is-playing', playing);
+  $('#play')?.classList.toggle('active', playing);
+  const pauseBtn = $('#pause-btn');
+  if (pauseBtn) pauseBtn.classList.toggle('active', !playing && audio.currentTime > 0 && !audio.ended);
+  $('#play')?.setAttribute('aria-label', playing ? 'Jeda' : 'Putar');
+  const compactPlay = $('#compact-play');
+  if (compactPlay) {
+    compactPlay.innerHTML = icon(playing ? 'pause' : 'play');
+    compactPlay.setAttribute('aria-label', playing ? 'Jeda' : 'Putar');
+  }
+  const spectrumStatus = $('#spectrum-status');
+  if (spectrumStatus) spectrumStatus.textContent = playing ? 'LIVE' : 'STANDBY';
+}
 function resetNativePlaybackElement() {
   if (!nativeDirectPlayback) return;
   const previous = audio;
@@ -487,6 +502,7 @@ function resetNativePlaybackElement() {
   audio.muted = previous.muted;
   audio.playbackRate = 1;
   if ('preservesPitch' in audio) audio.preservesPitch = true;
+  setPlaybackIndicator(false);
 }
 let metadataWorker;
 let metadataRequestId = 0;
@@ -1167,32 +1183,14 @@ function handleAudioMetadata() {
 }
 function handleAudioPlay() {
   scheduleSpectrum();
-  $('#app')?.classList.add('is-playing');
-  $('#cassette-door-bay')?.classList.add('is-playing');
-  $('#play')?.classList.add('active');
-  $('#pause-btn')?.classList.remove('active');
-  $('#play')?.setAttribute('aria-label','Jeda');
-  const compactPlay = $('#compact-play');
-  if (compactPlay) { compactPlay.innerHTML = icon('pause'); compactPlay.setAttribute('aria-label', 'Jeda'); }
-  const spectrumStatus = $('#spectrum-status');
-  if (spectrumStatus) spectrumStatus.textContent = 'LIVE';
+  setPlaybackIndicator(true);
   state.recent = [state.currentId, ...state.recent.filter(id => id !== state.currentId)].slice(0,100); persist();
   notifyTrack(current());
   if (state.view === 'recent') renderTracks(); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
 }
 function handleAudioPause() {
   scheduleSpectrum();
-  $('#app')?.classList.remove('is-playing');
-  $('#cassette-door-bay')?.classList.remove('is-playing');
-  $('#play')?.classList.remove('active');
-  if (audio.currentTime > 0 && !audio.ended) {
-    $('#pause-btn')?.classList.add('active');
-  }
-  $('#play')?.setAttribute('aria-label','Putar');
-  const compactPlay = $('#compact-play');
-  if (compactPlay) { compactPlay.innerHTML = icon('play'); compactPlay.setAttribute('aria-label', 'Putar'); }
-  const spectrumStatus = $('#spectrum-status');
-  if (spectrumStatus) spectrumStatus.textContent = 'STANDBY';
+  setPlaybackIndicator(false);
   persist();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
 }
