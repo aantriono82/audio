@@ -102,6 +102,21 @@ async function domClick(selector) {
   const encoded = JSON.stringify(selector);
   await evaluate(`const element=document.querySelector(${encoded}); if(!element) throw new Error('Missing element: '+${encoded}); element.click(); return true;`);
 }
+async function armPlaybackProbe() {
+  await evaluate(`
+    if (window.__atigaPlayProbeHandler) document.removeEventListener('play', window.__atigaPlayProbeHandler, true);
+    window.__atigaPlayTime = null;
+    window.__atigaPlayProbeHandler = event => {
+      if (event.target?.id === 'audio') window.__atigaPlayTime = event.target.currentTime;
+    };
+    document.addEventListener('play', window.__atigaPlayProbeHandler, true);
+    return true;
+  `);
+}
+async function playbackStartTime(label) {
+  await until(() => evaluate('return Number.isFinite(window.__atigaPlayTime)'), `${label} play event`);
+  return evaluate('return window.__atigaPlayTime');
+}
 async function launch() {
   const result = await request('POST', '/session', { capabilities: { alwaysMatch: { 'webkitgtk:browserOptions': { binary } } } });
   session = result.sessionId;
@@ -130,9 +145,10 @@ try {
   await until(async () => { try { return (await request('GET', '/status')).ready; } catch { return false; } }, 'WebDriver');
   await launch();
   await until(() => evaluate('return document.querySelector("#welcome-dialog")?.open'), 'first launch onboarding');
+  await armPlaybackProbe();
   await click('#welcome-demo');
   await until(() => evaluate('return !document.querySelector("#audio").paused'), 'demo playback started');
-  assert.ok(await evaluate('return document.querySelector("#audio").currentTime < 0.5'), 'demo playback must start near zero');
+  assert.ok((await playbackStartTime('demo playback')) < 0.5, 'demo playback must start near zero');
   await until(() => evaluate('return document.querySelector("#audio").currentTime > 0.5'), 'demo playback');
   await evaluate('document.querySelector("#audio").pause(); return true;');
   await click('#welcome-finish');
@@ -159,19 +175,21 @@ try {
   await rename(music, path.join(directory, 'original-moved'));
   await evaluate('const search=document.querySelector("#search"); search.value="Desktop smoke"; search.dispatchEvent(new Event("input",{bubbles:true})); return true;');
   await evaluate('window.__atigaAudioBeforeImport = document.querySelector("#audio"); return true;');
+  await armPlaybackProbe();
   await domClick(`#tracks [data-id="${track.id}"] .track-name`);
   await until(() => evaluate('return !document.querySelector("#audio").paused'), 'imported playback started');
   assert.equal(await evaluate('return window.__atigaAudioBeforeImport !== document.querySelector("#audio")'), true, 'native playback must replace the media element');
-  assert.ok(await evaluate('return document.querySelector("#audio").currentTime < 0.5'), `${fixtureLabel} playback must start near zero`);
+  assert.ok((await playbackStartTime(`imported ${fixtureLabel}`)) < 0.5, `${fixtureLabel} playback must start near zero`);
   await evaluate('window.__atigaSmokeStartedAt = performance.now(); return true;');
   await delay(3500);
   const firstProgress = await evaluate('return { elapsed: (performance.now() - window.__atigaSmokeStartedAt) / 1000, media: document.querySelector("#audio").currentTime }');
   assert.ok(firstProgress.media > firstProgress.elapsed - 1 && firstProgress.media < firstProgress.elapsed + 1, `imported ${fixtureLabel} clock jumped: ${JSON.stringify(firstProgress)}`);
   await evaluate('window.__atigaAudioBeforeReselect = document.querySelector("#audio"); return true;');
+  await armPlaybackProbe();
   await domClick(`#tracks [data-id="${track.id}"] .track-name`);
   await until(() => evaluate('return !document.querySelector("#audio").paused'), 'reselected MP3 playback started');
   assert.equal(await evaluate('return window.__atigaAudioBeforeReselect !== document.querySelector("#audio")'), true, 'reselecting a native track must replace the media element');
-  assert.ok(await evaluate('return document.querySelector("#audio").currentTime < 0.5'), `reselected ${fixtureLabel} must start near zero`);
+  assert.ok((await playbackStartTime(`reselected ${fixtureLabel}`)) < 0.5, `reselected ${fixtureLabel} must start near zero`);
   await evaluate('window.__atigaSmokeStartedAt = performance.now(); return true;');
   await delay(3500);
   const replayProgress = await evaluate('return { elapsed: (performance.now() - window.__atigaSmokeStartedAt) / 1000, media: document.querySelector("#audio").currentTime }');
@@ -194,9 +212,10 @@ try {
   assert.equal(await evaluate('return document.querySelector("#welcome-dialog").open'), false);
   assert.equal(await evaluate('return document.querySelector("#audio").paused'), true);
   assert.equal(await evaluate('return document.querySelector("#audio").currentTime'), 0);
+  await armPlaybackProbe();
   await domClick('#play');
   await until(() => evaluate('return !document.querySelector("#audio").paused'), 'restored MP3 playback started');
-  assert.ok(await evaluate('return document.querySelector("#audio").currentTime < 0.5'), `restored ${fixtureLabel} must start near zero`);
+  assert.ok((await playbackStartTime(`restored ${fixtureLabel}`)) < 0.5, `restored ${fixtureLabel} must start near zero`);
   await evaluate('window.__atigaSmokeStartedAt = performance.now(); return true;');
   await delay(3500);
   const restoredProgress = await evaluate('return { elapsed: (performance.now() - window.__atigaSmokeStartedAt) / 1000, media: document.querySelector("#audio").currentTime }');
