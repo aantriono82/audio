@@ -1036,11 +1036,11 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 </dialog>
 
 <!-- Atiga Audio Settings / DSP Manager Dialog -->
-<dialog id="dsp-dialog" class="aimp-dsp-dialog" aria-labelledby="aimp-dialog-title">
+<dialog id="dsp-dialog" class="aimp-dsp-dialog" aria-labelledby="aimp-dialog-title" aria-label="Pengaturan Audio">
   <!-- Window Titlebar -->
   <div class="aimp-titlebar" id="aimp-titlebar">
-    <div class="aimp-titlebar-text" id="aimp-dialog-title">Pengaturan Audio</div>
-    <button type="button" class="aimp-titlebar-close" id="aimp-close-x" aria-label="Tutup Pengaturan Audio">
+    <div class="aimp-titlebar-text" id="aimp-dialog-title">Sound Effects</div>
+    <button type="button" class="aimp-titlebar-close" id="aimp-close-x" aria-label="Close Sound Effects">
       <svg viewBox="0 0 10 10" width="10" height="10">
         <path d="M1.5 1.5L8.5 8.5M8.5 1.5L1.5 8.5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
       </svg>
@@ -1057,11 +1057,11 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
       </svg>
       <span class="aimp-logo-text">ATIGA AMP</span>
     </div>
-    <div class="aimp-subtitle">Pengaturan Audio</div>
+    <div class="aimp-subtitle">DSP Manager</div>
   </div>
 
   <!-- Tabs Navigation -->
-  <nav class="aimp-tabs" role="tablist" aria-label="Bagian Pengaturan Audio">
+  <nav class="aimp-tabs" role="tablist" aria-label="Sound Effects sections">
     <button type="button" class="aimp-tab active" data-tab="general" role="tab" aria-selected="true" id="aimp-tab-general">General</button>
     <button type="button" class="aimp-tab" data-tab="equalizer" role="tab" aria-selected="false" id="aimp-tab-equalizer">Equalizer</button>
     <button type="button" class="aimp-tab" data-tab="volume" role="tab" aria-selected="false" id="aimp-tab-volume">Volume</button>
@@ -1227,20 +1227,93 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 
     <!-- Tab 2: Equalizer -->
     <div class="aimp-panel" id="aimp-panel-equalizer" role="tabpanel" aria-labelledby="aimp-tab-equalizer" hidden>
-      <div class="aimp-subpanel-row">
-        <label for="aimp-eq-preset">Preset:
-          <select id="aimp-eq-preset" class="aimp-sub-select">
-            <option value="Flat">Flat</option>
-            <option value="Warm">Warm</option>
-            <option value="Bass Boost">Bass Boost</option>
-            <option value="Vocal">Vocal</option>
-            <option value="Bright">Bright</option>
-            <option value="Custom">Custom</option>
-          </select>
+      <div class="aimp-eq-topbar">
+        <label class="aimp-eq-switch" for="aimp-check-equalizer">
+          <input type="checkbox" id="aimp-check-equalizer" />
+          <span class="aimp-eq-switch-slider" aria-hidden="true"></span>
+          <span class="aimp-eq-switch-label">Switch on the Equalizer</span>
+          <span class="aimp-eq-badge" id="aimp-eq-status-badge">ACTIVE</span>
         </label>
-        <button type="button" class="aimp-btn-mini" id="aimp-eq-reset-btn">Reset</button>
+        <div class="aimp-eq-topbar-info">
+          <span class="aimp-eq-band-count">20-Band Graphic DSP</span>
+        </div>
       </div>
-      <div class="aimp-eq-grid" id="aimp-eq-grid"></div>
+
+      <div class="aimp-eq-chart-row">
+        <div class="aimp-eq-chart-wrap" aria-label="Equalizer response graph">
+          <svg class="aimp-eq-chart" viewBox="0 0 500 120" preserveAspectRatio="none" role="img" aria-label="Equalizer response">
+            <defs>
+              <linearGradient id="aimp-eq-gradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.32" />
+                <stop offset="50%" stop-color="#0284c7" stop-opacity="0.14" />
+                <stop offset="100%" stop-color="#0369a1" stop-opacity="0.0" />
+              </linearGradient>
+            </defs>
+            <!-- Background grid lines -->
+            <line x1="0" y1="15" x2="500" y2="15" class="aimp-eq-grid-line" />
+            <line x1="0" y1="38" x2="500" y2="38" class="aimp-eq-grid-line aimp-eq-grid-sub" />
+            <line x1="0" y1="60" x2="500" y2="60" class="aimp-eq-zero-line" />
+            <line x1="0" y1="82" x2="500" y2="82" class="aimp-eq-grid-line aimp-eq-grid-sub" />
+            <line x1="0" y1="105" x2="500" y2="105" class="aimp-eq-grid-line" />
+
+            <!-- Frequency vertical guides (100Hz, 1kHz, 10kHz) -->
+            <line x1="105" y1="0" x2="105" y2="120" class="aimp-eq-vgrid-line" />
+            <line x1="263" y1="0" x2="263" y2="120" class="aimp-eq-vgrid-line" />
+            <line x1="421" y1="0" x2="421" y2="120" class="aimp-eq-vgrid-line" />
+
+            <!-- Area fill under the curve -->
+            <path id="aimp-eq-curve-fill" class="aimp-eq-curve-fill" d="M 0,60 L 500,60 Z" />
+            <!-- Smooth response curve path -->
+            <path id="aimp-eq-curve-path" class="aimp-eq-curve-path" d="M 0,60 L 500,60" />
+            <!-- Polyline for backward compatibility -->
+            <polyline id="aimp-eq-curve" class="aimp-eq-curve" points="0,60 500,60" />
+          </svg>
+        </div>
+        <div class="aimp-eq-scale" aria-hidden="true">
+          <span>+12 dB</span>
+          <span>+6 dB</span>
+          <span class="aimp-eq-scale-zero">0 dB</span>
+          <span>-6 dB</span>
+          <span>-12 dB</span>
+        </div>
+      </div>
+
+      <div class="aimp-eq-fader-row">
+        <div class="aimp-eq-grid-container">
+          <!-- Background reference guide rails -->
+          <div class="aimp-eq-rails" aria-hidden="true">
+            <span class="aimp-eq-rail aimp-eq-rail-p12"></span>
+            <span class="aimp-eq-rail aimp-eq-rail-p6"></span>
+            <span class="aimp-eq-rail aimp-eq-rail-zero"></span>
+            <span class="aimp-eq-rail aimp-eq-rail-m6"></span>
+            <span class="aimp-eq-rail aimp-eq-rail-m12"></span>
+          </div>
+          <div class="aimp-eq-grid" id="aimp-eq-grid"></div>
+        </div>
+
+        <div class="aimp-eq-divider" aria-hidden="true"></div>
+
+        <div class="aimp-eq-master-col" aria-label="Preamp equalizer">
+          <div class="aimp-eq-master-header">PREAMP</div>
+          <div class="aimp-eq-master">
+            <span class="aimp-eq-master-scale aimp-eq-master-top">+15</span>
+            <span class="aimp-eq-master-scale aimp-eq-master-mid">0</span>
+            <span class="aimp-eq-master-scale aimp-eq-master-bottom">-15</span>
+            <span class="aimp-eq-master-fader">
+              <input type="range" id="aimp-eq-master" min="-15" max="15" step="1" value="0" aria-label="EQ preamp" />
+              <output class="aimp-eq-master-val" id="aimp-eq-master-val">0 dB</output>
+            </span>
+          </div>
+          <div class="aimp-eq-master-footer">GAIN</div>
+        </div>
+      </div>
+
+      <div class="aimp-eq-reset-hint">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true">
+          <path d="M8 1a5 5 0 0 0-5 5v.5a.5.5 0 0 0 1 0V6a4 4 0 1 1 8 0v.5a.5.5 0 0 0 1 0V6a5 5 0 0 0-5-5zm-2 9.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm.5 2a.5.5 0 0 0 0 1h2a.5.5 0 0 0 0-1h-2zM8 0a6 6 0 0 0-6 6c0 2.14 1.13 4.02 2.82 5.07.38.24.63.64.68 1.08l.12 1.05A1.5 1.5 0 0 0 7.11 15h1.78a1.5 1.5 0 0 0 1.49-1.3l.12-1.05c.05-.44.3-.84.68-1.08C12.87 10.02 14 8.14 14 6a6 6 0 0 0-6-6z"/>
+        </svg>
+        <span>Klik kanan slider untuk reset ke 0 dB</span>
+      </div>
     </div>
 
     <!-- Tab 3: Volume -->
@@ -1308,8 +1381,20 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 
   <!-- Bottom Footer Bar -->
   <div class="aimp-footer">
-    <button type="button" class="aimp-btn" id="aimp-reset-all">Kembalikan bawaan</button>
-    <button type="button" class="aimp-btn" id="aimp-close-btn">Tutup</button>
+    <button type="button" class="aimp-btn" id="aimp-reset-all">Reset to Defaults</button>
+    <button type="button" class="aimp-btn aimp-eq-reset-footer" id="aimp-eq-reset-btn">Reset to Defaults</button>
+    <label class="aimp-eq-preset-footer" for="aimp-eq-preset">
+      <span>Presets</span>
+      <select id="aimp-eq-preset" class="aimp-sub-select">
+        <option value="Flat">Flat</option>
+        <option value="Warm">Warm</option>
+        <option value="Bass Boost">Bass Boost</option>
+        <option value="Vocal">Vocal</option>
+        <option value="Bright">Bright</option>
+        <option value="Custom">Custom</option>
+      </select>
+    </label>
+    <button type="button" class="aimp-btn" id="aimp-close-btn">Close</button>
   </div>
 </dialog>
 

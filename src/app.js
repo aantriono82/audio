@@ -343,7 +343,7 @@ function addAdvancedUI() {
       if (settings.viewMode === 'rack' || settings.viewMode === 'collection') state.viewMode = settings.viewMode;
       ['volume', 'crossfade', 'preamp', 'balance'].forEach(key => { if (Number.isFinite(settings[key])) state[key] = settings[key]; });
       if ([0, 1, 2].includes(settings.repeat)) state.repeat = settings.repeat;
-      if (Array.isArray(settings.eq) && settings.eq.length === 10 && settings.eq.every(value => Number.isFinite(value))) state.eq = settings.eq;
+      if (Array.isArray(settings.eq) && [10, EQ_BAND_COUNT].includes(settings.eq.length) && settings.eq.every(value => Number.isFinite(value))) state.eq = normalizeEq(settings.eq);
       if (typeof settings.preset === 'string') state.preset = settings.preset;
       if (typeof settings.outputDevice === 'string') state.outputDevice = settings.outputDevice;
       if (settings.dsp && typeof settings.dsp === 'object') {
@@ -427,13 +427,19 @@ let saved = {};
 try { saved = JSON.parse(localStorage.getItem('atiga-state') || '{}') || {}; } catch { /* Start fresh if browser data is invalid. */ }
 let nativeSettingsWritable = true;
 const savedPositions = saved.positions && typeof saved.positions === 'object' ? saved.positions : {};
+const EQ_BAND_COUNT = 20;
+const normalizeEq = values => {
+  if (!Array.isArray(values) || ![10, EQ_BAND_COUNT].includes(values.length)) return Array(EQ_BAND_COUNT).fill(0);
+  const normalized = values.map(value => Number.isFinite(value) ? Math.max(-12, Math.min(12, value)) : 0);
+  return normalized.length === 10 ? normalized.flatMap(value => [value, value]) : normalized;
+};
 const state = {
   tracks: [...demoTracks], favorites: new Set(Array.isArray(saved.favorites) ? saved.favorites : []),
   playlists: Array.isArray(saved.playlists) ? saved.playlists.filter(p => p && typeof p.name === 'string' && Array.isArray(p.ids)) : [],
   recent: Array.isArray(saved.recent) ? saved.recent : [], currentId: saved.currentId || null, queue: Array.isArray(saved.queue) ? saved.queue : [], positions: savedPositions,
   view: 'all', queueView: false, search: '', sortAsc: false, shuffle: Boolean(saved.shuffle), repeat: [0,1,2].includes(saved.repeat) ? saved.repeat : 0,
   volume: Number.isFinite(saved.volume) ? Math.min(1, Math.max(0, saved.volume)) : .7,
-  eq: Array.isArray(saved.eq) && saved.eq.length === 10 ? saved.eq.map(n => Number.isFinite(n) ? Math.max(-12,Math.min(12,n)) : 0) : Array(10).fill(0),
+  eq: normalizeEq(saved.eq),
   preset: saved.preset || 'Flat',
   theme: saved.theme || 'ember', glow: saved.glow !== false, gapless: saved.gapless !== false,
   compact: saved.compact ?? (window.matchMedia?.('(max-width: 640px)').matches ?? false),
@@ -660,9 +666,7 @@ function applySavedState(nextSaved) {
   state.shuffle = Boolean(nextSaved.shuffle);
   state.repeat = [0, 1, 2].includes(nextSaved.repeat) ? nextSaved.repeat : 0;
   state.volume = Number.isFinite(nextSaved.volume) ? Math.min(1, Math.max(0, nextSaved.volume)) : .7;
-  state.eq = Array.isArray(nextSaved.eq) && nextSaved.eq.length === 10
-    ? nextSaved.eq.map(n => Number.isFinite(n) ? Math.max(-12, Math.min(12, n)) : 0)
-    : Array(10).fill(0);
+  state.eq = normalizeEq(nextSaved.eq);
   state.preset = typeof nextSaved.preset === 'string' ? nextSaved.preset : 'Flat';
   state.theme = typeof nextSaved.theme === 'string' ? nextSaved.theme : 'ember';
   state.glow = nextSaved.glow !== false;
@@ -741,7 +745,8 @@ function dbAction(mode, action) {
     transaction.onabort = () => reject(transaction.error || new Error('Penyimpanan dibatalkan.'));
   });
 }
-const frequencies = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+const frequencies = [31, 43, 63, 87, 125, 175, 250, 350, 500, 700, 1000, 1400, 2000, 2800, 4000, 5600, 8000, 11200, 16000, 22000];
+const formatEqFrequency = frequency => frequency >= 1000 ? (frequency % 1000 === 0 ? `${frequency / 1000}k` : `${(frequency / 1000).toFixed(1)}k`) : frequency;
 
 function createReverbImpulse(ctx, duration = 1.2, decay = 2.0) {
   const sampleRate = ctx.sampleRate;
@@ -1506,8 +1511,8 @@ function setAudioBass(db) {
 }
 
 function setAudioTreble(db) {
-  state.eq[8] = Math.round(db * 0.8);
-  state.eq[9] = db;
+  state.eq[18] = Math.round(db * 0.8);
+  state.eq[19] = db;
   state.preset = 'Custom';
   state.eqEnabled = true;
   if (nativePlaybackMode()) void ensureAudioProcessing();
@@ -1568,7 +1573,7 @@ function setupRackControls() {
   balKnob = bindRotaryKnob($('#knob-balance'), { min: -1, max: 1, initial: state.balance, step: 0.02, angleMin: -144, angleMax: 144, onChange: setAudioBalance });
   preampKnob = bindRotaryKnob($('#knob-preamp'), { min: -12, max: 12, initial: state.preamp, step: 1, angleMin: -144, angleMax: 144, onChange: setAudioPreamp });
   bassKnob = bindRotaryKnob($('#knob-bass'), { min: -12, max: 12, initial: state.eq[0], step: 1, angleMin: -144, angleMax: 144, onChange: setAudioBass });
-  trebleKnob = bindRotaryKnob($('#knob-treble'), { min: -12, max: 12, initial: state.eq[9], step: 1, angleMin: -144, angleMax: 144, onChange: setAudioTreble });
+  trebleKnob = bindRotaryKnob($('#knob-treble'), { min: -12, max: 12, initial: state.eq[19], step: 1, angleMin: -144, angleMax: 144, onChange: setAudioTreble });
 
   trueBassKnob = bindRotaryKnob($('#knob-true-bass'), { min: 0, max: 10, initial: Math.max(0, Math.min(10, state.dsp.bass / 1.2)), step: 1, angleMin: -140, angleMax: 140, onChange: v => { state.dsp.bass = Math.round(v * 1.2); state.dspEnabled = true; if (nativePlaybackMode()) void ensureAudioProcessing(); applyDspSettings(); syncRackAudioControls(); syncDspUi(); persist(); } });
   enhancerKnob = bindRotaryKnob($('#knob-enhancer'), { min: 0, max: 10, initial: state.dsp.stereo / 10, step: 1, angleMin: -140, angleMax: 140, onChange: v => { state.dsp.stereo = Math.round(v * 10); state.dspEnabled = true; if (nativePlaybackMode()) void ensureAudioProcessing(); applyDspSettings(); syncRackAudioControls(); $('#knob-enhancer')?.setAttribute('aria-valuetext', `Enhancer stereo ${v}`); persist(); } });
@@ -2169,7 +2174,14 @@ const helpBtn = $('#help');
 if (helpBtn) {
   helpBtn.onclick = () => $('#help-dialog')?.showModal();
 }
-const presets = { Flat: Array(10).fill(0), Warm: [3,3,2,1,0,-1,-1,-2,-2,-3], 'Bass Boost': [6,5,4,2,0,0,0,0,0,0], Vocal: [-2,-2,-1,1,3,4,3,1,0,-1], Bright: [-2,-1,0,0,1,2,3,4,4,3] };
+const pairPreset = values => values.flatMap(value => [value, value]);
+const presets = {
+  Flat: Array(EQ_BAND_COUNT).fill(0),
+  Warm: pairPreset([3, 3, 2, 1, 0, -1, -1, -2, -2, -3]),
+  'Bass Boost': pairPreset([6, 5, 4, 2, 0, 0, 0, 0, 0, 0]),
+  Vocal: pairPreset([-2, -2, -1, 1, 3, 4, 3, 1, 0, -1]),
+  Bright: pairPreset([-2, -1, 0, 0, 1, 2, 3, 4, 4, 3])
+};
 const presetLabels = { Flat: 'Datar', Warm: 'Hangat', 'Bass Boost': 'Penguat bas', Vocal: 'Vokal', Bright: 'Cerah', Custom: 'Kustom' };
 const eqBandsEl = $('#eq-bands');
 if (eqBandsEl) {
@@ -2188,9 +2200,10 @@ function syncEQ() {
   const presetLabelEl = $('#preset-label');
   if (presetLabelEl) presetLabelEl.textContent = presetLabels[state.preset] || state.preset;
   bassKnob?.setVal(state.eq[0], false);
-  trebleKnob?.setVal(state.eq[9], false);
+  trebleKnob?.setVal(state.eq[19], false);
   const eqActive = state.eqEnabled && state.eq.some(val => val !== 0);
   $('#lamp-equalizer')?.classList.toggle('active', eqActive);
+  syncAimpEqGraph();
   syncRackAudioControls();
   persist();
 }
@@ -2200,7 +2213,7 @@ if (eqPresetSelect) {
 }
 const eqResetBtn = $('#eq-reset');
 if (eqResetBtn) {
-  eqResetBtn.onclick = () => { state.eq = Array(10).fill(0); state.preset = 'Flat'; syncEQ(); };
+  eqResetBtn.onclick = () => { state.eq = Array(EQ_BAND_COUNT).fill(0); state.preset = 'Flat'; syncEQ(); };
 }
 $$('#eq-toggle, #player-eq').forEach(el => {
   if (el) el.onclick = () => openDspDialog('equalizer');
@@ -2637,6 +2650,56 @@ function makeDraggable(dialog, handle) {
   window.addEventListener('touchend', onEnd);
 }
 
+function syncAimpEqGraph() {
+  const curve = $('#aimp-eq-curve');
+  const curvePath = $('#aimp-eq-curve-path');
+  const curveFill = $('#aimp-eq-curve-fill');
+  if (!curve && !curvePath) return;
+
+  const lastIndex = Math.max(1, state.eq.length - 1);
+  const pts = state.eq.map((value, index) => {
+    const x = (index / lastIndex) * 500;
+    const clampedVal = Math.max(-14, Math.min(14, Number(value) || 0));
+    // 0 dB at y=60; +12 dB at y=15; -12 dB at y=105
+    const y = Math.max(8, Math.min(112, 60 - clampedVal * 3.75));
+    return { x, y };
+  });
+
+  const points = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  if (curve) {
+    curve.setAttribute('points', points || '0,60 500,60');
+    curve.style.opacity = state.eqEnabled ? '1' : '0.35';
+  }
+
+  // Smooth Catmull-Rom spline converted to cubic Bezier curve segments
+  const n = pts.length;
+  let pathD = `M ${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = i > 0 ? pts[i - 1] : pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = i < n - 2 ? pts[i + 2] : p2;
+
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+    pathD += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+  }
+
+  if (curvePath) {
+    curvePath.setAttribute('d', pathD);
+    curvePath.style.opacity = state.eqEnabled ? '1' : '0.35';
+  }
+
+  if (curveFill) {
+    const fillD = `${pathD} L 500,60 L 0,60 Z`;
+    curveFill.setAttribute('d', fillD);
+    curveFill.style.opacity = state.eqEnabled ? '1' : '0.15';
+  }
+}
+
 function syncDspUi() {
   const setVal = (id, val) => {
     const el = $(`#${id}`);
@@ -2651,6 +2714,9 @@ function syncDspUi() {
   setVal('aimp-slider-speed', state.dsp.speed);
   setVal('aimp-slider-tempo', state.dsp.tempo);
   setVal('aimp-slider-pitch', state.dsp.pitch);
+  setVal('aimp-eq-master', state.preamp);
+  const masterVal = $('#aimp-eq-master-val');
+  if (masterVal) masterVal.textContent = `${state.preamp > 0 ? `+${state.preamp}` : state.preamp} dB`;
   trueBassKnob?.setVal(Math.max(0, Math.min(10, state.dsp.bass / 1.2)), false);
   enhancerKnob?.setVal(Math.max(0, Math.min(10, state.dsp.stereo / 10)), false);
   reverbKnob?.setVal(Math.max(0, Math.min(10, state.dsp.reverb / 10)), false);
@@ -2663,13 +2729,21 @@ function syncDspUi() {
   if (checkFadeNav) checkFadeNav.checked = Boolean(state.dsp.fadeNav);
 
   // Equalizer
+  const checkEqualizer = $('#aimp-check-equalizer');
+  if (checkEqualizer) checkEqualizer.checked = Boolean(state.eqEnabled);
+  const statusBadge = $('#aimp-eq-status-badge');
+  if (statusBadge) {
+    statusBadge.textContent = state.eqEnabled ? 'ACTIVE' : 'BYPASS';
+    statusBadge.classList.toggle('bypass', !state.eqEnabled);
+  }
   const eqPreset = $('#aimp-eq-preset');
   if (eqPreset) eqPreset.value = state.preset || 'Flat';
   frequencies.forEach((_, i) => {
     setVal(`aimp-eq-band-${i}`, state.eq[i]);
     const out = $(`#aimp-eq-val-${i}`);
-    if (out) out.textContent = state.eq[i] > 0 ? `+${state.eq[i]}` : String(state.eq[i]);
+    if (out) out.textContent = `${state.eq[i] > 0 ? `+${state.eq[i]}` : state.eq[i]} dB`;
   });
+  syncAimpEqGraph();
 
   // Volume & Mixing
   setVal('aimp-slider-preamp', state.preamp);
@@ -2760,6 +2834,7 @@ function setupDspDialog() {
       tab.classList.add('active');
       tab.setAttribute('aria-selected', 'true');
       const tabName = tab.dataset.tab;
+      dialog.classList.toggle('equalizer-active', tabName === 'equalizer');
       $$('#dsp-dialog .aimp-panel').forEach(p => { p.hidden = true; });
       const targetPanel = $(`#aimp-panel-${tabName}`);
       if (targetPanel) targetPanel.hidden = false;
@@ -2838,6 +2913,28 @@ function setupDspDialog() {
     };
   }
 
+  const checkEqualizer = $('#aimp-check-equalizer');
+  if (checkEqualizer) {
+    checkEqualizer.onchange = (e) => {
+      const enabled = e.target.checked;
+      const statusBadge = $('#aimp-eq-status-badge');
+      if (statusBadge) {
+        statusBadge.textContent = enabled ? 'ACTIVE' : 'BYPASS';
+        statusBadge.classList.toggle('bypass', !enabled);
+      }
+      if (enabled) {
+        state.eqEnabled = true;
+        syncRackAudioControls();
+        if (nativePlaybackMode()) void ensureAudioProcessing();
+        applyDspSettings();
+        syncAimpEqGraph();
+        persist();
+      } else {
+        setEqEnabled(false);
+      }
+    };
+  }
+
   // Reset to Defaults button
   const resetBtn = $('#aimp-reset-all');
   if (resetBtn) {
@@ -2869,10 +2966,13 @@ function setupDspDialog() {
   const aimpEqGrid = $('#aimp-eq-grid');
   if (aimpEqGrid) {
     aimpEqGrid.innerHTML = frequencies.map((freq, i) => `
-      <label class="aimp-eq-slider-band">
-        <output id="aimp-eq-val-${i}">${state.eq[i] > 0 ? `+${state.eq[i]}` : state.eq[i]}</output>
-        <input type="range" id="aimp-eq-band-${i}" min="-12" max="12" step="1" value="${state.eq[i]}" data-band="${i}" />
-        <span>${freq >= 1000 ? `${freq / 1000}k` : freq}</span>
+      <label class="aimp-eq-slider-band" data-band="${i}">
+        <span class="aimp-eq-frequency-top ${i % 2 === 0 ? 'active' : ''}">${i % 2 === 0 ? formatEqFrequency(freq) : ''}</span>
+        <span class="aimp-eq-fader">
+          <input type="range" id="aimp-eq-band-${i}" min="-12" max="12" step="1" value="${state.eq[i]}" data-band="${i}" />
+          <output class="aimp-eq-value" id="aimp-eq-val-${i}">${state.eq[i] > 0 ? `+${state.eq[i]}` : state.eq[i]} dB</output>
+        </span>
+        <span class="aimp-eq-frequency-bottom ${i % 2 === 1 ? 'active' : ''}">${i % 2 === 1 ? formatEqFrequency(freq) : ''}</span>
       </label>
     `).join('');
     aimpEqGrid.querySelectorAll('input').forEach(input => {
@@ -2885,9 +2985,10 @@ function setupDspDialog() {
         if (nativePlaybackMode()) void ensureAudioProcessing();
         if (filters[idx]) filters[idx].gain.setTargetAtTime(val, context?.currentTime || 0, 0.03);
         const out = $(`#aimp-eq-val-${idx}`);
-        if (out) out.textContent = val > 0 ? `+${val}` : String(val);
+        if (out) out.textContent = `${val > 0 ? `+${val}` : val} dB`;
         const mainInput = $(`#eq-band-${idx}`);
         if (mainInput) mainInput.value = String(val);
+        syncAimpEqGraph();
         syncRackAudioControls();
         persist();
       };
@@ -2897,6 +2998,24 @@ function setupDspDialog() {
         input.dispatchEvent(new Event('input'));
       };
     });
+  }
+
+  const aimpEqMaster = $('#aimp-eq-master');
+  if (aimpEqMaster) {
+    aimpEqMaster.value = String(state.preamp);
+    const masterVal = $('#aimp-eq-master-val');
+    if (masterVal) masterVal.textContent = `${state.preamp > 0 ? `+${state.preamp}` : state.preamp} dB`;
+    aimpEqMaster.oninput = (e) => {
+      setAudioPreamp(Number(e.target.value));
+      e.target.value = String(state.preamp);
+      if (masterVal) masterVal.textContent = `${state.preamp > 0 ? `+${state.preamp}` : state.preamp} dB`;
+      syncDspUi();
+    };
+    aimpEqMaster.oncontextmenu = (e) => {
+      e.preventDefault();
+      aimpEqMaster.value = '0';
+      aimpEqMaster.dispatchEvent(new Event('input'));
+    };
   }
 
   const aimpEqPreset = $('#aimp-eq-preset');
@@ -2916,7 +3035,7 @@ function setupDspDialog() {
   const aimpEqReset = $('#aimp-eq-reset-btn');
   if (aimpEqReset) {
     aimpEqReset.onclick = () => {
-      state.eq = Array(10).fill(0);
+      state.eq = Array(EQ_BAND_COUNT).fill(0);
       state.preset = 'Flat';
       state.eqEnabled = true;
       if (nativePlaybackMode()) void ensureAudioProcessing();
