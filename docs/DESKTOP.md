@@ -60,7 +60,7 @@ Sebelum rilis publik, uji pada distro Linux sasaran:
 2. Putuskan jaringan, buka aplikasi, dan putar demo serta musik lokal.
 3. Pilih beberapa file dan folder bersarang dengan nama Unicode; batalkan dialog; drag file dan folder dari pengelola berkas.
 4. Pindai ulang: file baru ditambahkan dan file lama tidak terduplikasi. Uji file rusak, folder hilang, izin ditolak, serta pembatalan impor.
-5. Putar MP3/WAV/OGG/FLAC, seek, jeda, dan pindah lagu; di browser uji EQ, sedangkan Linux desktop memakai mode playback kompatibilitas tanpa pemrosesan Web Audio.
+5. Putar MP3/WAV/OGG/FLAC, seek, jeda, dan pindah lagu. Playback awal Linux memakai mode kompatibilitas; tekan DSP/EQ atau ubah knob audio untuk mengaktifkan pemrosesan Web Audio dan uji efeknya.
 6. Simpan favorit, playlist, volume dan posisi; tutup lalu buka kembali tanpa autoplay. Uji preferensi melanjutkan posisi dalam keadaan mati dan hidup, lalu pastikan pemutaran tetap pause saat startup. Pindahkan file asli dan pastikan salinan impor tetap diputar.
 7. Hapus lagu dari koleksi dan pastikan file asli masih ada. Uji upgrade, uninstall, dan install ulang sesuai kebijakan data yang ingin dirilis.
 

@@ -35,7 +35,7 @@ Terakhir diperbarui: 14 September 2026
 | 10 | AMP-20-01 | 0.2.0 | P0 | Migrasi ke referensi file asli | AMP-18-09 |
 | 11 | AMP-20-02 | 0.2.0 | P0 | Sinkronisasi folder penuh | AMP-20-01 |
 | 12 | AMP-20-03 | 0.2.0 | P1 | Cadangan ringan dan penuh | AMP-20-01, AMP-20-02 |
-| 13 | AMP-FUTURE-01 | Backlog | P2 | Spike DSP Linux yang stabil | AMP-18-09 |
+| 13 | AMP-FUTURE-01 | Backlog | P2 | Verifikasi DSP Linux opt-in yang stabil | AMP-18-09 |
 
 ---
 
@@ -142,7 +142,7 @@ Pengguna dapat memilih, menemukan, dan berpindah antara mode **Rack** dan **Kole
 
 ### Masalah
 
-Sejumlah elemen terlihat dan berperilaku sebagai kontrol, tetapi hanya mengubah dekorasi atau menampilkan toast. Linux juga menampilkan kontrol EQ/DSP walaupun jalur playback stabil menonaktifkan Web Audio.
+Sejumlah elemen terlihat dan berperilaku sebagai kontrol, tetapi hanya mengubah dekorasi atau menampilkan toast. Linux memulai pada jalur playback stabil dan membutuhkan aktivasi Web Audio secara eksplisit agar EQ/DSP diterapkan.
 
 ### Hasil yang diinginkan
 
@@ -156,7 +156,7 @@ Pengguna dapat percaya bahwa setiap kontrol interaktif menghasilkan efek nyata d
 - Ubah elemen dekoratif menjadi presentasional dan keluarkan dari urutan fokus.
 - Ubah kontrol yang menyiratkan efek audio tetapi hanya mengganti kulit, lampu, atau toast menjadi elemen dekoratif.
 - Satukan dialog EQ, pengaturan audio, dan DSP menjadi satu **Pengaturan Audio** bermerek Atiga; tombol rack membuka bagian yang sesuai.
-- Pertahankan kontrol EQ/DSP di Linux dalam keadaan dinonaktifkan dengan penjelasan mengenai mode playback stabil.
+- Pertahankan kontrol EQ/DSP Linux dalam keadaan bypass saat startup, lalu aktifkan jalur Web Audio setelah tindakan pengguna dengan penjelasan yang terlihat.
 - Sinkronkan status aktif, `aria-pressed`, lampu, dan state audio.
 - Hapus interaksi yang hanya mengeluarkan toast efek palsu.
 
@@ -397,20 +397,19 @@ Ekspor saat ini hanya menyimpan metadata dan bergantung pada file yang sudah ter
 
 ---
 
-## AMP-FUTURE-01 — Spike DSP Linux yang stabil
+## AMP-FUTURE-01 — Verifikasi DSP Linux opt-in yang stabil
 
-**GitHub title:** `[Backlog][P2] Evaluasi jalur DSP Linux tanpa mengurangi stabilitas playback`
+**GitHub title:** `[Backlog][P2] Verifikasi jalur DSP Linux opt-in tanpa mengurangi stabilitas playback`
 
 ### Pertanyaan
 
-Apakah EQ, ReplayGain, spectrum, crossfade, dan efek lain dapat diterapkan pada paket Linux sasaran tanpa mengembalikan kegagalan WebKitGTK/GStreamer yang sudah dihindari oleh mode kompatibilitas?
+Apakah EQ, ReplayGain, spectrum, crossfade, dan efek lain tetap stabil setelah pengguna mengaktifkan jalur Web Audio pada paket Linux sasaran?
 
 ### Cakupan
 
 - Bandingkan pilihan teknis yang sesuai dengan arsitektur Tauri saat itu.
 - Buat prototipe terisolasi dan ukur stabilitas, latensi, penggunaan CPU, dukungan codec, dan packaging.
-- Tentukan fitur DSP yang layak, tidak layak, atau perlu ditunda.
-- Jangan mengaktifkan kontrol produksi melalui issue spike ini.
+- Tentukan efek yang layak, tidak layak, atau perlu ditunda berdasarkan hasil paket sasaran.
 
 ### Kriteria penerimaan
 

@@ -139,7 +139,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           <div class="console-matrix-panel">
             <!-- Row 1: dbx badge aligned to the top right -->
             <div class="matrix-top-header">
-              <button type="button" class="dbx-indicator-badge active" id="dbx-badge" title="dbx Dynamic Noise Reduction System" aria-label="dbx Noise Reduction">
+              <button type="button" class="dbx-indicator-badge active" id="dbx-badge" title="dbx Dynamic Noise Reduction System" aria-label="dbx Noise Reduction" aria-pressed="true">
                 <span>dbx</span>
               </button>
             </div>
@@ -154,7 +154,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
                 <button class="matrix-btn active" id="btn-amplifier" aria-label="Amplifier" title="Amplifier"></button>
               </div>
               <div class="matrix-btn-cell">
-                <button class="matrix-btn" id="btn-dsp" aria-label="DSP" title="DSP"></button>
+                <button class="matrix-btn" id="btn-dsp" aria-label="DSP" aria-pressed="false" title="DSP"></button>
               </div>
             </div>
 
@@ -533,6 +533,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
                   <div class="amp-lamp-item"><i class="lamp-dot green active" id="lamp-right"></i><span>RIGHT</span></div>
                   <div class="amp-lamp-item"><i class="lamp-dot green active" id="lamp-stereo"></i><span>STEREO</span></div>
                   <div class="amp-lamp-item"><i class="lamp-dot amber" id="lamp-equalizer"></i><span>EQUALIZER</span></div>
+                  <div class="amp-lamp-item"><i class="lamp-dot amber" id="lamp-dsp"></i><span>DSP</span></div>
                   <div class="amp-lamp-item"><i class="lamp-dot red" id="lamp-mute"></i><span>MUTE</span></div>
                 </div>
               </div>
@@ -710,8 +711,8 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
             <div class="amp-switch-module amp-dual-keys-block">
               <div class="switch-head-labels"><span>EQUALIZER</span><span>DSP</span></div>
               <div class="amp-dual-keys-housing" id="switch-eq-dsp" title="Buka Ekualiser 10-Band / DSP">
-                <button class="amp-dual-key-btn active" id="btn-amp-eq"><span></span></button>
-                <button class="amp-dual-key-btn" id="btn-amp-dsp"><span></span></button>
+                <button class="amp-dual-key-btn active" id="btn-amp-eq" aria-label="Equalizer 10-Band" aria-pressed="true"><span></span></button>
+                <button class="amp-dual-key-btn" id="btn-amp-dsp" aria-label="DSP" aria-pressed="false"><span></span></button>
               </div>
               <div class="rocker-sublabel">ON <span class="sym-box">■</span> <span class="sym-box">■</span> OFF</div>
             </div>
@@ -733,7 +734,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
               <div class="mini-dial-ticks">
                 <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
               </div>
-              <div class="knob-metal-body knob-small" id="knob-enhancer" data-param="enhancer" title="Tampilan stereo meter">
+              <div class="knob-metal-body knob-small" id="knob-enhancer" data-param="enhancer" title="Penguat lebar stereo">
                 <div class="knob-indicator-line"></div>
               </div>
               <div class="knob-sub-signs mini-signs"><span>−</span><span>+</span></div>
@@ -756,7 +757,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
             <div class="amp-switch-module amp-mute-block">
               <span class="switch-head-labels">MUTE</span>
               <div class="amp-mute-recess">
-                <button class="push-rect-switch" id="amp-mute-switch" title="Bisukan Suara">
+                <button class="push-rect-switch" id="amp-mute-switch" title="Bisukan Suara" aria-label="Bisukan suara" aria-pressed="false">
                   <span class="switch-pip"></span>
                 </button>
               </div>
@@ -1147,7 +1148,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           </div>
           <!-- Stereo enhancer -->
           <div class="aimp-slider-group" data-slider="stereo-enhancer">
-            <div class="aimp-slider-label">Stereo display</div>
+            <div class="aimp-slider-label">Stereo enhancer</div>
             <div class="aimp-slider-track-wrap">
               <div class="aimp-ticks aimp-ticks-top">
                 <span></span><span></span><span></span><span></span><span></span>

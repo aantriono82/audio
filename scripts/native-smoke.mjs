@@ -153,6 +153,11 @@ try {
   await evaluate('document.querySelector("#audio").pause(); return true;');
   await click('#welcome-finish');
   await domClick('#mode-collection');
+  const rackControlAvailability = await evaluate(`return ${JSON.stringify(['#btn-dsp', '#btn-amp-eq', '#btn-amp-dsp', '#knob-bass', '#knob-treble', '#knob-preamp', '#knob-balance', '#knob-true-bass', '#knob-enhancer', '#knob-reverb', '#amp-mute-switch'])}.every(selector => {
+    const element = document.querySelector(selector);
+    return element && !element.disabled && !element.classList.contains('disabled');
+  })`);
+  assert.equal(rackControlAvailability, true, 'rack EQ/DSP controls must be available on Linux');
   assert.equal(await evaluate('return !!window.__TAURI_INTERNALS__'), true);
   assert.equal(await evaluate('return performance.getEntriesByType("resource").some(r=>/^https?:/.test(r.name))'), false);
   console.log('PASS: first launch, offline assets, Play selects demo');

@@ -294,7 +294,7 @@ function addAdvancedUI() {
     formatSupport.innerHTML = ['mp3','wav','ogg','flac','m4a','aac','opus','aiff','webm'].map(ext => `<span>${ext.toUpperCase()} ${audio.canPlayType(`audio/${ext}`) ? '✓' : '?'}</span>`).join('');
     if (nativeDirectPlayback) {
       const note = document.createElement('small');
-      note.textContent = 'Mode kompatibilitas Linux aktif; EQ/DSP Web Audio dinonaktifkan agar playback stabil.';
+      note.textContent = 'Playback Linux dimulai pada jalur stabil. Tekan DSP atau ubah knob audio untuk mengaktifkan pemrosesan.';
       formatSupport.append(note);
     }
   }
@@ -317,7 +317,7 @@ function addAdvancedUI() {
       exportedAt: new Date().toISOString(),
       tracks: state.tracks.filter(track => !track.demo).map(({ id, fingerprint, title, artist, album, genre, format, duration }) => ({ id, fingerprint, title, artist, album, genre, format, duration })),
       favorites: [...state.favorites], playlists: state.playlists, recent: state.recent, queue: state.queue, positions: state.positions,
-      settings: { theme: state.theme, glow: state.glow, gapless: state.gapless, compact: state.compact, viewMode: state.viewMode, resumePlayback: state.resumePlayback, shuffle: state.shuffle, repeat: state.repeat, volume: state.volume, eq: state.eq, preset: state.preset, crossfade: state.crossfade, preamp: state.preamp, balance: state.balance, replayGain: state.replayGain, notifications: state.notifications, outputDevice: state.outputDevice }
+      settings: { theme: state.theme, glow: state.glow, gapless: state.gapless, compact: state.compact, viewMode: state.viewMode, resumePlayback: state.resumePlayback, shuffle: state.shuffle, repeat: state.repeat, volume: state.volume, eq: state.eq, eqEnabled: state.eqEnabled, dspEnabled: state.dspEnabled, dsp: state.dsp, preset: state.preset, crossfade: state.crossfade, preamp: state.preamp, balance: state.balance, replayGain: state.replayGain, notifications: state.notifications, outputDevice: state.outputDevice }
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const link = document.createElement('a'); const url = URL.createObjectURL(blob); link.href = url; link.download = `atiga-amp-backup-${new Date().toISOString().slice(0, 10)}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 0);
@@ -339,13 +339,26 @@ function addAdvancedUI() {
       state.positions = Object.fromEntries(Object.entries(backup.positions || {}).map(([id, value]) => { const resolved = resolveId(id); return resolved ? [resolved, Number(value) || 0] : null; }).filter(Boolean));
       const settings = backup.settings || {};
       if (typeof settings.theme === 'string') state.theme = settings.theme;
-      ['glow', 'gapless', 'compact', 'resumePlayback', 'shuffle', 'replayGain', 'notifications'].forEach(key => { if (typeof settings[key] === 'boolean') state[key] = settings[key]; });
+      ['glow', 'gapless', 'compact', 'resumePlayback', 'shuffle', 'replayGain', 'notifications', 'eqEnabled', 'dspEnabled'].forEach(key => { if (typeof settings[key] === 'boolean') state[key] = settings[key]; });
       if (settings.viewMode === 'rack' || settings.viewMode === 'collection') state.viewMode = settings.viewMode;
       ['volume', 'crossfade', 'preamp', 'balance'].forEach(key => { if (Number.isFinite(settings[key])) state[key] = settings[key]; });
       if ([0, 1, 2].includes(settings.repeat)) state.repeat = settings.repeat;
       if (Array.isArray(settings.eq) && settings.eq.length === 10 && settings.eq.every(value => Number.isFinite(value))) state.eq = settings.eq;
       if (typeof settings.preset === 'string') state.preset = settings.preset;
       if (typeof settings.outputDevice === 'string') state.outputDevice = settings.outputDevice;
+      if (settings.dsp && typeof settings.dsp === 'object') {
+        Object.entries(settings.dsp).forEach(([key, value]) => {
+          if (['voiceRemover', 'fadePause', 'fadeNav'].includes(key)) {
+            if (typeof value === 'boolean') state.dsp[key] = value;
+          } else if (['echo', 'reverb', 'flanger', 'chorus', 'bass', 'stereo', 'speed', 'tempo', 'pitch'].includes(key) && Number.isFinite(value)) {
+            state.dsp[key] = value;
+          }
+        });
+      }
+      if (nativeDirectPlayback) {
+        state.eqEnabled = false;
+        state.dspEnabled = false;
+      }
       applyTheme(); applyViewMode(); render(); syncSettings(); await applyOutputDevice(); persist();
       const available = backup.tracks.filter(track => byId.has(track.id) || byFingerprint.has(track.fingerprint)).length;
       toast(`Cadangan dipulihkan. ${available} dari ${backup.tracks.length} lagu tersedia.`);
@@ -431,6 +444,8 @@ const state = {
   preamp: Number.isFinite(saved.preamp) ? Math.max(-12, Math.min(12, saved.preamp)) : 0,
   balance: Number.isFinite(saved.balance) ? Math.max(-1, Math.min(1, saved.balance)) : 0,
   replayGain: saved.replayGain !== false, notifications: saved.notifications === true,
+  eqEnabled: saved.eqEnabled !== false,
+  dspEnabled: saved.dspEnabled !== false,
   outputDevice: saved.outputDevice || 'default',
   groupBy: saved.groupBy || '', panelOrder: Array.isArray(saved.panelOrder) ? saved.panelOrder : ['sidebar','library','now'],
   playCounts: saved.playCounts && typeof saved.playCounts === 'object' ? saved.playCounts : {},
@@ -452,22 +467,123 @@ const state = {
 };
 let audio = $('#audio');
 // WebKitGTK/GStreamer has a known failure mode when a media element is routed
-// through a complex Web Audio graph. Keep Linux desktop playback on the
-// native media element; the browser build retains EQ/DSP and analyser output.
+// through a complex Web Audio graph. Linux therefore starts on the native
+// media element and only opts into Web Audio after an explicit DSP action.
 const capabilities = playbackCapabilities({ desktop, platform: navigator.platform || navigator.userAgent });
 const nativeDirectPlayback = capabilities.nativeDirectPlayback;
+// Linux starts in the stable native media path. A deliberate DSP/EQ action
+// switches the current media element to Web Audio for the rest of the session.
+// This keeps the normal first-play path reliable while making audio controls
+// functional when the user asks for them.
+let webAudioActive = !nativeDirectPlayback;
+const nativePlaybackMode = () => nativeDirectPlayback && !webAudioActive;
+if (nativeDirectPlayback) {
+  state.eqEnabled = false;
+  state.dspEnabled = false;
+}
 state.playlists = state.playlists.filter(playlist => !['after-hours', 'slow-living'].includes(playlist.id));
 let context, analyser, analyserL, analyserR, filters = [], compressor, masterGain, panner, db, loadedId, readyTrackId = null, pendingStartupPosition = 0, playbackToken = 0, lastSavedSecond = -1, directAudio = nativeDirectPlayback;
 let pendingStartCleanup;
-let dspBassFilter, dspEchoDelay, dspEchoFeedback, dspEchoGain, dspReverbConvolver, dspReverbGain, dspChorusDelay, dspChorusGain, dspChorusLfo, dspVoiceDryGain, dspVoiceWetGain, dspVoiceSplitter, dspVoiceMerger, dspVoiceInvGain, dspSumGain;
+let dspBassFilter, dspEchoDelay, dspEchoFeedback, dspEchoGain, dspReverbConvolver, dspReverbGain, dspChorusDelay, dspChorusGain, dspChorusLfo, dspVoiceDryGain, dspVoiceWetGain, dspVoiceSplitter, dspVoiceMerger, dspVoiceInvGain, dspStereoPanner, dspStereoSplitter, dspStereoMerger, dspStereoLDirect, dspStereoRDirect, dspStereoLCross, dspStereoRCross, dspSumGain;
 let giantVolKnob, deckVolKnob, balKnob, preampKnob, bassKnob, trebleKnob, trueBassKnob, enhancerKnob, reverbKnob;
 let crossfadeTimer, crossfadeStarted = false;
+let processingSwitchPromise;
 const urls = new Map();
 const artUrls = new Map();
 function releaseTrackURL(id) {
   const url = urls.get(id);
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
   urls.delete(id);
+}
+function syncRackAudioControls() {
+  const eqOn = Boolean(state.eqEnabled);
+  const dspOn = Boolean(state.dspEnabled);
+  const eqButton = $('#btn-amp-eq');
+  const dspButtons = [$('#btn-amp-dsp'), $('#btn-dsp')].filter(Boolean);
+  if (eqButton) {
+    eqButton.classList.toggle('active', eqOn);
+    eqButton.setAttribute('aria-pressed', String(eqOn));
+  }
+  dspButtons.forEach(button => {
+    button.classList.toggle('active', dspOn);
+    button.setAttribute('aria-pressed', String(dspOn));
+  });
+  const dbxBadge = $('#dbx-badge');
+  if (dbxBadge) {
+    dbxBadge.classList.toggle('active', dspOn);
+    dbxBadge.setAttribute('aria-pressed', String(dspOn));
+  }
+  $('#lamp-equalizer')?.classList.toggle('active', eqOn && state.eq.some(value => value !== 0));
+  $('#lamp-dsp')?.classList.toggle('active', dspOn);
+}
+function setEqEnabled(enabled, notify = false) {
+  state.eqEnabled = Boolean(enabled);
+  syncRackAudioControls();
+  syncEQ();
+  applyDspSettings();
+  persist();
+  if (notify) toast(state.eqEnabled ? 'Equalizer 10-Band ON' : 'Equalizer Bypass');
+}
+function setDspEnabled(enabled, notify = false) {
+  state.dspEnabled = Boolean(enabled);
+  syncRackAudioControls();
+  applyDspSettings();
+  persist();
+  if (notify) toast(state.dspEnabled ? 'ATIGA AMP DSP Manager ON' : 'ATIGA AMP DSP Bypass');
+}
+async function enableWebAudioProcessing() {
+  if (webAudioActive) {
+    setupAudio();
+    if (context) await context.resume();
+    return Boolean(context);
+  }
+  if (processingSwitchPromise) return processingSwitchPromise;
+  processingSwitchPromise = (async () => {
+    const wasPaused = audio.paused;
+    const position = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+    const hadSource = Boolean(audio.src);
+    webAudioActive = true;
+    directAudio = false;
+    setupAudio();
+    if (!context) {
+      webAudioActive = false;
+      directAudio = true;
+      return false;
+    }
+    try {
+      await context.resume();
+      applyAudioSettings();
+      if (hadSource && Number.isFinite(position)) {
+        try { audio.currentTime = position; } catch { /* metadata may still be loading */ }
+      }
+      if (!wasPaused && audio.paused) await audio.play();
+      toast('Pemrosesan audio aktif. EQ dan DSP siap digunakan.');
+      return true;
+    } catch (error) {
+      console.warn('Peralihan ke Web Audio gagal:', error);
+      webAudioActive = false;
+      directAudio = true;
+      try { await context?.close(); } catch { /* context may already be closed */ }
+      context = null;
+      filters = []; analyser = null; analyserL = null; analyserR = null; compressor = null; masterGain = null; panner = null;
+      dspBassFilter = null; dspEchoDelay = null; dspEchoFeedback = null; dspEchoGain = null; dspReverbConvolver = null; dspReverbGain = null; dspChorusDelay = null; dspChorusGain = null; dspChorusLfo = null; dspVoiceDryGain = null; dspVoiceWetGain = null; dspVoiceSplitter = null; dspVoiceMerger = null; dspVoiceInvGain = null; dspStereoPanner = null; dspStereoSplitter = null; dspStereoMerger = null; dspStereoLDirect = null; dspStereoRDirect = null; dspStereoLCross = null; dspStereoRCross = null; dspSumGain = null;
+      if (nativePlaybackMode()) resetNativePlaybackElement();
+      return false;
+    }
+  })().finally(() => { processingSwitchPromise = undefined; });
+  return processingSwitchPromise;
+}
+function ensureAudioProcessing() {
+  return enableWebAudioProcessing().then(ok => {
+    if (!ok) {
+      state.eqEnabled = false;
+      state.dspEnabled = false;
+      syncRackAudioControls();
+      applyDspSettings();
+      toast('Pemrosesan audio tidak tersedia pada perangkat ini.');
+    }
+    return ok;
+  });
 }
 function setPlaybackIndicator(playing) {
   $('#app')?.classList.toggle('is-playing', playing);
@@ -485,7 +601,7 @@ function setPlaybackIndicator(playing) {
   if (spectrumStatus) spectrumStatus.textContent = playing ? 'LIVE' : 'STANDBY';
 }
 function resetNativePlaybackElement() {
-  if (!nativeDirectPlayback) return;
+  if (!nativePlaybackMode()) return;
   const previous = audio;
   if (!previous) return;
   // WebKitGTK can keep a GStreamer segment alive after src is cleared. A
@@ -560,6 +676,8 @@ function applySavedState(nextSaved) {
   state.balance = Number.isFinite(nextSaved.balance) ? Math.max(-1, Math.min(1, nextSaved.balance)) : 0;
   state.replayGain = nextSaved.replayGain !== false;
   state.notifications = nextSaved.notifications === true;
+  state.eqEnabled = nextSaved.eqEnabled !== false;
+  state.dspEnabled = nextSaved.dspEnabled !== false;
   state.outputDevice = typeof nextSaved.outputDevice === 'string' ? nextSaved.outputDevice : 'default';
   state.panelOrder = Array.isArray(nextSaved.panelOrder) ? nextSaved.panelOrder : ['sidebar', 'library', 'now'];
   state.playCounts = nextSaved.playCounts && typeof nextSaved.playCounts === 'object' ? nextSaved.playCounts : {};
@@ -578,6 +696,12 @@ function applySavedState(nextSaved) {
     fadePause: nextSaved.dsp?.fadePause !== false,
     fadeNav: nextSaved.dsp?.fadeNav !== false
   };
+  if (nativeDirectPlayback) {
+    // Saved effect values are retained, but native Linux starts in the
+    // direct path. The user can opt into Web Audio by pressing a DSP control.
+    state.eqEnabled = false;
+    state.dspEnabled = false;
+  }
 }
 function persist() {
   try {
@@ -636,7 +760,7 @@ function createReverbImpulse(ctx, duration = 1.2, decay = 2.0) {
 
 function applyPlaybackRates() {
   if (!audio) return;
-  if (nativeDirectPlayback) {
+  if (nativePlaybackMode() || !state.dspEnabled) {
     audio.playbackRate = 1;
     if ('preservesPitch' in audio) audio.preservesPitch = true;
     return;
@@ -654,13 +778,27 @@ function applyPlaybackRates() {
 }
 
 function applyDspSettings() {
+  const dspOn = Boolean(state.dspEnabled);
   if (context) {
-    if (dspBassFilter) dspBassFilter.gain.setTargetAtTime(state.dsp.bass, context.currentTime, 0.03);
-    if (dspEchoGain) dspEchoGain.gain.setTargetAtTime((state.dsp.echo / 100) * 0.7, context.currentTime, 0.03);
-    if (dspReverbGain) dspReverbGain.gain.setTargetAtTime((state.dsp.reverb / 100) * 0.75, context.currentTime, 0.03);
-    if (dspChorusGain) dspChorusGain.gain.setTargetAtTime((state.dsp.chorus / 100) * 0.45 + (state.dsp.flanger / 100) * 0.45, context.currentTime, 0.03);
+    if (compressor) {
+      compressor.threshold.value = dspOn ? -3 : 0;
+      compressor.ratio.value = dspOn ? 12 : 1;
+    }
+    if (dspBassFilter) dspBassFilter.gain.setTargetAtTime(dspOn ? state.dsp.bass : 0, context.currentTime, 0.03);
+    if (dspEchoGain) dspEchoGain.gain.setTargetAtTime(dspOn ? (state.dsp.echo / 100) * 0.7 : 0, context.currentTime, 0.03);
+    if (dspReverbGain) dspReverbGain.gain.setTargetAtTime(dspOn ? (state.dsp.reverb / 100) * 0.75 : 0, context.currentTime, 0.03);
+    if (dspChorusGain) dspChorusGain.gain.setTargetAtTime(dspOn ? (state.dsp.chorus / 100) * 0.45 + (state.dsp.flanger / 100) * 0.45 : 0, context.currentTime, 0.03);
+    if (dspStereoLDirect && dspStereoRDirect && dspStereoLCross && dspStereoRCross) {
+      const amount = dspOn ? state.dsp.stereo / 100 : 0;
+      const direct = 1 + amount * 0.6;
+      const cross = -amount * 0.6;
+      dspStereoLDirect.gain.setTargetAtTime(direct, context.currentTime, 0.03);
+      dspStereoRDirect.gain.setTargetAtTime(direct, context.currentTime, 0.03);
+      dspStereoLCross.gain.setTargetAtTime(cross, context.currentTime, 0.03);
+      dspStereoRCross.gain.setTargetAtTime(cross, context.currentTime, 0.03);
+    }
     if (dspVoiceDryGain && dspVoiceWetGain) {
-      const isVoice = Boolean(state.dsp.voiceRemover);
+      const isVoice = dspOn && Boolean(state.dsp.voiceRemover);
       dspVoiceDryGain.gain.setTargetAtTime(isVoice ? 0 : 1, context.currentTime, 0.03);
       dspVoiceWetGain.gain.setTargetAtTime(isVoice ? 1 : 0, context.currentTime, 0.03);
     }
@@ -675,7 +813,7 @@ function setupAudio() {
   try {
     context = new AudioContextCtor();
     const source = context.createMediaElementSource(audio);
-    filters = frequencies.map((frequency, i) => { const filter = context.createBiquadFilter(); filter.type = 'peaking'; filter.frequency.value = frequency; filter.Q.value = 1.2; filter.gain.value = state.eq[i]; return filter; });
+    filters = frequencies.map((frequency, i) => { const filter = context.createBiquadFilter(); filter.type = 'peaking'; filter.frequency.value = frequency; filter.Q.value = 1.2; filter.gain.value = state.eqEnabled ? state.eq[i] : 0; return filter; });
     analyser = context.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = .8;
     compressor = context.createDynamicsCompressor(); compressor.threshold.value = -3; compressor.knee.value = 3; compressor.ratio.value = 12;
     masterGain = context.createGain(); panner = context.createStereoPanner();
@@ -731,6 +869,21 @@ function setupAudio() {
     dspVoiceInvGain = context.createGain();
     dspVoiceInvGain.gain.value = -1;
 
+    // Stereo enhancer: increase the side signal while preserving the center.
+    // The inverted cross-feed widens stereo material and leaves mono centered.
+    dspStereoSplitter = context.createChannelSplitter(2);
+    dspStereoPanner = context.createStereoPanner();
+    dspStereoPanner.pan.value = 0;
+    dspStereoMerger = context.createChannelMerger(2);
+    dspStereoLDirect = context.createGain();
+    dspStereoRDirect = context.createGain();
+    dspStereoLCross = context.createGain();
+    dspStereoRCross = context.createGain();
+    dspStereoLDirect.gain.value = 1;
+    dspStereoRDirect.gain.value = 1;
+    dspStereoLCross.gain.value = 0;
+    dspStereoRCross.gain.value = 0;
+
     dspSumGain = context.createGain();
 
     // Route: source -> EQ filters -> dspBassFilter -> compressor
@@ -741,7 +894,17 @@ function setupAudio() {
 
     // Dry voice path
     compressor.connect(dspVoiceDryGain);
-    dspVoiceDryGain.connect(dspSumGain);
+    dspVoiceDryGain.connect(dspStereoPanner);
+    dspStereoPanner.connect(dspStereoSplitter);
+    dspStereoSplitter.connect(dspStereoLDirect, 0);
+    dspStereoLDirect.connect(dspStereoMerger, 0, 0);
+    dspStereoSplitter.connect(dspStereoRDirect, 1);
+    dspStereoRDirect.connect(dspStereoMerger, 0, 1);
+    dspStereoSplitter.connect(dspStereoLCross, 0);
+    dspStereoLCross.connect(dspStereoMerger, 0, 1);
+    dspStereoSplitter.connect(dspStereoRCross, 1);
+    dspStereoRCross.connect(dspStereoMerger, 0, 0);
+    dspStereoMerger.connect(dspSumGain);
 
     // Voice Remover path
     compressor.connect(dspVoiceSplitter);
@@ -782,7 +945,7 @@ function setupAudio() {
   } catch (error) {
     console.warn('Web Audio tidak tersedia; memakai pemutaran audio langsung.', error);
     context = null; filters = []; analyser = null; analyserL = null; analyserR = null; compressor = null; masterGain = null; panner = null; directAudio = true;
-    dspBassFilter = null; dspEchoDelay = null; dspEchoGain = null; dspReverbConvolver = null; dspReverbGain = null; dspChorusDelay = null; dspChorusGain = null; dspChorusLfo = null; dspVoiceDryGain = null; dspVoiceWetGain = null; dspSumGain = null;
+    dspBassFilter = null; dspEchoDelay = null; dspEchoGain = null; dspReverbConvolver = null; dspReverbGain = null; dspChorusDelay = null; dspChorusGain = null; dspChorusLfo = null; dspVoiceDryGain = null; dspVoiceWetGain = null; dspStereoPanner = null; dspStereoSplitter = null; dspStereoMerger = null; dspStereoLDirect = null; dspStereoRDirect = null; dspStereoLCross = null; dspStereoRCross = null; dspSumGain = null;
   }
 }
 function applyAudioSettings() {
@@ -966,7 +1129,7 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
   // A new media element gives WebKitGTK/GStreamer a fresh decoder pipeline.
   // Seeking an MP3 to zero while metadata is still loading can leave its
   // JavaScript clock at zero while decoded audio resumes from an old segment.
-  if (nativeDirectPlayback) {
+  if (nativePlaybackMode()) {
     persist();
     resetNativePlaybackElement();
   } else {
@@ -983,7 +1146,7 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
   // Restoring the selected track must not read the whole audio file while the
   // window is starting. Load it only after the user presses Play.
   if (!autoplay && Number.isFinite(requestedPosition)) {
-    if (nativeDirectPlayback) releaseTrackURL(id);
+    if (nativePlaybackMode()) releaseTrackURL(id);
     loadedId = null;
     readyTrackId = null;
     pendingStartupPosition = Math.max(0, requestedPosition);
@@ -994,7 +1157,7 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
   try {
     // A fresh Blob URL prevents WebKitGTK from reusing an MP3 media resource
     // whose internal GStreamer segment has already advanced.
-    const url = await sourceURL(track, nativeDirectPlayback && Boolean(track.nativePath));
+    const url = await sourceURL(track, nativePlaybackMode() && Boolean(track.nativePath));
     if (token !== playbackToken) {
       // A fast second click can finish this request after another track was
       // selected. Do not retain a URL that no active player can use.
@@ -1105,7 +1268,7 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
   }
 }
 function maybeCrossfade() {
-  if (nativeDirectPlayback || !state.crossfade || crossfadeStarted || !loadedId || !Number.isFinite(audio.duration) || audio.duration - audio.currentTime > state.crossfade) return;
+  if (nativePlaybackMode() || !state.crossfade || crossfadeStarted || !loadedId || !Number.isFinite(audio.duration) || audio.duration - audio.currentTime > state.crossfade) return;
   const upcoming = nextTrack(); if (!upcoming || state.repeat === 2) return;
   crossfadeStarted = true;
   const start = context?.currentTime || 0;
@@ -1149,7 +1312,7 @@ async function togglePlay() {
 function advance(direction = 1, automatic = false) {
   if (automatic && state.repeat === 2) { selectTrack(state.currentId, true, 0); return; }
   if (direction === -1 && audio.currentTime > 3) {
-    if (nativeDirectPlayback) selectTrack(state.currentId, !audio.paused, 0);
+    if (nativePlaybackMode()) selectTrack(state.currentId, !audio.paused, 0);
     else audio.currentTime = 0;
     return;
   }
@@ -1159,7 +1322,7 @@ function advance(direction = 1, automatic = false) {
   let index = list.findIndex(t => t.id === state.currentId);
   if (state.shuffle && list.length > 1) { const alternatives = list.filter(t => t.id !== state.currentId); selectTrack(alternatives[Math.floor(Math.random() * alternatives.length)].id); return; }
   if (automatic && index === list.length - 1 && state.repeat === 0) {
-    if (nativeDirectPlayback) selectTrack(state.currentId, false, 0);
+    if (nativePlaybackMode()) selectTrack(state.currentId, false, 0);
     else audio.pause();
     return;
   }
@@ -1198,7 +1361,7 @@ function handleAudioEnded() {
   // Do not restore a completed track from its final timestamp after restart.
   // WebKitGTK can report the ended position slightly before or after duration.
   if (state.currentId) state.positions[state.currentId] = 0;
-  if (!nativeDirectPlayback) audio.currentTime = 0;
+  if (!nativePlaybackMode()) audio.currentTime = 0;
   persist();
   $('#pause-btn')?.classList.remove('active');
   advance(1, true);
@@ -1314,6 +1477,7 @@ function setMasterVolume(v) {
 
 function setAudioBalance(b) {
   state.balance = Math.max(-1, Math.min(1, b));
+  if (nativePlaybackMode()) void ensureAudioProcessing();
   applyAudioSettings();
   syncSettings();
   balKnob?.setVal(state.balance, false);
@@ -1322,6 +1486,7 @@ function setAudioBalance(b) {
 
 function setAudioPreamp(p) {
   state.preamp = Math.max(-12, Math.min(12, p));
+  if (nativePlaybackMode()) void ensureAudioProcessing();
   applyAudioSettings();
   syncSettings();
   preampKnob?.setVal(state.preamp, false);
@@ -1332,7 +1497,11 @@ function setAudioBass(db) {
   state.eq[0] = db;
   state.eq[1] = Math.round(db * 0.8);
   state.preset = 'Custom';
+  state.eqEnabled = true;
+  if (nativePlaybackMode()) void ensureAudioProcessing();
   syncEQ();
+  syncRackAudioControls();
+  applyDspSettings();
   bassKnob?.setVal(db, false);
 }
 
@@ -1340,33 +1509,15 @@ function setAudioTreble(db) {
   state.eq[8] = Math.round(db * 0.8);
   state.eq[9] = db;
   state.preset = 'Custom';
+  state.eqEnabled = true;
+  if (nativePlaybackMode()) void ensureAudioProcessing();
   syncEQ();
+  syncRackAudioControls();
+  applyDspSettings();
   trebleKnob?.setVal(db, false);
 }
 
 function applyRuntimeCapabilities() {
-  const linuxDspControls = [
-    '#aimp-slider-echo', '#aimp-slider-reverb', '#aimp-slider-flanger', '#aimp-slider-chorus',
-    '#aimp-slider-bass', '#aimp-slider-stereo', '#aimp-slider-speed', '#aimp-slider-tempo', '#aimp-slider-pitch',
-    '#aimp-check-voice-remover', '#aimp-check-fade-pause', '#aimp-check-fade-nav',
-    '#aimp-slider-preamp', '#aimp-slider-balance', '#aimp-check-replaygain', '#aimp-slider-crossfade',
-    '#output-device', '#settings-output-device', '#preamp', '#balance', '#crossfade', '#replay-gain'
-  ];
-  const unavailableMessage = 'Tidak tersedia pada mode playback stabil Linux.';
-  if (nativeDirectPlayback) {
-    linuxDspControls.forEach(selector => {
-      const element = $(selector);
-      if (!element) return;
-      element.disabled = true;
-      element.setAttribute('aria-disabled', 'true');
-      element.title = unavailableMessage;
-    });
-    ['#eq-bands input', '#aimp-eq-grid input'].forEach(selector => $$(selector).forEach(element => {
-      element.disabled = true;
-      element.setAttribute('aria-disabled', 'true');
-      element.title = unavailableMessage;
-    }));
-  }
   ['#aimp-check-skip-silence', '#aimp-slider-silence'].forEach(selector => {
     const element = $(selector);
     if (!element) return;
@@ -1414,14 +1565,14 @@ function toggleDrawer(forceState) {
 function setupRackControls() {
   giantVolKnob = bindRotaryKnob($('#giant-master-volume'), { min: 0, max: 1, initial: state.volume, step: 0.01, angleMin: -140, angleMax: 140, onChange: setMasterVolume });
   deckVolKnob = bindRotaryKnob($('#deck-volume-knob'), { min: 0, max: 1, initial: state.volume, step: 0.01, onChange: setMasterVolume });
-  balKnob = bindRotaryKnob($('#knob-balance'), { min: -1, max: 1, initial: state.balance, step: 0.02, angleMin: -144, angleMax: 144, disabled: nativeDirectPlayback, onChange: setAudioBalance });
-  preampKnob = bindRotaryKnob($('#knob-preamp'), { min: -12, max: 12, initial: state.preamp, step: 1, angleMin: -144, angleMax: 144, disabled: nativeDirectPlayback, onChange: setAudioPreamp });
-  bassKnob = bindRotaryKnob($('#knob-bass'), { min: -12, max: 12, initial: state.eq[0], step: 1, angleMin: -144, angleMax: 144, disabled: nativeDirectPlayback, onChange: setAudioBass });
-  trebleKnob = bindRotaryKnob($('#knob-treble'), { min: -12, max: 12, initial: state.eq[9], step: 1, angleMin: -144, angleMax: 144, disabled: nativeDirectPlayback, onChange: setAudioTreble });
+  balKnob = bindRotaryKnob($('#knob-balance'), { min: -1, max: 1, initial: state.balance, step: 0.02, angleMin: -144, angleMax: 144, onChange: setAudioBalance });
+  preampKnob = bindRotaryKnob($('#knob-preamp'), { min: -12, max: 12, initial: state.preamp, step: 1, angleMin: -144, angleMax: 144, onChange: setAudioPreamp });
+  bassKnob = bindRotaryKnob($('#knob-bass'), { min: -12, max: 12, initial: state.eq[0], step: 1, angleMin: -144, angleMax: 144, onChange: setAudioBass });
+  trebleKnob = bindRotaryKnob($('#knob-treble'), { min: -12, max: 12, initial: state.eq[9], step: 1, angleMin: -144, angleMax: 144, onChange: setAudioTreble });
 
-  trueBassKnob = bindRotaryKnob($('#knob-true-bass'), { min: 0, max: 10, initial: Math.max(0, Math.min(10, state.dsp.bass / 1.2)), step: 1, angleMin: -140, angleMax: 140, disabled: nativeDirectPlayback, onChange: v => { state.dsp.bass = Math.round(v * 1.2); applyDspSettings(); syncDspUi(); persist(); } });
-  enhancerKnob = bindRotaryKnob($('#knob-enhancer'), { min: 0, max: 10, initial: state.dsp.stereo / 10, step: 1, angleMin: -140, angleMax: 140, onChange: v => { $('#knob-enhancer')?.setAttribute('aria-valuetext', `Tampilan enhancer ${v}`); persist(); } });
-  reverbKnob = bindRotaryKnob($('#knob-reverb'), { min: 0, max: 10, initial: state.dsp.reverb / 10, step: 1, angleMin: -140, angleMax: 140, disabled: nativeDirectPlayback, onChange: v => { state.dsp.reverb = Math.round(v * 10); applyDspSettings(); syncDspUi(); persist(); } });
+  trueBassKnob = bindRotaryKnob($('#knob-true-bass'), { min: 0, max: 10, initial: Math.max(0, Math.min(10, state.dsp.bass / 1.2)), step: 1, angleMin: -140, angleMax: 140, onChange: v => { state.dsp.bass = Math.round(v * 1.2); state.dspEnabled = true; if (nativePlaybackMode()) void ensureAudioProcessing(); applyDspSettings(); syncRackAudioControls(); syncDspUi(); persist(); } });
+  enhancerKnob = bindRotaryKnob($('#knob-enhancer'), { min: 0, max: 10, initial: state.dsp.stereo / 10, step: 1, angleMin: -140, angleMax: 140, onChange: v => { state.dsp.stereo = Math.round(v * 10); state.dspEnabled = true; if (nativePlaybackMode()) void ensureAudioProcessing(); applyDspSettings(); syncRackAudioControls(); $('#knob-enhancer')?.setAttribute('aria-valuetext', `Enhancer stereo ${v}`); persist(); } });
+  reverbKnob = bindRotaryKnob($('#knob-reverb'), { min: 0, max: 10, initial: state.dsp.reverb / 10, step: 1, angleMin: -140, angleMax: 140, onChange: v => { state.dsp.reverb = Math.round(v * 10); state.dspEnabled = true; if (nativePlaybackMode()) void ensureAudioProcessing(); applyDspSettings(); syncRackAudioControls(); syncDspUi(); persist(); } });
 
   const tapeButtons = $$('#btn-tape-normal, #btn-tape-cro2, #btn-tape-metal');
   const sourceRotary = $('#deck-source-rotary');
@@ -1480,7 +1631,7 @@ function setupRackControls() {
   const stopBtn = $('#stop-btn');
   if (stopBtn) {
     stopBtn.onclick = () => {
-      if (nativeDirectPlayback && state.currentId) selectTrack(state.currentId, false, 0);
+      if (nativePlaybackMode() && state.currentId) selectTrack(state.currentId, false, 0);
       else {
         audio.pause();
         audio.currentTime = 0;
@@ -1510,7 +1661,7 @@ function setupRackControls() {
   const resetBtn = $('#counter-reset-btn');
   if (resetBtn) {
     resetBtn.onclick = () => {
-      if (nativeDirectPlayback && state.currentId) selectTrack(state.currentId, !audio.paused, 0);
+      if (nativePlaybackMode() && state.currentId) selectTrack(state.currentId, !audio.paused, 0);
       else {
         audio.currentTime = 0;
         updateProgress();
@@ -1549,19 +1700,17 @@ function setupRackControls() {
 
   const dbxBadge = $('#dbx-badge');
   if (dbxBadge) {
-    if (nativeDirectPlayback) {
-      dbxBadge.disabled = true;
-      dbxBadge.title = 'Pengaturan DSP tidak tersedia pada mode playback stabil Linux';
-      dbxBadge.setAttribute('aria-disabled', 'true');
-    }
     dbxBadge.onclick = (e) => {
       e?.stopPropagation?.();
+      if (!state.dspEnabled) {
+        void ensureAudioProcessing().then(ok => { if (ok) setDspEnabled(true, true); });
+      }
       openDspDialog('general');
     };
     dbxBadge.onkeydown = (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        openDspDialog('general');
+        dbxBadge.click();
       }
     };
   }
@@ -1596,6 +1745,9 @@ function setupRackControls() {
   if (ampMute) ampMute.onclick = toggleMute;
 
   const openEQ = () => {
+    if (nativePlaybackMode()) {
+      void ensureAudioProcessing().then(ok => { if (ok) setEqEnabled(true); });
+    } else setEqEnabled(true);
     openDspDialog('equalizer');
   };
   $$('#switch-eq-dsp, #eq-toggle, #player-eq').forEach(el => {
@@ -1628,23 +1780,22 @@ function setupRackControls() {
 
   const btnDsp = $('#btn-dsp');
   if (btnDsp) {
-    if (nativeDirectPlayback) {
-      btnDsp.disabled = true;
-      btnDsp.title = 'DSP tidak tersedia pada mode playback stabil Linux';
-      btnDsp.setAttribute('aria-disabled', 'true');
-    }
     btnDsp.onclick = (e) => {
       e?.stopPropagation?.();
+      const on = !state.dspEnabled;
+      if (on) {
+        void ensureAudioProcessing().then(ok => {
+          if (ok) setDspEnabled(true, true);
+        });
+      } else {
+        setDspEnabled(false, true);
+      }
       openDspDialog('general');
     };
   }
 
   const matrixDsp = $('#matrix-lbl-dsp');
-  if (matrixDsp && nativeDirectPlayback) {
-    matrixDsp.disabled = true;
-    matrixDsp.title = 'DSP tidak tersedia pada mode playback stabil Linux';
-    matrixDsp.setAttribute('aria-disabled', 'true');
-  }
+  if (matrixDsp) matrixDsp.title = 'Buka dan aktifkan Pengaturan Audio';
 
   // Plaque legend labels click-through
   [
@@ -1674,37 +1825,25 @@ function setupRackControls() {
   const btnAmpEq = $('#btn-amp-eq');
   const btnAmpDsp = $('#btn-amp-dsp');
   if (btnAmpEq) {
-    if (nativeDirectPlayback) {
-      btnAmpEq.disabled = true;
-      btnAmpEq.title = 'EQ tidak tersedia pada mode playback stabil Linux';
-      btnAmpEq.setAttribute('aria-disabled', 'true');
-    }
-    btnAmpEq.setAttribute('aria-pressed', String(btnAmpEq.classList.contains('active')));
+    btnAmpEq.title = 'Aktifkan / bypass Equalizer 10-Band';
     btnAmpEq.onclick = (e) => {
       e.stopPropagation();
-      btnAmpEq.classList.toggle('active');
-      const on = btnAmpEq.classList.contains('active');
-      btnAmpEq.setAttribute('aria-pressed', String(on));
-      $('#lamp-equalizer')?.classList.toggle('active', on);
-      openEQ();
-      toast(on ? 'Equalizer 10-Band ON' : 'Equalizer Bypass');
+      const on = !state.eqEnabled;
+      if (on) {
+        void ensureAudioProcessing().then(ok => { if (ok) setEqEnabled(true, true); });
+      } else setEqEnabled(false, true);
+      openDspDialog('equalizer');
     };
   }
   if (btnAmpDsp) {
-    if (nativeDirectPlayback) {
-      btnAmpDsp.disabled = true;
-      btnAmpDsp.title = 'DSP tidak tersedia pada mode playback stabil Linux';
-      btnAmpDsp.setAttribute('aria-disabled', 'true');
-    }
-    btnAmpDsp.setAttribute('aria-pressed', String(btnAmpDsp.classList.contains('active')));
+    btnAmpDsp.title = 'Aktifkan / bypass DSP';
     btnAmpDsp.onclick = (e) => {
       e.stopPropagation();
-      btnAmpDsp.classList.toggle('active');
-      const on = btnAmpDsp.classList.contains('active');
-      btnAmpDsp.setAttribute('aria-pressed', String(on));
-      $('#lamp-dsp')?.classList.toggle('active', on);
+      const on = !state.dspEnabled;
+      if (on) {
+        void ensureAudioProcessing().then(ok => { if (ok) setDspEnabled(true, true); });
+      } else setDspEnabled(false, true);
       openDspDialog('general');
-      toast(on ? 'ATIGA AMP DSP Manager ON' : 'ATIGA AMP DSP Bypass');
     };
   }
 
@@ -1727,6 +1866,7 @@ function setupRackControls() {
       $('#dot-vu')?.classList.toggle('active', !isPeak);
     };
   });
+  syncRackAudioControls();
 }
 
 const playSessionBtn = $('#play-session');
@@ -1843,7 +1983,7 @@ async function removeTrack(id) {
   if (state.currentId === id) {
     pendingStartCleanup?.(); pendingStartCleanup = undefined;
     playbackToken++;
-    if (nativeDirectPlayback) resetNativePlaybackElement();
+    if (nativePlaybackMode()) resetNativePlaybackElement();
     else {
       audio.pause();
       try { audio.currentTime = 0; } catch { /* source may already be gone */ }
@@ -1944,7 +2084,7 @@ function removeDemoTracks() {
     pendingStartCleanup?.();
     pendingStartCleanup = undefined;
     playbackToken++;
-    if (nativeDirectPlayback) resetNativePlaybackElement();
+    if (nativePlaybackMode()) resetNativePlaybackElement();
     else {
       audio.pause();
       audio.removeAttribute('src');
@@ -2041,7 +2181,7 @@ function syncEQ() {
     input.value = state.eq[i];
     const gainEl = $(`#gain-${i}`);
     if (gainEl) gainEl.textContent = `${state.eq[i]>0?'+':''}${state.eq[i]}`;
-    if (filters[i]) filters[i].gain.setTargetAtTime(state.eq[i], context.currentTime,.03);
+    if (filters[i]) filters[i].gain.setTargetAtTime(state.eqEnabled ? state.eq[i] : 0, context.currentTime,.03);
   });
   const eqPresetSelect = $('#eq-preset');
   if (eqPresetSelect) eqPresetSelect.value = state.preset;
@@ -2049,8 +2189,9 @@ function syncEQ() {
   if (presetLabelEl) presetLabelEl.textContent = presetLabels[state.preset] || state.preset;
   bassKnob?.setVal(state.eq[0], false);
   trebleKnob?.setVal(state.eq[9], false);
-  const eqActive = state.eq.some(val => val !== 0);
+  const eqActive = state.eqEnabled && state.eq.some(val => val !== 0);
   $('#lamp-equalizer')?.classList.toggle('active', eqActive);
+  syncRackAudioControls();
   persist();
 }
 const eqPresetSelect = $('#eq-preset');
@@ -2541,16 +2682,14 @@ function syncDspUi() {
   if ($('#aimp-crossfade-val')) $('#aimp-crossfade-val').textContent = `${state.crossfade} s`;
   const checkGapless = $('#aimp-check-gapless');
   if (checkGapless) checkGapless.checked = Boolean(state.gapless);
+  syncRackAudioControls();
 }
 
 let dspDialogReady = false;
 function openDspDialog(tab = 'general') {
   const dialog = $('#dsp-dialog');
   if (!dialog) return;
-  if (nativeDirectPlayback) {
-    toast('EQ dan DSP tidak tersedia pada mode playback stabil Linux.');
-    return;
-  }
+  if (nativePlaybackMode()) void ensureAudioProcessing();
 
   if (!dspDialogReady) {
     setupDspDialog();
@@ -2645,12 +2784,15 @@ function setupDspDialog() {
     if (!slider) return;
     slider.dataset.key = key;
     slider.dataset.default = String(def);
-    slider.setAttribute('aria-label', key === 'stereo' ? 'Tampilan stereo meter' : key);
+    slider.setAttribute('aria-label', key === 'stereo' ? 'Stereo enhancer' : key);
 
     slider.oninput = (e) => {
       const val = Number(e.target.value);
       state.dsp[key] = val;
+      state.dspEnabled = true;
+      if (nativePlaybackMode()) void ensureAudioProcessing();
       applyDspSettings();
+      syncRackAudioControls();
       persist();
     };
 
@@ -2659,7 +2801,10 @@ function setupDspDialog() {
       e.preventDefault();
       slider.value = String(def);
       state.dsp[key] = def;
+      state.dspEnabled = true;
+      if (nativePlaybackMode()) void ensureAudioProcessing();
       applyDspSettings();
+      syncRackAudioControls();
       persist();
     };
   });
@@ -2669,7 +2814,10 @@ function setupDspDialog() {
   if (checkVoice) {
     checkVoice.onchange = (e) => {
       state.dsp.voiceRemover = e.target.checked;
+      state.dspEnabled = true;
+      if (nativePlaybackMode()) void ensureAudioProcessing();
       applyDspSettings();
+      syncRackAudioControls();
       persist();
     };
   }
@@ -2708,7 +2856,9 @@ function setupDspDialog() {
         fadePause: true,
         fadeNav: true
       };
+      state.dspEnabled = true;
       syncDspUi();
+      if (nativePlaybackMode()) void ensureAudioProcessing();
       applyDspSettings();
       persist();
       toast('Sound Effects diatur ulang ke bawaan.');
@@ -2731,11 +2881,14 @@ function setupDspDialog() {
         const idx = Number(e.target.dataset.band);
         const val = Number(e.target.value);
         state.eq[idx] = val;
+        state.eqEnabled = true;
+        if (nativePlaybackMode()) void ensureAudioProcessing();
         if (filters[idx]) filters[idx].gain.setTargetAtTime(val, context?.currentTime || 0, 0.03);
         const out = $(`#aimp-eq-val-${idx}`);
         if (out) out.textContent = val > 0 ? `+${val}` : String(val);
         const mainInput = $(`#eq-band-${idx}`);
         if (mainInput) mainInput.value = String(val);
+        syncRackAudioControls();
         persist();
       };
       input.oncontextmenu = (e) => {
@@ -2747,26 +2900,30 @@ function setupDspDialog() {
   }
 
   const aimpEqPreset = $('#aimp-eq-preset');
-      if (aimpEqPreset) {
-        aimpEqPreset.value = state.preset || 'Flat';
-        aimpEqPreset.onchange = (e) => {
-          const preset = e.target.value;
-          if (presets[preset]) state.eq = [...presets[preset]];
-          state.preset = preset;
-          syncEQ();
-          syncDspUi();
-        };
-      }
+  if (aimpEqPreset) {
+    aimpEqPreset.value = state.preset || 'Flat';
+    aimpEqPreset.onchange = (e) => {
+      const preset = e.target.value;
+      if (presets[preset]) state.eq = [...presets[preset]];
+      state.preset = preset;
+      state.eqEnabled = true;
+      if (nativePlaybackMode()) void ensureAudioProcessing();
+      syncEQ();
+      syncDspUi();
+    };
+  }
 
-      const aimpEqReset = $('#aimp-eq-reset-btn');
-      if (aimpEqReset) {
-        aimpEqReset.onclick = () => {
-          state.eq = Array(10).fill(0);
-          state.preset = 'Flat';
-          syncEQ();
-          syncDspUi();
-        };
-      }
+  const aimpEqReset = $('#aimp-eq-reset-btn');
+  if (aimpEqReset) {
+    aimpEqReset.onclick = () => {
+      state.eq = Array(10).fill(0);
+      state.preset = 'Flat';
+      state.eqEnabled = true;
+      if (nativePlaybackMode()) void ensureAudioProcessing();
+      syncEQ();
+      syncDspUi();
+    };
+  }
 
   // Subpanel: Volume in DSP Manager
   const aimpPreamp = $('#aimp-slider-preamp');
@@ -2774,6 +2931,7 @@ function setupDspDialog() {
     aimpPreamp.setAttribute('aria-label', 'Preamp');
     aimpPreamp.oninput = (e) => {
       state.preamp = Number(e.target.value);
+      if (nativePlaybackMode()) void ensureAudioProcessing();
       if ($('#aimp-preamp-val')) $('#aimp-preamp-val').textContent = `${state.preamp > 0 ? `+${state.preamp}` : state.preamp} dB`;
       applyAudioSettings();
       syncSettings();
@@ -2785,6 +2943,7 @@ function setupDspDialog() {
     aimpBalance.setAttribute('aria-label', 'Keseimbangan');
     aimpBalance.oninput = (e) => {
       state.balance = Number(e.target.value);
+      if (nativePlaybackMode()) void ensureAudioProcessing();
       if ($('#aimp-balance-val')) $('#aimp-balance-val').textContent = state.balance === 0 ? '0 (Center)' : (state.balance < 0 ? `L ${Math.abs(Math.round(state.balance * 100))}%` : `R ${Math.round(state.balance * 100)}%`);
       applyAudioSettings();
       syncSettings();

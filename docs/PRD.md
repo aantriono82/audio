@@ -23,7 +23,7 @@ Kedua pengalaman harus mudah ditemukan, mudah dipindahkan, dan mengingat pilihan
 | Pengalaman | Rack vintage dan pemutar praktis merupakan dua mode kelas utama. |
 | Kontrol | Elemen hanya boleh interaktif bila menghasilkan perubahan nyata. Kontrol yang hanya mengubah visual boleh tetap interaktif bila jelas disebut sebagai pengaturan tampilan/simulasi; elemen dekoratif tidak boleh menyamar sebagai kontrol. |
 | Pengaturan audio | EQ, DSP, mixing, dan pengaturan audio disatukan dalam satu permukaan **Pengaturan Audio** bermerek Atiga. Tombol pada rack membuka bagian yang sesuai. |
-| DSP Linux | Kontrol yang memerlukan Web Audio tetap terlihat tetapi dinonaktifkan, dengan penjelasan bahwa fitur tidak tersedia pada mode playback stabil Linux. |
+| DSP Linux | Linux memulai playback pada jalur native yang stabil. Tombol DSP/EQ dan knob audio mengaktifkan Web Audio secara eksplisit setelah tindakan pengguna; bila belum diaktifkan, efek tetap bypass dan status UI menunjukkan keadaan tersebut. |
 | Model koleksi tujuan | Musik direferensikan dari file asli dan tidak disalin otomatis ke direktori aplikasi. Perubahan ini ditargetkan untuk 0.2.0. |
 | Pemindaian folder tujuan | Mendukung beberapa folder musik dengan sinkronisasi penuh: menemukan penambahan, perubahan, penggantian nama, serta file yang hilang. |
 | Posisi playback | Menjadi preferensi pengguna; bawaan memulai lagu dari awal dan tidak pernah autoplay setelah aplikasi dibuka. |
@@ -68,7 +68,7 @@ Pengguna utama menyimpan musik di komputer Linux dan ingin mendengarkannya secar
 - Saat preferensi mati, lagu terakhir tetap dapat dipilih saat startup tetapi posisi siap-putarnya adalah `00:00`.
 - Saat preferensi hidup, lagu terakhir siap dilanjutkan dari posisi tersimpan tanpa autoplay. Memilih lagu secara eksplisit tetap memulai lagu itu dari awal.
 - Perpindahan otomatis, repeat, shuffle, dan antrean tidak boleh membawa posisi lagu sebelumnya.
-- Linux tetap memakai jalur playback yang paling stabil. Fitur yang membutuhkan Web Audio tidak boleh terlihat aktif ketika jalur tersebut dinonaktifkan.
+- Linux tetap memulai playback pada jalur yang paling stabil. Fitur Web Audio hanya terlihat aktif setelah pengguna mengaktifkan DSP/EQ atau mengubah knob audio, lalu statusnya disinkronkan dengan graph audio.
 
 ### Dua mode kelas utama
 
@@ -85,7 +85,7 @@ Pengguna utama menyimpan musik di komputer Linux dan ingin mendengarkannya secar
 - Kontrol simulasi boleh mengubah tampilan meter atau perangkat bila nama dan keterangannya secara tegas menyebut fungsi visual tersebut.
 - Kontrol yang menyiratkan efek audio tetapi hanya mengubah kulit, lampu, atau toast harus menjadi dekorasi dan keluar dari urutan fokus.
 - Elemen yang murni dekoratif tidak menerima fokus keyboard dan tidak mengumumkan diri sebagai kontrol kepada teknologi bantu.
-- Kontrol EQ/DSP yang secara teknis tidak tersedia pada Linux tetap terlihat dalam keadaan dinonaktifkan dengan penjelasan singkat mengenai mode playback stabil.
+- Kontrol EQ/DSP Linux tetap terlihat dalam keadaan bypass saat startup dan dapat diaktifkan secara eksplisit. Aplikasi menjelaskan bahwa aktivasi memindahkan sesi ke jalur Web Audio.
 - Tidak ada kontrol audio yang hanya menampilkan toast seolah-olah efek telah diterapkan.
 - Status aktif/nonaktif pada UI harus sesuai dengan state dan kemampuan audio sebenarnya.
 - Dialog EQ, pengaturan audio, dan DSP yang tumpang tindih digabung menjadi satu **Pengaturan Audio** bermerek Atiga; tombol rack membuka bagian yang relevan.
@@ -134,7 +134,6 @@ Pengguna utama menyimpan musik di komputer Linux dan ingin mendengarkannya secar
 - Mengganti koleksi dari salinan terkelola menjadi referensi file asli.
 - Sinkronisasi folder penuh.
 - Cadangan penuh yang mengemas audio.
-- Implementasi DSP baru untuk Linux.
 - Paritas fitur browser/PWA.
 - Optimalisasi khusus mobile di luar pencegahan regresi dasar.
 - Dukungan Windows, RPM, ARM, akun, cloud sync, streaming, atau telemetri.
@@ -169,8 +168,7 @@ Pengguna utama menyimpan musik di komputer Linux dan ingin mendengarkannya secar
 
 ## Backlog setelah 0.2.0
 
-- Menilai jalur DSP Linux yang tidak mengurangi stabilitas playback.
-- Mengaktifkan kembali kontrol DSP hanya setelah efeknya dapat diverifikasi pada paket Linux sasaran.
+- Memperluas verifikasi jalur DSP Linux opt-in pada paket dan distro sasaran.
 - Menilai kebutuhan PWA/mobile berdasarkan penggunaan nyata; tidak ada janji paritas sebelumnya.
 
 ## Kriteria rilis

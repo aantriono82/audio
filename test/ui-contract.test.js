@@ -18,6 +18,9 @@ test('primary UI contract keeps onboarding, compact controls, and backup entry p
     assert.match(markup, new RegExp(`id="${id}"`));
   }
   assert.match(markup, /id="dbx-badge"[^>]*>\s*<span>dbx<\/span>/s);
+  for (const id of ['btn-dsp', 'btn-amp-eq', 'btn-amp-dsp', 'knob-bass', 'knob-treble', 'knob-preamp', 'knob-balance', 'knob-true-bass', 'knob-enhancer', 'knob-reverb', 'amp-mute-switch']) {
+    assert.match(markup, new RegExp(`id="${id}"`));
+  }
   assert.doesNotMatch(markup, /role="button"/);
 });
 
@@ -47,10 +50,10 @@ test('Linux playback avoids the fragile Web Audio path and starts from zero', ()
   assert.match(appSource, /previous\.replaceWith\(replacement\)/);
   assert.match(appSource, /audio = replacement/);
   assert.match(appSource, /audio\.removeAttribute\('src'\)/);
-  assert.match(appSource, /sourceURL\(track, nativeDirectPlayback && Boolean\(track\.nativePath\)\)/);
+  assert.match(appSource, /sourceURL\(track, nativePlaybackMode\(\) && Boolean\(track\.nativePath\)\)/);
   assert.match(appSource, /const requiresSeek = startPosition > 0\.25/);
   assert.match(appSource, /if \(requiresSeek\) \{\s*try \{ audio\.currentTime = startPosition/s);
-  assert.match(appSource, /if \(nativeDirectPlayback && state\.currentId\) selectTrack\(state\.currentId, false, 0\)/);
+  assert.match(appSource, /if \(nativePlaybackMode\(\) && state\.currentId\) selectTrack\(state\.currentId, false, 0\)/);
   assert.match(appSource, /if \(automatic && state\.repeat === 2\) \{ selectTrack\(state\.currentId, true, 0\)/);
   assert.match(appSource, /audio\.addEventListener\('canplay', resetStart\)/);
   assert.match(appSource, /if \(requiresSeek\) audio\.addEventListener\('seeked', verifyStart\)/);
@@ -59,8 +62,20 @@ test('Linux playback avoids the fragile Web Audio path and starts from zero', ()
   assert.match(appSource, /readyTrackId === state\.currentId/);
   assert.match(appSource, /selectTrack\(state\.currentId, false, Number\.isFinite\(savedPosition\) \? savedPosition : 0\)/);
   assert.match(appSource, /const blob = await nativeAudioBlob\(track\.nativePath\)/);
-  assert.match(appSource, /if \(nativeDirectPlayback\) \{\s*audio\.playbackRate = 1/s);
-  assert.match(appSource, /nativeDirectPlayback \|\| !state\.crossfade/);
+  assert.match(appSource, /if \(nativePlaybackMode\(\) \|\| !state\.dspEnabled\) \{\s*audio\.playbackRate = 1/s);
+  assert.match(appSource, /nativePlaybackMode\(\) \|\| !state\.crossfade/);
+});
+
+test('rack EQ and DSP controls apply state, effect routing, and native opt-in', () => {
+  assert.match(appSource, /function syncRackAudioControls\(\)/);
+  assert.match(appSource, /function enableWebAudioProcessing\(\)/);
+  assert.match(appSource, /state\.eqEnabled = true/);
+  assert.match(appSource, /state\.dspEnabled = true/);
+  assert.match(appSource, /dspStereoSplitter = context\.createChannelSplitter\(2\)/);
+  assert.match(appSource, /dspStereoLCross\.gain\.setTargetAtTime/);
+  assert.match(appSource, /btnAmpDsp\.title = 'Aktifkan \/ bypass DSP'/);
+  assert.doesNotMatch(appSource, /btnAmpDsp\.disabled = true/);
+  assert.doesNotMatch(appSource, /EQ dan DSP tidak tersedia pada mode playback stabil Linux/);
 });
 
 test('mode, onboarding, and collection lifecycle contracts are visible', () => {
@@ -73,13 +88,14 @@ test('mode, onboarding, and collection lifecycle contracts are visible', () => {
   assert.match(appSource, /removeDemoTracks\(\)/);
   assert.match(appSource, /resumePlayback: saved\.resumePlayback === true/);
   assert.match(appSource, /legacy-audio-setting/);
-  assert.match(appSource, /#aimp-slider-speed/);
+  assert.match(appSource, /aimp-slider-speed/);
   assert.match(appSource, /#output-device/);
 });
 
 test('playback capability boundary keeps Linux direct playback explicit', () => {
   assert.match(capabilitiesSource, /nativeDirectPlayback/);
   assert.match(capabilitiesSource, /webAudioDsp/);
+  assert.match(capabilitiesSource, /webAudioDspOptIn/);
   assert.match(capabilitiesSource, /outputRouting/);
 });
 
