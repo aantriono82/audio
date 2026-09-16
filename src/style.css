@@ -3265,7 +3265,7 @@ dialog::backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
 #settings-dialog .skin-ember .skin-preview { background: linear-gradient(135deg, #32251d, #17191a); }
 #settings-dialog .skin-ember .skin-preview i { background: #e29a45; }
 #settings-dialog .skin-neon .skin-preview { background: linear-gradient(135deg, #161b30, #17151c); }
-#settings-dialog .skin-neon .skin-preview i { background: #e548ff; }
+#settings-dialog .skin-neon .skin-preview i { background: #63f5d0; }
 #settings-dialog .skin-ocean .skin-preview { background: linear-gradient(135deg, #152c3d, #101b24); }
 #settings-dialog .skin-ocean .skin-preview i { background: #45b8ff; }
 #settings-dialog .skin-violet .skin-preview { background: linear-gradient(135deg, #29203c, #17151e); }
