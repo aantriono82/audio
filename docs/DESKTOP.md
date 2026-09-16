@@ -45,6 +45,7 @@ Untuk rilis, perbarui versi di `package.json`, `package-lock.json`, `src-tauri/C
 - `settings.json`: playlist, favorit, antrean, EQ, tema, volume, posisi terakhir, dan preferensi resume; penulisan berurutan dan penggantian file atomik.
 - `library/<UUID>/`: salinan audio, `track.json`, dan cover jika tersedia. Penyalinan diselesaikan dalam direktori sementara sebelum lagu dimasukkan ke koleksi.
 - `music-folder.json`: folder terakhir yang dipilih pengguna, untuk pemindaian ulang.
+- `debug.log`: log lifecycle dan error aplikasi, dibatasi sekitar 4 MB.
 
 Pembacaan audio dibatasi ke file/folder pilihan pengguna dan salinan dalam data aplikasi. Pemindaian tidak mengikuti symlink agar tidak keluar dari folder atau berputar tanpa henti. Impor membaca satu file per giliran; pembatalan selesai setelah file aktif diproses. Pemindaian direktori berjalan sebelum tahap impor dan belum memiliki pembatalan tersendiri. Pada Linux desktop, elemen audio memutar salinan dari data aplikasi melalui Blob URL yang diambil secara asynchronous dari asset protocol; hanya track aktif yang dipertahankan dan metadata impor tetap dibaca sesuai kebutuhan. Cover tersimpan dilayani melalui asset protocol Tauri.
 

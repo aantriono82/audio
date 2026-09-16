@@ -16,6 +16,12 @@ Buka URL Vite yang tercetak di terminal (bawaan http://127.0.0.1:5174) untuk pen
 
 Penyimpanan browser terpisah per origin, termasuk port. Gunakan kembali port sebelumnya untuk mengakses koleksi impor dan pengaturan yang tersimpan pada port tersebut.
 
+## Debugging
+
+Log dasar sudah aktif sejak aplikasi dibuka. Untuk diagnosis developer di browser, buka URL memakai `?debug=1` sebelum mereproduksi masalah atau set localStorage `atiga-debug-verbose` ke `1` lalu reload; event tersimpan pada localStorage dengan key `atiga-debug-log`. Pada desktop, baca atau salin `debug.log` dari direktori data aplikasi.
+
+Pada desktop Tauri Linux, event ditulis otomatis ke `${XDG_DATA_HOME:-$HOME/.local/share}/com.atiga.amp/debug.log`. Isi log dibatasi sekitar 4 MB. Log hanya berisi lifecycle, error, status playback, serta nama dan metadata dasar file; isi audio tidak dicatat dan tidak ada pengunggahan data.
+
 ## Fitur
 
 - Enam audio demo instrumental asli untuk preview onboarding, dibangkitkan di perangkat tanpa unduhan rekaman.

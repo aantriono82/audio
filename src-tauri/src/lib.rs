@@ -1,10 +1,12 @@
 mod storage;
 
 use serde_json::{json, Value};
-use std::{fs, path::PathBuf};
+use std::{fs, fs::OpenOptions, io::Write, path::PathBuf};
 use storage::Result;
 use tauri::{DragDropEvent, Manager, WindowEvent};
 use tauri_plugin_dialog::DialogExt;
+
+const MAX_DEBUG_LOG_BYTES: u64 = 4 * 1024 * 1024;
 
 fn data_root(app: &tauri::AppHandle) -> Result<PathBuf> {
     app.path().app_data_dir().map_err(|e| e.to_string())
@@ -189,6 +191,53 @@ async fn save_player_settings(app: tauri::AppHandle, settings: Value) -> Result<
     .await
 }
 
+#[tauri::command]
+async fn append_debug_log(app: tauri::AppHandle, line: String) -> Result<()> {
+    blocking(move || {
+        let path = data_root(&app)?.join("debug.log");
+        if let Ok(metadata) = fs::metadata(&path) {
+            if metadata.len() >= MAX_DEBUG_LOG_BYTES {
+                storage::atomic_write(&path, b"--- Atiga Amp debug log rotated ---\n")?;
+            }
+        }
+        let parent = path.parent().ok_or("Invalid debug log path")?;
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+            .map_err(|e| e.to_string())?;
+        writeln!(file, "{line}").map_err(|e| e.to_string())
+    })
+    .await
+}
+
+#[tauri::command]
+async fn read_debug_log(app: tauri::AppHandle) -> Result<String> {
+    blocking(move || {
+        let path = data_root(&app)?.join("debug.log");
+        match fs::read_to_string(path) {
+            Ok(content) => Ok(content),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
+            Err(error) => Err(error.to_string()),
+        }
+    })
+    .await
+}
+
+#[tauri::command]
+async fn clear_debug_log(app: tauri::AppHandle) -> Result<()> {
+    blocking(move || {
+        let path = data_root(&app)?.join("debug.log");
+        match fs::remove_file(path) {
+            Ok(()) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(error.to_string()),
+        }
+    })
+    .await
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -221,7 +270,10 @@ pub fn run() {
             load_audio_library,
             remove_audio_track,
             load_player_settings,
-            save_player_settings
+            save_player_settings,
+            append_debug_log,
+            read_debug_log,
+            clear_debug_log
         ])
         .run(tauri::generate_context!())
         .expect("error while running Atiga Amp");

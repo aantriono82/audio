@@ -11,11 +11,13 @@ import '@fontsource/space-mono/latin-400.css';
 import '@fontsource/space-mono/latin-700.css';
 import './style.css';
 import { App } from './react/App';
+import { captureError, initDebugLogging } from './debug-log.js';
 
+initDebugLogging({ desktop: isTauri() });
 const root = document.getElementById('root');
 if (!root) throw new Error('Elemen root React tidak ditemukan.');
 createRoot(root).render(<App />);
 
 if (import.meta.env.PROD && !isTauri() && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => { void navigator.serviceWorker.register('/sw.js').catch(console.error); });
+  window.addEventListener('load', () => { void navigator.serviceWorker.register('/sw.js').catch(error => captureError('service_worker.register_failed', error)); });
 }

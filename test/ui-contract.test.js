@@ -9,6 +9,7 @@ const markup = await readFile(path.join(root, 'src/react/playerMarkup.ts'), 'utf
 const index = await readFile(path.join(root, 'index.html'), 'utf8');
 const manifest = await readFile(path.join(root, 'public/manifest.webmanifest'), 'utf8');
 const appSource = await readFile(path.join(root, 'src/app.js'), 'utf8');
+const mainSource = await readFile(path.join(root, 'src/main.tsx'), 'utf8');
 const desktopSource = await readFile(path.join(root, 'src/desktop.js'), 'utf8');
 const nativeSource = await readFile(path.join(root, 'src-tauri/src/lib.rs'), 'utf8');
 const capabilitiesSource = await readFile(path.join(root, 'src/capabilities.js'), 'utf8');
@@ -22,6 +23,10 @@ test('primary UI contract keeps onboarding, compact controls, and backup entry p
     assert.match(markup, new RegExp(`id="${id}"`));
   }
   assert.doesNotMatch(markup, /role="button"/);
+  assert.match(mainSource, /initDebugLogging/);
+  assert.doesNotMatch(appSource, /toggle-debug-logging|export-debug-log|clear-debug-log|Diagnostik/);
+  assert.match(nativeSource, /append_debug_log/);
+  assert.match(nativeSource, /read_debug_log/);
 });
 
 test('offline app contract includes a manifest and service worker registration', () => {
