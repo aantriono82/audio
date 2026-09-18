@@ -173,6 +173,11 @@ async fn remove_audio_track(app: tauri::AppHandle, id: String) -> Result<()> {
 }
 
 #[tauri::command]
+async fn clear_audio_library(app: tauri::AppHandle) -> Result<()> {
+    blocking(move || storage::clear_tracks(&data_root(&app)?)).await
+}
+
+#[tauri::command]
 async fn load_player_settings(app: tauri::AppHandle) -> Result<Value> {
     blocking(move || storage::read_json(&data_root(&app)?.join("settings.json"))).await
 }
@@ -269,6 +274,7 @@ pub fn run() {
             save_audio_track,
             load_audio_library,
             remove_audio_track,
+            clear_audio_library,
             load_player_settings,
             save_player_settings,
             append_debug_log,

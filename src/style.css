@@ -4308,16 +4308,17 @@ dialog.aimp-dsp-dialog::backdrop {
 
 /* Compact playlist toolbar */
 .playlist-deck-tools {
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
-.pl-search-box { width: clamp(180px, 20vw, 250px); }
-.pl-view-select { min-width: 118px; }
-.pl-tool-btn { min-width: 32px; min-height: 30px; }
+.pl-search-box { width: clamp(140px, 16vw, 210px); }
+.pl-view-select { min-width: 110px; }
+.pl-tool-btn { min-width: 30px; min-height: 28px; }
 .playlist-action {
-  min-height: 30px;
-  padding: 5px 8px;
+  min-height: 28px;
+  padding: 4px 7px;
+  font-size: 12px;
   border: 1px solid rgba(40, 37, 30, 0.25);
   border-radius: 4px;
   color: #5f5b52;
@@ -5731,16 +5732,17 @@ dialog.aimp-dsp-dialog.equalizer-active {
   pointer-events: none;
 }
 
-/* Range input: exact 18px width matching the thumb to prevent any horizontal offset */
+/* Range input: rotated -90deg so it renders and travels vertically across all engines (WebKitGTK, Chromium, Firefox) */
 .aimp-eq-slider-band input[type="range"] {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  top: 50%;
   z-index: 2;
-  writing-mode: vertical-lr;
-  direction: rtl;
+  transform: translate(-50%, -50%) rotate(-90deg);
   appearance: none;
   -webkit-appearance: none;
-  width: 18px;
-  height: 130px;
+  width: 130px;
+  height: 24px;
   margin: 0;
   padding: 0;
   border: 0;
@@ -5751,28 +5753,29 @@ dialog.aimp-dsp-dialog.equalizer-active {
 }
 
 .aimp-eq-slider-band input[type="range"]::-webkit-slider-runnable-track {
-  width: 18px;
-  height: 130px;
+  width: 130px;
+  height: 24px;
   background: transparent;
   border: 0;
 }
 .aimp-eq-slider-band input[type="range"]::-moz-range-track {
-  width: 18px;
-  height: 130px;
+  width: 130px;
+  height: 24px;
   background: transparent;
   border: 0;
 }
 
 /* Polished studio console fader thumb with distinct center indicator hairline */
+/* Note: rotated -90deg, so thumb width along the track (screen height) is 12px, thumb height across the track (screen width) is 18px */
 .aimp-eq-slider-band input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   -webkit-appearance: none;
-  width: 18px;
-  height: 12px;
+  width: 12px;
+  height: 18px;
   border-radius: 2px;
   background:
-    linear-gradient(to bottom, transparent 5px, #0284c7 5px 7px, transparent 7px),
-    linear-gradient(180deg, #ffffff 0%, #e2e8f0 30%, #94a3b8 70%, #64748b 100%);
+    linear-gradient(to right, transparent 5px, #0284c7 5px 7px, transparent 7px),
+    linear-gradient(90deg, #64748b 0%, #94a3b8 30%, #e2e8f0 70%, #ffffff 100%);
   border: 1px solid #475569;
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.35),
@@ -5784,12 +5787,12 @@ dialog.aimp-dsp-dialog.equalizer-active {
 }
 
 .aimp-eq-slider-band input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 12px;
+  width: 12px;
+  height: 18px;
   border-radius: 2px;
   background:
-    linear-gradient(to bottom, transparent 5px, #0284c7 5px 7px, transparent 7px),
-    linear-gradient(180deg, #ffffff 0%, #e2e8f0 30%, #94a3b8 70%, #64748b 100%);
+    linear-gradient(to right, transparent 5px, #0284c7 5px 7px, transparent 7px),
+    linear-gradient(90deg, #64748b 0%, #94a3b8 30%, #e2e8f0 70%, #ffffff 100%);
   border: 1px solid #475569;
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.35),
@@ -5954,14 +5957,15 @@ dialog.aimp-dsp-dialog.equalizer-active {
 }
 
 .aimp-eq-master-fader input[type="range"] {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  top: 50%;
   z-index: 2;
-  writing-mode: vertical-lr;
-  direction: rtl;
+  transform: translate(-50%, -50%) rotate(-90deg);
   appearance: none;
   -webkit-appearance: none;
-  width: 18px;
-  height: 130px;
+  width: 130px;
+  height: 24px;
   margin: 0;
   padding: 0;
   border: 0;
@@ -5972,28 +5976,29 @@ dialog.aimp-dsp-dialog.equalizer-active {
 }
 
 .aimp-eq-master-fader input[type="range"]::-webkit-slider-runnable-track {
-  width: 18px;
-  height: 130px;
+  width: 130px;
+  height: 24px;
   background: transparent;
   border: 0;
 }
 .aimp-eq-master-fader input[type="range"]::-moz-range-track {
-  width: 18px;
-  height: 130px;
+  width: 130px;
+  height: 24px;
   background: transparent;
   border: 0;
 }
 
 /* Master Preamp Accent Blue Thumb with White Center Hairline */
+/* Note: rotated -90deg, so thumb width along the track (screen height) is 12px, thumb height across the track (screen width) is 18px */
 .aimp-eq-master-fader input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   -webkit-appearance: none;
-  width: 18px;
-  height: 12px;
+  width: 12px;
+  height: 18px;
   border-radius: 2px;
   background:
-    linear-gradient(to bottom, transparent 5px, #ffffff 5px 7px, transparent 7px),
-    linear-gradient(180deg, #38bdf8 0%, #0284c7 55%, #0369a1 100%);
+    linear-gradient(to right, transparent 5px, #ffffff 5px 7px, transparent 7px),
+    linear-gradient(90deg, #0369a1 0%, #0284c7 45%, #38bdf8 100%);
   border: 1px solid #075985;
   box-shadow:
     0 2px 5px rgba(2, 132, 199, 0.45),
@@ -6003,12 +6008,12 @@ dialog.aimp-dsp-dialog.equalizer-active {
 }
 
 .aimp-eq-master-fader input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 12px;
+  width: 12px;
+  height: 18px;
   border-radius: 2px;
   background:
-    linear-gradient(to bottom, transparent 5px, #ffffff 5px 7px, transparent 7px),
-    linear-gradient(180deg, #38bdf8 0%, #0284c7 55%, #0369a1 100%);
+    linear-gradient(to right, transparent 5px, #ffffff 5px 7px, transparent 7px),
+    linear-gradient(90deg, #0369a1 0%, #0284c7 45%, #38bdf8 100%);
   border: 1px solid #075985;
   box-shadow:
     0 2px 5px rgba(2, 132, 199, 0.45),

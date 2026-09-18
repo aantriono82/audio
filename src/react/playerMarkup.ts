@@ -89,7 +89,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
                   <div class="strip-lines"></div>
                   <div class="strip-meta">
                     <span>STEREO</span>
-                    <span class="cassette-active-title" id="cassette-current-title">Amber Skies</span>
+                    <span class="cassette-active-title" id="cassette-current-title">NO TAPE LOADED</span>
                     <span>NOISE RED.</span>
                     <span>NO.</span>
                   </div>
@@ -821,7 +821,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
         <div class="playlist-deck-tabs">
           <button type="button" class="pl-tab-btn active" id="track-tab">
             <span>Daftar lagu</span>
-            <span class="pl-tab-badge" id="track-count">6</span>
+            <span class="pl-tab-badge" id="track-count">0</span>
           </button>
           <button type="button" class="pl-tab-btn" id="queue-tab">
             <span>Antrean</span>
@@ -853,6 +853,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           <button type="button" class="text-button playlist-action" id="new-playlist-visible">Playlist +</button>
           <button type="button" class="text-button playlist-action" id="rename-playlist" disabled>Ubah nama</button>
           <button type="button" class="text-button playlist-action danger" id="delete-playlist" disabled>Hapus playlist</button>
+          <button type="button" class="text-button playlist-action danger" id="clear-all-tracks" disabled title="Hapus seluruh lagu dari koleksi">Hapus semua lagu</button>
         </div>
       </div>
 
@@ -881,7 +882,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
       <!-- Footer Info and Drop Prompt -->
       <div class="playlist-deck-footer">
         <div class="pl-footer-left">
-          <span id="library-total">6 lagu · 18 menit</span>
+          <span id="library-total">0 lagu · 0 menit</span>
         </div>
         <div class="pl-footer-center">
           <button type="button" class="pl-drop-prompt" id="import-prompt" title="Tarik atau klik untuk memuat file audio">
@@ -938,8 +939,8 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
     <div class="player-track">
       <div class="mini-art" id="player-art" data-art="0"><span>AA</span></div>
       <div>
-        <strong id="player-title">Amber Skies</strong>
-        <span id="player-artist">Atiga Sessions</span>
+        <strong id="player-title">Belum ada lagu</strong>
+        <span id="player-artist">Tambahkan musik untuk mulai mendengarkan</span>
       </div>
       <button class="icon-button" id="player-favorite" aria-label="Favorit"></button>
     </div>

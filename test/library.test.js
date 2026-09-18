@@ -114,3 +114,23 @@ test('demo catalog contains six playable local previews', () => {
   assert.ok(demoTracks.every(track => track.demo && track.format === 'WAV' && track.duration > 0));
   assert.equal(new Set(demoTracks.map(track => track.id)).size, demoTracks.length);
 });
+
+test('clearing tracks state purges collection, resets playlists, queue, and favorites', () => {
+  const state = fixture({
+    tracks: [{ id: 'a', title: 'Song' }],
+    favorites: new Set(['a']),
+    queue: ['a'],
+    recent: ['a'],
+    playlists: [{ id: 'p1', ids: ['a'] }],
+  });
+  state.tracks = [];
+  state.playlists.forEach(p => { p.ids = []; });
+  state.queue = [];
+  state.favorites.clear();
+  state.recent = [];
+  assert.equal(baseTracks(state).length, 0);
+  assert.equal(visibleTracks(state).length, 0);
+  assert.equal(state.playlists[0].ids.length, 0);
+  assert.equal(state.favorites.size, 0);
+  assert.equal(state.queue.length, 0);
+});

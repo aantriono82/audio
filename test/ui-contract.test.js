@@ -89,13 +89,15 @@ test('rack EQ and DSP controls apply state, effect routing, and native opt-in', 
 });
 
 test('mode, onboarding, and collection lifecycle contracts are visible', () => {
-  for (const id of ['mode-rack', 'mode-collection', 'welcome-resume', 'welcome-finish', 'new-playlist-visible', 'rename-playlist', 'delete-playlist', 'import-summary']) {
+  for (const id of ['mode-rack', 'mode-collection', 'welcome-resume', 'welcome-finish', 'new-playlist-visible', 'rename-playlist', 'delete-playlist', 'clear-all-tracks', 'import-summary']) {
     assert.match(markup, new RegExp(`id="${id}"`));
   }
   assert.match(markup, /name="welcome-mode"/);
   assert.doesNotMatch(markup, /<dialog id="eq-dialog"/);
   assert.match(markup, /id="dsp-dialog"[\s\S]*Pengaturan Audio/);
   assert.match(appSource, /removeDemoTracks\(\)/);
+  assert.match(appSource, /async function clearAllTracks\(\)/);
+  assert.match(nativeSource, /clear_audio_library/);
   assert.match(appSource, /resumePlayback: saved\.resumePlayback === true/);
   assert.match(appSource, /legacy-audio-setting/);
   assert.match(appSource, /aimp-slider-speed/);

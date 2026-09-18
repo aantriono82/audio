@@ -1,6 +1,6 @@
-import { esc, formatTime, demoBlob, demoTracks, baseTracks, visibleTracks, queueIndexAtVisibleIndex } from './library.js';
+import { esc, formatTime, demoBlob, baseTracks, visibleTracks, queueIndexAtVisibleIndex } from './library.js';
 import { isAudioFile, metadataFromFilename, readEmbeddedMetadata } from './import.js';
-import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, nativeAudioBlob, saveNativeTrack, removeNativeTrack, nativeURL } from './desktop.js';
+import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, nativeAudioBlob, saveNativeTrack, removeNativeTrack, clearNativeLibrary, nativeURL } from './desktop.js';
 import { playbackCapabilities } from './capabilities.js';
 import { captureError, isVerboseLoggingEnabled, log } from './debug-log.js';
 
@@ -438,7 +438,7 @@ const normalizeEq = values => {
   return normalized.length === 10 ? normalized.flatMap(value => [value, value]) : normalized;
 };
 const state = {
-  tracks: [...demoTracks], favorites: new Set(Array.isArray(saved.favorites) ? saved.favorites : []),
+  tracks: [], favorites: new Set(Array.isArray(saved.favorites) ? saved.favorites : []),
   playlists: Array.isArray(saved.playlists) ? saved.playlists.filter(p => p && typeof p.name === 'string' && Array.isArray(p.ids)) : [],
   recent: Array.isArray(saved.recent) ? saved.recent : [], currentId: saved.currentId || null, queue: Array.isArray(saved.queue) ? saved.queue : [], positions: savedPositions,
   view: 'all', queueView: false, search: '', sortAsc: false, shuffle: Boolean(saved.shuffle), repeat: [0,1,2].includes(saved.repeat) ? saved.repeat : 0,
@@ -1051,6 +1051,8 @@ function renderNav() {
   const deletePlaylist = $('#delete-playlist');
   if (renamePlaylist) renamePlaylist.disabled = !selectedPlaylist;
   if (deletePlaylist) deletePlaylist.disabled = !selectedPlaylist;
+  const clearAllTracksBtn = $('#clear-all-tracks');
+  if (clearAllTracksBtn) clearAllTracksBtn.disabled = state.tracks.length === 0;
 }
 function nextTrack() {
   if (state.queue.length) return findTrack(state.queue[0]);
@@ -2000,6 +2002,7 @@ function showTrackOptions(id, index) {
     const playlist = state.playlists.find(p => p.id === state.view);
     if (playlist && !state.queueView) addOption('Hapus dari daftar putar ini', () => playlist.ids = playlist.ids.filter(item => item !== id), true, 'close');
     addOption('Hapus lagu dari koleksi', () => removeTrack(id), true, 'close');
+    addOption('Hapus seluruh lagu dari koleksi', () => clearAllTracks(), true, 'close');
     if (state.playlists.length) {
       const playlistHeading = document.createElement('div'); playlistHeading.className = 'option-section-label playlist-option-heading'; playlistHeading.textContent = 'TAMBAHKAN KE DAFTAR PUTAR'; target.append(playlistHeading);
       state.playlists.forEach(p => addOption(p.name, () => { if (!p.ids.includes(id)) { p.ids.push(id); toast(`Ditambahkan ke ${p.name}.`); } else toast('Lagu sudah ada di daftar putar ini.'); }, false, 'music'));
@@ -2038,6 +2041,80 @@ async function removeTrack(id) {
   delete state.playCounts[id];
   render(); persist();
   toast(`“${track.title}” dihapus dari koleksi.`);
+}
+async function clearAllTracks() {
+  const count = state.tracks.length;
+  if (!count) {
+    toast('Koleksi sudah kosong.');
+    return;
+  }
+  const consequence = desktop
+    ? 'Salinan audio di data aplikasi akan dihapus; file asal tidak diubah.'
+    : 'File asal di perangkat tidak diubah.';
+  if (!window.confirm(`Hapus seluruh ${count} lagu dari koleksi? ${consequence}`)) return;
+
+  try {
+    if (desktop) {
+      try {
+        await clearNativeLibrary();
+      } catch (err) {
+        captureError('library.clear_native_failed', err);
+        const nativeRemovals = state.tracks
+          .filter(track => track.nativePath)
+          .map(track => removeNativeTrack(track.id));
+        if (nativeRemovals.length) await Promise.allSettled(nativeRemovals);
+      }
+    }
+    if (db) {
+      try {
+        await dbAction('readwrite', store => store.clear());
+      } catch (error) {
+        captureError('library.clear_all_failed', error);
+      }
+    }
+  } catch (error) {
+    captureError('library.clear_all_failed', error);
+  }
+
+  pendingStartCleanup?.();
+  pendingStartCleanup = undefined;
+  playbackToken++;
+  if (nativePlaybackMode()) {
+    resetNativePlaybackElement();
+  } else {
+    audio.pause();
+    try { audio.currentTime = 0; } catch { /* source may already be gone */ }
+    audio.removeAttribute('src');
+    audio.load();
+  }
+  loadedId = null;
+  readyTrackId = null;
+  state.currentId = null;
+
+  state.tracks.forEach(track => {
+    releaseTrackURL(track.id);
+    const artUrl = artUrls.get(track.id);
+    if (artUrl) {
+      URL.revokeObjectURL(artUrl);
+      artUrls.delete(track.id);
+    }
+  });
+
+  state.tracks = [];
+  state.playlists.forEach(playlist => { playlist.ids = []; });
+  state.queue = [];
+  state.favorites.clear();
+  state.recent = [];
+  state.playCounts = {};
+  state.positions = {};
+
+  if ('mediaSession' in navigator && 'MediaMetadata' in window) {
+    try { navigator.mediaSession.metadata = null; } catch { /* ignore */ }
+  }
+
+  render();
+  persist();
+  toast(`Seluruh ${count} lagu berhasil dihapus dari koleksi.`);
 }
 let draggedId, draggedIndex;
 $('#tracks')?.addEventListener('dragstart', event => { const tr = event.target.closest('[data-id]'); if (!tr) return; draggedId = tr.dataset.id; draggedIndex = Number(tr.dataset.index); event.dataTransfer.setData('text/plain', draggedId); event.dataTransfer.effectAllowed = 'move'; tr.classList.add('dragging'); });
@@ -2081,6 +2158,12 @@ if (deletePlaylistBtn) {
     render();
     persist();
     toast('Daftar putar dihapus. Lagu tetap berada di koleksi.');
+  };
+}
+const clearAllTracksBtn = $('#clear-all-tracks');
+if (clearAllTracksBtn) {
+  clearAllTracksBtn.onclick = () => {
+    void clearAllTracks();
   };
 }
 const closePlaylistBtn = $('#close-playlist');
@@ -2775,6 +2858,7 @@ function bindAimpVerticalSlider(track, input) {
       }
       activePointerId = null;
     }
+    track.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointerup', stopDragging);
     window.removeEventListener('pointercancel', stopDragging);
@@ -2811,6 +2895,7 @@ function bindAimpVerticalSlider(track, input) {
       // Some older WebKitGTK builds can reject focus on a hidden range track.
     }
     updateFromPointer(clientY);
+    track.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', stopDragging);
     window.addEventListener('pointercancel', stopDragging);
@@ -3328,7 +3413,7 @@ async function init() {
       toast(`Pengaturan tidak dapat dibaca; file dipertahankan: ${error}`);
     }
   }
-  if (state.onboarded) removeDemoTracks();
+  removeDemoTracks();
   addAdvancedUI(); applyTheme(); applyPanelOrder(); applyViewMode();
   setupRackControls();
   applyRuntimeCapabilities();
@@ -3351,7 +3436,7 @@ async function init() {
       if (directory?.handle && (await directory.handle.queryPermission({ mode: 'read' })) === 'granted') await importFiles(await filesFromDirectory(directory.handle));
     }
   } catch (error) { captureError('library.browser_storage_load_failed', error); if (!desktop) toast('Penyimpanan lokal tidak tersedia. Musik impor hanya tersimpan untuk sesi ini.'); }
-  if (state.onboarded) removeDemoTracks();
+  removeDemoTracks();
   state.playlists.forEach(playlist => { playlist.ids = playlist.ids.filter(findTrack); });
   if (!findTrack(state.currentId)) state.currentId = null;
   state.queue = state.queue.filter(findTrack); state.recent = state.recent.filter(findTrack);

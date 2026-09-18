@@ -9,6 +9,7 @@ export const selectNativeAudio = folder => invoke('select_audio', { folder });
 export const scanNativePaths = paths => invoke('scan_audio_paths', { paths });
 export const rescanNativeFolder = () => invoke('rescan_audio_folder');
 export const removeNativeTrack = id => invoke('remove_audio_track', { id });
+export const clearNativeLibrary = () => invoke('clear_audio_library');
 export const nativeURL = path => convertFileSrc(path);
 
 function audioType(name) {

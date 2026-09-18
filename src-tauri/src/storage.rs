@@ -192,6 +192,14 @@ pub fn load_tracks(root: &Path) -> Result<Value> {
     Ok(serde_json::json!({ "tracks": tracks, "skipped": skipped }))
 }
 
+pub fn clear_tracks(root: &Path) -> Result<()> {
+    let library = root.join("library");
+    if library.exists() {
+        fs::remove_dir_all(&library).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -218,6 +226,30 @@ mod tests {
             b"audio fixture"
         );
         assert_eq!(loaded["skipped"], 0);
+    }
+
+    #[test]
+    fn clear_tracks_removes_all_imported_tracks() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("song.mp3");
+        fs::write(&source, b"mp3").unwrap();
+        let data = temp.path().join("data");
+        save_track(&data, &source, serde_json::json!({"id": ID}), &[]).unwrap();
+        assert_eq!(
+            load_tracks(&data).unwrap()["tracks"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        clear_tracks(&data).unwrap();
+        assert_eq!(
+            load_tracks(&data).unwrap()["tracks"]
+                .as_array()
+                .unwrap()
+                .len(),
+            0
+        );
     }
 
     #[test]
