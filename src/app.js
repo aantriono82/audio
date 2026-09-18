@@ -2734,6 +2734,50 @@ function syncAimpEqGraph() {
   }
 }
 
+function bindAimpVerticalSlider(track, input) {
+  if (!track || !input) return;
+
+  let dragging = false;
+  const min = Number(input.min) || 0;
+  const max = Number(input.max) || 100;
+  const step = Number(input.step) || 1;
+
+  const updateFromPointer = clientY => {
+    const rect = input.getBoundingClientRect();
+    if (!rect.height) return;
+    const ratio = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    const rawValue = max - ratio * (max - min);
+    const value = Math.max(min, Math.min(max, Math.round((rawValue - min) / step) * step + min));
+    if (String(value) === input.value) return;
+    input.value = String(value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+
+  const stopDragging = () => {
+    if (!dragging) return;
+    dragging = false;
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', stopDragging);
+    window.removeEventListener('pointercancel', stopDragging);
+  };
+  const onPointerMove = event => {
+    if (dragging) updateFromPointer(event.clientY);
+  };
+
+  track.addEventListener('pointerdown', event => {
+    if (event.button !== undefined && event.button !== 0) return;
+    event.preventDefault();
+    dragging = true;
+    input.focus({ preventScroll: true });
+    updateFromPointer(event.clientY);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', stopDragging);
+    window.addEventListener('pointercancel', stopDragging);
+  });
+  track.addEventListener('pointerup', stopDragging);
+  track.addEventListener('pointercancel', stopDragging);
+}
+
 function syncDspUi() {
   const setVal = (id, val) => {
     const el = $(`#${id}`);
@@ -3015,6 +3059,7 @@ function setupDspDialog() {
         const idx = Number(e.target.dataset.band);
         const val = Number(e.target.value);
         state.eq[idx] = val;
+        state.preset = 'Custom';
         state.eqEnabled = true;
         if (nativePlaybackMode()) void ensureAudioProcessing();
         if (filters[idx]) filters[idx].gain.setTargetAtTime(val, context?.currentTime || 0, 0.03);
@@ -3026,6 +3071,7 @@ function setupDspDialog() {
         syncRackAudioControls();
         persist();
       };
+      bindAimpVerticalSlider(input.closest('.aimp-eq-fader'), input);
       input.oncontextmenu = (e) => {
         e.preventDefault();
         input.value = '0';
@@ -3045,6 +3091,7 @@ function setupDspDialog() {
       if (masterVal) masterVal.textContent = `${state.preamp > 0 ? `+${state.preamp}` : state.preamp} dB`;
       syncDspUi();
     };
+    bindAimpVerticalSlider(aimpEqMaster.closest('.aimp-eq-master-fader'), aimpEqMaster);
     aimpEqMaster.oncontextmenu = (e) => {
       e.preventDefault();
       aimpEqMaster.value = '0';
