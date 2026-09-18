@@ -2753,29 +2753,70 @@ function bindAimpVerticalSlider(track, input) {
     input.dispatchEvent(new Event('input', { bubbles: true }));
   };
 
+  const clientYFromEvent = event => {
+    if (Number.isFinite(event.clientY)) return event.clientY;
+    const touch = event.touches?.[0] || event.changedTouches?.[0];
+    return touch && Number.isFinite(touch.clientY) ? touch.clientY : null;
+  };
+
   const stopDragging = () => {
     if (!dragging) return;
     dragging = false;
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointerup', stopDragging);
     window.removeEventListener('pointercancel', stopDragging);
-  };
-  const onPointerMove = event => {
-    if (dragging) updateFromPointer(event.clientY);
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', stopDragging);
+    window.removeEventListener('touchmove', onTouchMove);
+    window.removeEventListener('touchend', stopDragging);
+    window.removeEventListener('touchcancel', stopDragging);
   };
 
-  track.addEventListener('pointerdown', event => {
-    if (event.button !== undefined && event.button !== 0) return;
+  const startDragging = event => {
+    if (dragging) return;
+    if (event.type === 'mousedown' && event.button !== 0) return;
+    const clientY = clientYFromEvent(event);
+    if (clientY === null) return;
+
+    // WebKitGTK versions used by Linux packages may not dispatch pointer
+    // events for a custom vertical range input. Keep the native input as the
+    // source of truth, but provide mouse/touch handling for that runtime.
     event.preventDefault();
     dragging = true;
-    input.focus({ preventScroll: true });
-    updateFromPointer(event.clientY);
+    try {
+      input.focus();
+    } catch {
+      // Some older WebKitGTK builds can reject focus on a hidden range track.
+    }
+    updateFromPointer(clientY);
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', stopDragging);
     window.addEventListener('pointercancel', stopDragging);
-  });
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', stopDragging);
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', stopDragging);
+    window.addEventListener('touchcancel', stopDragging);
+  };
+
+  const onPointerMove = event => {
+    if (!dragging) return;
+    const clientY = clientYFromEvent(event);
+    if (clientY === null) return;
+    event.preventDefault();
+    updateFromPointer(clientY);
+  };
+  const onMouseMove = onPointerMove;
+  const onTouchMove = onPointerMove;
+
+  track.addEventListener('pointerdown', startDragging);
+  track.addEventListener('mousedown', startDragging);
+  track.addEventListener('touchstart', startDragging, { passive: false });
   track.addEventListener('pointerup', stopDragging);
   track.addEventListener('pointercancel', stopDragging);
+  track.addEventListener('mouseup', stopDragging);
+  track.addEventListener('touchend', stopDragging);
+  track.addEventListener('touchcancel', stopDragging);
 }
 
 function syncDspUi() {

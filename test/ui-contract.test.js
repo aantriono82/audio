@@ -81,6 +81,10 @@ test('rack EQ and DSP controls apply state, effect routing, and native opt-in', 
   assert.match(appSource, /btnAmpDsp\.title = 'Aktifkan \/ bypass DSP'/);
   assert.doesNotMatch(appSource, /btnAmpDsp\.disabled = true/);
   assert.doesNotMatch(appSource, /EQ dan DSP tidak tersedia pada mode playback stabil Linux/);
+  assert.match(appSource, /function bindAimpVerticalSlider\(track, input\)/);
+  assert.match(appSource, /track\.addEventListener\('mousedown', startDragging\)/);
+  assert.match(appSource, /track\.addEventListener\('touchstart', startDragging/);
+  assert.match(appSource, /window\.addEventListener\('mousemove', onMouseMove\)/);
 });
 
 test('mode, onboarding, and collection lifecycle contracts are visible', () => {
