@@ -5747,6 +5747,7 @@ dialog.aimp-dsp-dialog.equalizer-active {
   outline: 0;
   background: transparent;
   cursor: pointer;
+  pointer-events: none;
 }
 
 .aimp-eq-slider-band input[type="range"]::-webkit-slider-runnable-track {
@@ -5797,7 +5798,18 @@ dialog.aimp-dsp-dialog.equalizer-active {
   cursor: pointer;
 }
 
-.aimp-eq-slider-band input[type="range"]:hover::-webkit-slider-thumb {
+.aimp-eq-slider-band input[type="range"]:hover::-webkit-slider-thumb,
+.aimp-eq-slider-band:hover input[type="range"]::-webkit-slider-thumb,
+.aimp-eq-fader.is-dragging input[type="range"]::-webkit-slider-thumb {
+  border-color: #0284c7;
+  box-shadow:
+    0 2px 6px rgba(2, 132, 199, 0.4),
+    inset 0 1px 0 #ffffff;
+}
+
+.aimp-eq-slider-band input[type="range"]:hover::-moz-range-thumb,
+.aimp-eq-slider-band:hover input[type="range"]::-moz-range-thumb,
+.aimp-eq-fader.is-dragging input[type="range"]::-moz-range-thumb {
   border-color: #0284c7;
   box-shadow:
     0 2px 6px rgba(2, 132, 199, 0.4),
@@ -5832,6 +5844,7 @@ dialog.aimp-dsp-dialog.equalizer-active {
 }
 
 .aimp-eq-slider-band:hover .aimp-eq-value,
+.aimp-eq-fader.is-dragging .aimp-eq-value,
 .aimp-eq-slider-band input:focus-visible ~ .aimp-eq-value,
 .aimp-eq-slider-band input:active ~ .aimp-eq-value {
   opacity: 1;
@@ -5955,6 +5968,7 @@ dialog.aimp-dsp-dialog.equalizer-active {
   outline: 0;
   background: transparent;
   cursor: pointer;
+  pointer-events: none;
 }
 
 .aimp-eq-master-fader input[type="range"]::-webkit-slider-runnable-track {
@@ -6002,7 +6016,15 @@ dialog.aimp-dsp-dialog.equalizer-active {
   cursor: pointer;
 }
 
-.aimp-eq-master-fader input[type="range"]:hover::-webkit-slider-thumb {
+.aimp-eq-master-fader input[type="range"]:hover::-webkit-slider-thumb,
+.aimp-eq-master-col:hover input[type="range"]::-webkit-slider-thumb,
+.aimp-eq-master-fader.is-dragging input[type="range"]::-webkit-slider-thumb {
+  box-shadow: 0 2px 7px rgba(2, 132, 199, 0.65), inset 0 1px 0 #ffffff;
+}
+
+.aimp-eq-master-fader input[type="range"]:hover::-moz-range-thumb,
+.aimp-eq-master-col:hover input[type="range"]::-moz-range-thumb,
+.aimp-eq-master-fader.is-dragging input[type="range"]::-moz-range-thumb {
   box-shadow: 0 2px 7px rgba(2, 132, 199, 0.65), inset 0 1px 0 #ffffff;
 }
 
@@ -6028,6 +6050,7 @@ dialog.aimp-dsp-dialog.equalizer-active {
 }
 
 .aimp-eq-master-col:hover .aimp-eq-master-val,
+.aimp-eq-master-fader.is-dragging .aimp-eq-master-val,
 .aimp-eq-master-fader input:focus-visible ~ .aimp-eq-master-val,
 .aimp-eq-master-fader input:active ~ .aimp-eq-master-val {
   opacity: 1;

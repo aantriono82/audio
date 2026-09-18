@@ -85,6 +85,7 @@ test('rack EQ and DSP controls apply state, effect routing, and native opt-in', 
   assert.match(appSource, /track\.addEventListener\('mousedown', startDragging\)/);
   assert.match(appSource, /track\.addEventListener\('touchstart', startDragging/);
   assert.match(appSource, /window\.addEventListener\('mousemove', onMouseMove\)/);
+  assert.match(appSource, /track\.classList\.add\('is-dragging'\)/);
 });
 
 test('mode, onboarding, and collection lifecycle contracts are visible', () => {

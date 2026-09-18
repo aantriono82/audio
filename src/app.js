@@ -2738,6 +2738,7 @@ function bindAimpVerticalSlider(track, input) {
   if (!track || !input) return;
 
   let dragging = false;
+  let activePointerId = null;
   const min = Number(input.min) || 0;
   const max = Number(input.max) || 100;
   const step = Number(input.step) || 1;
@@ -2745,7 +2746,10 @@ function bindAimpVerticalSlider(track, input) {
   const updateFromPointer = clientY => {
     const rect = input.getBoundingClientRect();
     if (!rect.height) return;
-    const ratio = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    const thumbHalfHeight = 6;
+    const usableHeight = Math.max(1, rect.height - thumbHalfHeight * 2);
+    const clampedY = Math.max(rect.top + thumbHalfHeight, Math.min(rect.bottom - thumbHalfHeight, clientY));
+    const ratio = (clampedY - (rect.top + thumbHalfHeight)) / usableHeight;
     const rawValue = max - ratio * (max - min);
     const value = Math.max(min, Math.min(max, Math.round((rawValue - min) / step) * step + min));
     if (String(value) === input.value) return;
@@ -2762,6 +2766,15 @@ function bindAimpVerticalSlider(track, input) {
   const stopDragging = () => {
     if (!dragging) return;
     dragging = false;
+    track.classList.remove('is-dragging');
+    if (activePointerId !== null && typeof track.releasePointerCapture === 'function') {
+      try {
+        track.releasePointerCapture(activePointerId);
+      } catch {
+        // Pointer capture release may fail if pointer was cancelled
+      }
+      activePointerId = null;
+    }
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointerup', stopDragging);
     window.removeEventListener('pointercancel', stopDragging);
@@ -2783,6 +2796,15 @@ function bindAimpVerticalSlider(track, input) {
     // source of truth, but provide mouse/touch handling for that runtime.
     event.preventDefault();
     dragging = true;
+    track.classList.add('is-dragging');
+    if (event.pointerId !== undefined && typeof track.setPointerCapture === 'function') {
+      try {
+        track.setPointerCapture(event.pointerId);
+        activePointerId = event.pointerId;
+      } catch {
+        // Fallback to window event listeners
+      }
+    }
     try {
       input.focus();
     } catch {
@@ -2817,6 +2839,58 @@ function bindAimpVerticalSlider(track, input) {
   track.addEventListener('mouseup', stopDragging);
   track.addEventListener('touchend', stopDragging);
   track.addEventListener('touchcancel', stopDragging);
+
+  // Right-click and double-click reset to 0 dB
+  const resetToZero = event => {
+    event.preventDefault();
+    if (input.value === '0') return;
+    input.value = '0';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  track.addEventListener('contextmenu', resetToZero);
+  track.addEventListener('dblclick', resetToZero);
+
+  // Mouse wheel to adjust by step
+  track.addEventListener('wheel', event => {
+    event.preventDefault();
+    const dir = event.deltaY < 0 ? 1 : -1;
+    const delta = dir * step * (event.shiftKey ? 3 : 1);
+    const cur = Number(input.value) || 0;
+    const next = Math.max(min, Math.min(max, Math.round((cur + delta) / step) * step));
+    if (String(next) === input.value) return;
+    input.value = String(next);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }, { passive: false });
+
+  // Keyboard navigation support
+  const onKey = event => {
+    let delta = 0;
+    if (event.key === 'ArrowUp' || event.key === 'ArrowRight') delta = step;
+    else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') delta = -step;
+    else if (event.key === 'PageUp') delta = step * 3;
+    else if (event.key === 'PageDown') delta = -step * 3;
+    else if (event.key === 'Home') {
+      event.preventDefault();
+      input.value = String(min);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      input.value = String(max);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    }
+    if (delta !== 0) {
+      event.preventDefault();
+      const cur = Number(input.value) || 0;
+      const next = Math.max(min, Math.min(max, cur + delta));
+      if (String(next) === input.value) return;
+      input.value = String(next);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  };
+  track.addEventListener('keydown', onKey);
+  input.addEventListener('keydown', onKey);
 }
 
 function syncDspUi() {
