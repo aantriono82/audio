@@ -1,4 +1,4 @@
-import { esc, formatTime, demoBlob, baseTracks, visibleTracks, queueIndexAtVisibleIndex } from './library.js';
+import { esc, formatTime, demoBlob, demoTracks, baseTracks, visibleTracks, queueIndexAtVisibleIndex } from './library.js';
 import { isAudioFile, metadataFromFilename, readEmbeddedMetadata } from './import.js';
 import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, nativeAudioBlob, saveNativeTrack, removeNativeTrack, clearNativeLibrary, nativeURL } from './desktop.js';
 import { playbackCapabilities } from './capabilities.js';
@@ -2273,7 +2273,12 @@ function finishWelcome() {
 }
 if (welcomeDialog) {
   $('#welcome-demo')?.addEventListener('click', () => {
-    const demo = state.tracks.find(track => track.demo);
+    let demo = state.tracks.find(track => track.demo);
+    if (!demo) {
+      state.tracks.push(...demoTracks);
+      render();
+      demo = state.tracks.find(track => track.demo);
+    }
     if (demo) void selectTrack(demo.id, true);
   });
   $('#welcome-import')?.addEventListener('click', () => $('#file-input')?.click());
