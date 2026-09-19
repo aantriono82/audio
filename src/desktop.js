@@ -18,13 +18,20 @@ function audioType(name) {
 }
 
 async function nativeBlob(path) {
-  const response = await fetch(nativeURL(path), { signal: AbortSignal.timeout(30000) });
-  if (!response.ok) throw new Error(`Audio tidak dapat dibaca (${response.status}).`);
-  // The asset protocol may return application/octet-stream. Preserve the
-  // codec hint from the filename so WebKitGTK/GStreamer selects the right
-  // demuxer for the Blob URL used by the player.
-  const blob = await response.blob();
-  return new Blob([blob], { type: audioType(path) });
+  try {
+    const response = await fetch(nativeURL(path), { signal: AbortSignal.timeout(5000) });
+    if (response.ok) {
+      const blob = await response.blob();
+      if (blob && blob.size > 0) {
+        return new Blob([blob], { type: audioType(path) });
+      }
+    }
+  } catch {
+    // Fall back to direct authorized IPC read below when asset protocol fetch is blocked
+  }
+  const bytes = await invoke('read_audio_file', { path });
+  const data = bytes instanceof ArrayBuffer ? bytes : new Uint8Array(bytes);
+  return new Blob([data], { type: audioType(path) });
 }
 
 export async function readNativeAudio(entry) {

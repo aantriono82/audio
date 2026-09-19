@@ -149,3 +149,9 @@ test('audio fidelity contract avoids GStreamer time-stretching and aggressive co
   assert.match(appSource, /Math\.min\(20000, Math\.floor\(\(context\.sampleRate \|\| 44100\) \* 0\.45\)\)/);
 });
 
+test('local audio import contract keeps IPC fallback and resilient duration probing', () => {
+  assert.match(desktopSource, /invoke\('read_audio_file'/);
+  assert.match(appSource, /library\.import_duration_fallback/);
+  assert.match(appSource, /askConfirm/);
+});
+

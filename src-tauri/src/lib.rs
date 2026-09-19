@@ -22,10 +22,13 @@ async fn blocking<T: Send + 'static>(
 
 fn authorized_audio(app: &tauri::AppHandle, path: &str) -> Result<PathBuf> {
     let path = fs::canonicalize(path).map_err(|e| e.to_string())?;
-    if !app.asset_protocol_scope().is_allowed(&path)
-        || !storage::audio_extension(&path)
-        || !path.is_file()
-    {
+    if !storage::audio_extension(&path) || !path.is_file() {
+        return Err("File audio belum dipilih atau tidak valid.".into());
+    }
+    let in_library = data_root(app)
+        .map(|r| path.starts_with(r.join("library")))
+        .unwrap_or(false);
+    if !in_library && !app.asset_protocol_scope().is_allowed(&path) {
         return Err("File audio belum dipilih atau tidak diizinkan.".into());
     }
     Ok(path)
@@ -84,10 +87,11 @@ async fn select_audio(app: tauri::AppHandle, folder: bool) -> Result<Value> {
             .map(|p| p.into_path().map_err(|e| e.to_string()))
             .collect::<Result<_>>()?;
         for path in &paths {
-            if path.is_dir() {
-                app.asset_protocol_scope().allow_directory(path, false)
+            let canon = fs::canonicalize(path).unwrap_or_else(|_| path.clone());
+            if canon.is_dir() {
+                app.asset_protocol_scope().allow_directory(&canon, true)
             } else {
-                app.asset_protocol_scope().allow_file(path)
+                app.asset_protocol_scope().allow_file(&canon)
             }
             .map_err(|e| e.to_string())?;
         }
@@ -118,7 +122,7 @@ async fn rescan_audio_folder(app: tauri::AppHandle) -> Result<Value> {
         let path =
             fs::canonicalize(folder).map_err(|e| format!("Folder musik tidak tersedia: {e}"))?;
         app.asset_protocol_scope()
-            .allow_directory(&path, false)
+            .allow_directory(&path, true)
             .map_err(|e| e.to_string())?;
         scan_paths(&app, vec![path])
     })
@@ -256,7 +260,7 @@ pub fn run() {
                     let result = if path.is_file() {
                         scope.allow_file(path)
                     } else if path.is_dir() {
-                        scope.allow_directory(path, false)
+                        scope.allow_directory(path, true)
                     } else {
                         Ok(())
                     };

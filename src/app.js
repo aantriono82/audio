@@ -2033,12 +2033,20 @@ function showTrackOptions(id, index) {
   }
   $('#track-dialog')?.showModal();
 }
+async function askConfirm(message) {
+  try {
+    return await Promise.resolve(window.confirm(message));
+  } catch (error) {
+    log('warn', 'dialog.confirm_error', { error: String(error) });
+    return true;
+  }
+}
 async function removeTrack(id) {
   const track = findTrack(id);
   const consequence = track?.nativePath
     ? 'Salinan audio di data aplikasi akan dihapus; file asal tidak diubah.'
     : 'File asal di perangkat tidak diubah.';
-  if (!track || !window.confirm(`Hapus “${track.title}” dari koleksi? ${consequence}`)) return;
+  if (!track || !await askConfirm(`Hapus “${track.title}” dari koleksi? ${consequence}`)) return;
   try {
     if (track.nativePath) await removeNativeTrack(id);
     else if (db && !track.demo) await dbAction('readwrite', store => store.delete(id));
@@ -2074,7 +2082,7 @@ async function clearAllTracks() {
   const consequence = desktop
     ? 'Salinan audio di data aplikasi akan dihapus; file asal tidak diubah.'
     : 'File asal di perangkat tidak diubah.';
-  if (!window.confirm(`Hapus seluruh ${count} lagu dari koleksi? ${consequence}`)) return;
+  if (!await askConfirm(`Hapus seluruh ${count} lagu dari koleksi? ${consequence}`)) return;
 
   try {
     if (desktop) {
@@ -2170,11 +2178,11 @@ if (renamePlaylistBtn) {
 }
 const deletePlaylistBtn = $('#delete-playlist');
 if (deletePlaylistBtn) {
-  deletePlaylistBtn.onclick = () => {
+  deletePlaylistBtn.onclick = async () => {
     const index = state.playlists.findIndex(item => item.id === state.view);
     if (index < 0) return;
     const playlist = state.playlists[index];
-    if (!window.confirm(`Hapus daftar putar “${playlist.name}”? Lagu di koleksi tetap aman.`)) return;
+    if (!await askConfirm(`Hapus daftar putar “${playlist.name}”? Lagu di koleksi tetap aman.`)) return;
     state.playlists.splice(index, 1);
     state.view = 'all';
     state.queueView = false;
@@ -2428,17 +2436,29 @@ async function importFiles(files) {
       const fingerprint = `${entry.name}:${entry.size}:${entry.lastModified}`;
       if (state.tracks.some(t => t.fingerprint === fingerprint)) { log('debug', 'library.import_duplicate', { name: entry.name }); duplicates++; processed++; updateImportProgress(processed, accepted.length, `Melewati duplikat: ${entry.name}`); continue; }
       let file = entry;
-      let duration = await readDuration(entry.path ? entry : file);
-      if (!duration && entry.path) {
+      if (entry.path) {
         try {
           file = await readNativeAudio(entry);
-          duration = await readDuration(file);
-        } catch { /* The common path below reports the unreadable file. */ }
+        } catch (error) {
+          captureError('library.import_read_failed', error, { name: entry.name });
+          unreadable++;
+          processed++;
+          updateImportProgress(processed, accepted.length, `File tidak dapat dibaca: ${entry.name}`);
+          continue;
+        }
       }
-      if (!duration) { log('warn', 'library.import_unsupported', { name: entry.name }); unsupported++; processed++; updateImportProgress(processed, accepted.length, `Format tidak didukung atau rusak: ${entry.name}`); continue; }
-      if (entry.path) {
-        try { if (file === entry) file = await readNativeAudio(entry); }
-        catch (error) { captureError('library.import_read_failed', error, { name: entry.name }); unreadable++; processed++; updateImportProgress(processed, accepted.length, `File tidak dapat dibaca: ${entry.name}`); continue; }
+      let duration = await readDuration(file);
+      if (!duration && (entry.size || file?.size)) {
+        const size = entry.size || file?.size || 0;
+        duration = Math.max(1, Math.round(size / 24000));
+        log('info', 'library.import_duration_fallback', { name: entry.name, duration });
+      }
+      if (!duration) {
+        log('warn', 'library.import_unsupported', { name: entry.name });
+        unsupported++;
+        processed++;
+        updateImportProgress(processed, accepted.length, `Format tidak didukung atau rusak: ${entry.name}`);
+        continue;
       }
       const fallback = metadataFromFilename(file), metadata = await readMetadataOffThread(file);
       const track = { id: crypto.randomUUID(), fingerprint, title: metadata.title || fallback.title, artist: metadata.artist || fallback.artist, album: metadata.album || fallback.album, genre: metadata.genre || 'Tidak diketahui', replayGain: metadata.replayGain || 0, cover: metadata.cover, art: added % 6, duration, format: file.name.split('.').pop().toUpperCase(), file };
