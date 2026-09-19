@@ -13,6 +13,7 @@ const mainSource = await readFile(path.join(root, 'src/main.tsx'), 'utf8');
 const desktopSource = await readFile(path.join(root, 'src/desktop.js'), 'utf8');
 const nativeSource = await readFile(path.join(root, 'src-tauri/src/lib.rs'), 'utf8');
 const capabilitiesSource = await readFile(path.join(root, 'src/capabilities.js'), 'utf8');
+const styleSource = await readFile(path.join(root, 'src/style.css'), 'utf8');
 
 test('primary UI contract keeps onboarding, compact controls, and backup entry points', () => {
   for (const id of ['welcome-dialog', 'welcome-import', 'welcome-demo', 'compact-previous', 'compact-play', 'compact-next', 'library-import']) {
@@ -125,3 +126,26 @@ test('native file drops authorize paths before scanning', () => {
   assert.match(nativeSource, /asset_protocol_scope\(\)/);
   assert.match(nativeSource, /scope\.allow_file\(path\)/);
 });
+
+test('mute contract ensures reliable audio silencing on Linux and Web Audio', () => {
+  assert.match(appSource, /muted:\s*Boolean\(saved\.muted\)/);
+  assert.match(appSource, /audio\.volume = state\.muted \? 0 : state\.volume/);
+  assert.match(appSource, /const isMuted = Boolean\(state\.muted \|\| !state\.volume\)/);
+  assert.match(appSource, /function toggleMute\(\)/);
+  assert.match(appSource, /applyAudioSettings\(\)/);
+});
+
+test('playlist deck menu toolbar stays on a single line without wrapping', () => {
+  assert.match(styleSource, /\.playlist-deck-header\s*\{[^}]*flex-wrap:\s*nowrap/);
+  assert.match(styleSource, /\.playlist-deck-tools\s*\{[^}]*flex-wrap:\s*nowrap/);
+  assert.doesNotMatch(styleSource, /\.playlist-deck-tools\s*\{[^}]*flex-wrap:\s*wrap/);
+});
+
+test('audio fidelity contract avoids GStreamer time-stretching and aggressive compression', () => {
+  assert.match(appSource, /audio\.playbackRate = 1;\s*if \('preservesPitch' in audio\) audio\.preservesPitch = false;/);
+  assert.match(appSource, /audio\.preservesPitch = \(pitchSemitones === 0 && Math\.abs\(effectiveRate - 1\) > 0\.001\);/);
+  assert.match(appSource, /compressor\.threshold\.value = dspOn \? -0\.5 : 0;/);
+  assert.match(appSource, /compressor\.ratio\.value = dspOn \? 3 : 1;/);
+  assert.match(appSource, /Math\.min\(20000, Math\.floor\(\(context\.sampleRate \|\| 44100\) \* 0\.45\)\)/);
+});
+

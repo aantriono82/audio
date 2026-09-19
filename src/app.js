@@ -319,7 +319,7 @@ function addAdvancedUI() {
       exportedAt: new Date().toISOString(),
       tracks: state.tracks.filter(track => !track.demo).map(({ id, fingerprint, title, artist, album, genre, format, duration }) => ({ id, fingerprint, title, artist, album, genre, format, duration })),
       favorites: [...state.favorites], playlists: state.playlists, recent: state.recent, queue: state.queue, positions: state.positions,
-      settings: { theme: state.theme, glow: state.glow, gapless: state.gapless, compact: state.compact, viewMode: state.viewMode, resumePlayback: state.resumePlayback, shuffle: state.shuffle, repeat: state.repeat, volume: state.volume, eq: state.eq, eqEnabled: state.eqEnabled, dspEnabled: state.dspEnabled, dsp: state.dsp, preset: state.preset, crossfade: state.crossfade, preamp: state.preamp, balance: state.balance, replayGain: state.replayGain, notifications: state.notifications, outputDevice: state.outputDevice }
+      settings: { theme: state.theme, glow: state.glow, gapless: state.gapless, compact: state.compact, viewMode: state.viewMode, resumePlayback: state.resumePlayback, shuffle: state.shuffle, repeat: state.repeat, volume: state.volume, muted: state.muted, eq: state.eq, eqEnabled: state.eqEnabled, dspEnabled: state.dspEnabled, dsp: state.dsp, preset: state.preset, crossfade: state.crossfade, preamp: state.preamp, balance: state.balance, replayGain: state.replayGain, notifications: state.notifications, outputDevice: state.outputDevice }
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const link = document.createElement('a'); const url = URL.createObjectURL(blob); link.href = url; link.download = `atiga-amp-backup-${new Date().toISOString().slice(0, 10)}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 0);
@@ -341,7 +341,7 @@ function addAdvancedUI() {
       state.positions = Object.fromEntries(Object.entries(backup.positions || {}).map(([id, value]) => { const resolved = resolveId(id); return resolved ? [resolved, Number(value) || 0] : null; }).filter(Boolean));
       const settings = backup.settings || {};
       if (typeof settings.theme === 'string') state.theme = settings.theme;
-      ['glow', 'gapless', 'compact', 'resumePlayback', 'shuffle', 'replayGain', 'notifications', 'eqEnabled', 'dspEnabled'].forEach(key => { if (typeof settings[key] === 'boolean') state[key] = settings[key]; });
+      ['glow', 'gapless', 'compact', 'resumePlayback', 'shuffle', 'replayGain', 'notifications', 'eqEnabled', 'dspEnabled', 'muted'].forEach(key => { if (typeof settings[key] === 'boolean') state[key] = settings[key]; });
       if (settings.viewMode === 'rack' || settings.viewMode === 'collection') state.viewMode = settings.viewMode;
       ['volume', 'crossfade', 'preamp', 'balance'].forEach(key => { if (Number.isFinite(settings[key])) state[key] = settings[key]; });
       if ([0, 1, 2].includes(settings.repeat)) state.repeat = settings.repeat;
@@ -443,6 +443,7 @@ const state = {
   recent: Array.isArray(saved.recent) ? saved.recent : [], currentId: saved.currentId || null, queue: Array.isArray(saved.queue) ? saved.queue : [], positions: savedPositions,
   view: 'all', queueView: false, search: '', sortAsc: false, shuffle: Boolean(saved.shuffle), repeat: [0,1,2].includes(saved.repeat) ? saved.repeat : 0,
   volume: Number.isFinite(saved.volume) ? Math.min(1, Math.max(0, saved.volume)) : .7,
+  muted: Boolean(saved.muted),
   eq: normalizeEq(saved.eq),
   preset: saved.preset || 'Flat',
   theme: saved.theme || 'ember', glow: saved.glow !== false, gapless: saved.gapless !== false,
@@ -476,6 +477,12 @@ const state = {
   }
 };
 let audio = $('#audio');
+if (audio) {
+  audio.muted = Boolean(state.muted);
+  audio.volume = state.muted ? 0 : state.volume;
+  audio.playbackRate = 1;
+  if ('preservesPitch' in audio) audio.preservesPitch = false;
+}
 // WebKitGTK/GStreamer has a known failure mode when a media element is routed
 // through a complex Web Audio graph. Linux therefore starts on the native
 // media element and only opts into Web Audio after an explicit DSP action.
@@ -626,10 +633,10 @@ function resetNativePlaybackElement() {
   previous.replaceWith(replacement);
   audio = replacement;
   bindAudioEvents(audio);
-  audio.volume = state.volume;
-  audio.muted = previous.muted;
+  audio.volume = state.muted ? 0 : state.volume;
+  audio.muted = Boolean(state.muted ?? previous.muted);
   audio.playbackRate = 1;
-  if ('preservesPitch' in audio) audio.preservesPitch = true;
+  if ('preservesPitch' in audio) audio.preservesPitch = false;
   setPlaybackIndicator(false);
 }
 let metadataWorker;
@@ -774,7 +781,7 @@ function applyPlaybackRates() {
   if (!audio) return;
   if (nativePlaybackMode() || !state.dspEnabled) {
     audio.playbackRate = 1;
-    if ('preservesPitch' in audio) audio.preservesPitch = true;
+    if ('preservesPitch' in audio) audio.preservesPitch = false;
     return;
   }
   const speed = (state.dsp?.speed || 100) / 100;
@@ -785,7 +792,7 @@ function applyPlaybackRates() {
   const effectiveRate = Math.max(0.25, Math.min(4.0, speed * tempo * pitchFactor));
   audio.playbackRate = effectiveRate;
   if ('preservesPitch' in audio) {
-    audio.preservesPitch = (pitchSemitones === 0);
+    audio.preservesPitch = (pitchSemitones === 0 && Math.abs(effectiveRate - 1) > 0.001);
   }
 }
 
@@ -793,8 +800,8 @@ function applyDspSettings() {
   const dspOn = Boolean(state.dspEnabled);
   if (context) {
     if (compressor) {
-      compressor.threshold.value = dspOn ? -3 : 0;
-      compressor.ratio.value = dspOn ? 12 : 1;
+      compressor.threshold.value = dspOn ? -0.5 : 0;
+      compressor.ratio.value = dspOn ? 3 : 1;
     }
     if (dspBassFilter) dspBassFilter.gain.setTargetAtTime(dspOn ? state.dsp.bass : 0, context.currentTime, 0.03);
     if (dspEchoGain) dspEchoGain.gain.setTargetAtTime(dspOn ? (state.dsp.echo / 100) * 0.7 : 0, context.currentTime, 0.03);
@@ -802,8 +809,8 @@ function applyDspSettings() {
     if (dspChorusGain) dspChorusGain.gain.setTargetAtTime(dspOn ? (state.dsp.chorus / 100) * 0.45 + (state.dsp.flanger / 100) * 0.45 : 0, context.currentTime, 0.03);
     if (dspStereoLDirect && dspStereoRDirect && dspStereoLCross && dspStereoRCross) {
       const amount = dspOn ? state.dsp.stereo / 100 : 0;
-      const direct = 1 + amount * 0.6;
-      const cross = -amount * 0.6;
+      const direct = 1.0;
+      const cross = -amount * 0.35;
       dspStereoLDirect.gain.setTargetAtTime(direct, context.currentTime, 0.03);
       dspStereoRDirect.gain.setTargetAtTime(direct, context.currentTime, 0.03);
       dspStereoLCross.gain.setTargetAtTime(cross, context.currentTime, 0.03);
@@ -823,11 +830,13 @@ function setupAudio() {
   const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextCtor) { log('warn', 'audio.audio_context_unavailable'); directAudio = true; return; }
   try {
-    context = new AudioContextCtor();
+    try { context = new AudioContextCtor({ latencyHint: 'playback' }); }
+    catch { context = new AudioContextCtor(); }
     const source = context.createMediaElementSource(audio);
-    filters = frequencies.map((frequency, i) => { const filter = context.createBiquadFilter(); filter.type = 'peaking'; filter.frequency.value = frequency; filter.Q.value = 1.2; filter.gain.value = state.eqEnabled ? state.eq[i] : 0; return filter; });
+    const maxFilterFreq = Math.min(20000, Math.floor((context.sampleRate || 44100) * 0.45));
+    filters = frequencies.map((frequency, i) => { const filter = context.createBiquadFilter(); filter.type = 'peaking'; filter.frequency.value = Math.min(frequency, maxFilterFreq); filter.Q.value = 1.2; filter.gain.value = state.eqEnabled ? state.eq[i] : 0; return filter; });
     analyser = context.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = .8;
-    compressor = context.createDynamicsCompressor(); compressor.threshold.value = -3; compressor.knee.value = 3; compressor.ratio.value = 12;
+    compressor = context.createDynamicsCompressor(); compressor.threshold.value = state.dspEnabled ? -0.5 : 0; compressor.knee.value = 6; compressor.ratio.value = state.dspEnabled ? 3 : 1; compressor.attack.value = 0.003; compressor.release.value = 0.15;
     masterGain = context.createGain(); panner = context.createStereoPanner();
 
     // DSP Bass filter
@@ -964,7 +973,8 @@ function applyAudioSettings() {
   if (panner) panner.pan.setTargetAtTime(state.balance, context.currentTime, .03);
   if (masterGain) {
     const replay = state.replayGain ? (current()?.replayGain || 0) : 0;
-    masterGain.gain.setTargetAtTime(10 ** ((state.preamp + replay) / 20), context.currentTime, .03);
+    const isMuted = Boolean(state.muted || !state.volume);
+    masterGain.gain.setTargetAtTime(isMuted ? 0 : 10 ** ((state.preamp + replay) / 20), context.currentTime, .03);
   }
   applyDspSettings();
 }
@@ -1128,9 +1138,17 @@ function renderModes() {
     repeatBtn.setAttribute('aria-label', `Ulangi: ${['mati', 'semua lagu', 'satu lagu'][state.repeat]}`);
     repeatBtn.title = repeatBtn.getAttribute('aria-label');
   }
-  $('#volume').value = state.volume; audio.volume = state.volume; $('#volume').style.setProperty('--fill',`${state.volume * 100}%`);
-  const isMuted = Boolean(audio.muted || !state.volume);
+  const isMuted = Boolean(state.muted || !state.volume);
+  audio.muted = Boolean(state.muted);
+  audio.volume = state.muted ? 0 : state.volume;
+  const volEl = $('#volume');
+  if (volEl) {
+    volEl.value = state.volume;
+    volEl.style.setProperty('--fill',`${state.volume * 100}%`);
+  }
+  $('#mute')?.setAttribute('aria-pressed', String(Boolean(state.muted)));
   $('#mute')?.classList.toggle('active', isMuted);
+  $('#amp-mute-switch')?.setAttribute('aria-pressed', String(Boolean(state.muted)));
   $('#amp-mute-switch')?.classList.toggle('active', isMuted);
   $('#lamp-mute')?.classList.toggle('active', isMuted);
   giantVolKnob?.setVal(state.volume, false);
@@ -1191,6 +1209,8 @@ async function selectTrack(id, autoplay = true, requestedPosition) {
     const startPosition = Number.isFinite(requestedPosition) ? Math.max(0, requestedPosition) : 0;
     audio.pause(); audio.removeAttribute('src'); audio.load();
     audio.src = url; audio.preload = state.gapless ? 'auto' : 'metadata';
+    audio.muted = Boolean(state.muted);
+    audio.volume = state.muted ? 0 : state.volume;
     // A newly loaded source already starts at zero. Do not seek MP3 files to
     // zero during setup: on WebKitGTK that seek can complete late and resume
     // an old decoder segment. Non-zero resume positions still require a seek.
@@ -1501,8 +1521,12 @@ function bindRotaryKnob(element, { min, max, initial, step = 1, angleMin = -135,
 
 function setMasterVolume(v) {
   state.volume = Math.max(0, Math.min(1, v));
-  audio.volume = state.volume;
-  if (audio.muted && state.volume > 0) audio.muted = false;
+  if (state.volume > 0 && state.muted) {
+    state.muted = false;
+  }
+  audio.muted = Boolean(state.muted);
+  audio.volume = state.muted ? 0 : state.volume;
+  applyAudioSettings();
   const volEl = $('#volume');
   if (volEl) {
     volEl.value = state.volume;
@@ -1567,13 +1591,12 @@ function applyRuntimeCapabilities() {
 }
 
 function toggleMute() {
-  audio.muted = !audio.muted;
-  const isMuted = Boolean(audio.muted || !state.volume);
-  $('#mute')?.setAttribute('aria-pressed', String(audio.muted));
-  $('#mute')?.classList.toggle('active', isMuted);
-  $('#amp-mute-switch')?.classList.toggle('active', isMuted);
-  $('#lamp-mute')?.classList.toggle('active', isMuted);
+  state.muted = !state.muted;
+  audio.muted = Boolean(state.muted);
+  audio.volume = state.muted ? 0 : state.volume;
+  applyAudioSettings();
   renderModes();
+  persist();
 }
 
 function toggleDrawer(forceState) {
@@ -2520,6 +2543,7 @@ window.addEventListener('keydown', event => {
   if (event.target.closest('input,select,textarea,button') || $('dialog[open]')) return;
   if (event.code === 'Space') { event.preventDefault(); togglePlay(); }
   if (event.key === '/') { event.preventDefault(); $('#search').focus(); }
+  if (event.key === 'm' || event.key === 'M') { event.preventDefault(); toggleMute(); }
   if (event.altKey && event.key === 'ArrowRight') { event.preventDefault(); advance(); }
   if (event.altKey && event.key === 'ArrowLeft') { event.preventDefault(); advance(-1); }
 });
@@ -2561,7 +2585,7 @@ function paintSpectrum(timestamp) {
   spectrumFrame = 0;
   if (document.hidden) return;
 
-  const isPlayingAudio = !audio.paused && !audio.muted && state.volume > 0;
+  const isPlayingAudio = !audio.paused && !audio.muted && !state.muted && state.volume > 0;
   const canvasVisible = Boolean(canvas?.clientWidth);
   const needsMeters = isPlayingAudio || smoothedL > 0.004 || smoothedR > 0.004 || peakHoldL > 0.5 || peakHoldR > 0.5;
   if (!needsMeters && !canvasVisible) return;

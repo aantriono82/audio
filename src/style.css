@@ -2599,16 +2599,20 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 22px 10px;
+  flex-wrap: nowrap;
+  padding: 12px 18px 10px;
   background: transparent;
   border-bottom: 1px solid #22252a;
-  gap: 16px;
+  gap: 10px;
+  min-width: 0;
 }
 
 .playlist-deck-tabs {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 14px;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .pl-tab-btn {
@@ -2665,7 +2669,18 @@ svg { width: 16px; height: 16px; display: block; flex-shrink: 0; }
 .playlist-deck-tools {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: nowrap;
+  gap: 5px;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.playlist-deck-tools::-webkit-scrollbar {
+  display: none;
 }
 
 .pl-search-box {
@@ -3734,15 +3749,18 @@ dialog::backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
     height: auto;
   }
   .playlist-deck-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
   }
   .playlist-deck-tools {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
   .pl-search-box {
-    width: 100%;
+    width: clamp(80px, 10vw, 130px);
   }
   .album-col, .format-col {
     display: none;
@@ -4308,33 +4326,61 @@ dialog.aimp-dsp-dialog::backdrop {
 
 /* Compact playlist toolbar */
 .playlist-deck-tools {
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 5px;
+  flex-wrap: nowrap;
 }
 
-.pl-search-box { width: clamp(140px, 16vw, 210px); }
-.pl-view-select { min-width: 110px; }
-.pl-tool-btn { min-width: 30px; min-height: 28px; }
+.pl-search-box {
+  width: clamp(90px, 11vw, 160px);
+  min-width: 80px;
+  padding: 4px 8px;
+  flex-shrink: 1;
+}
+.pl-view-select {
+  min-width: unset;
+  max-width: 120px;
+  padding: 5px 22px 5px 8px;
+  font-size: 11px;
+  flex-shrink: 1;
+}
+.pl-tool-btn {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 4px 6px;
+  flex-shrink: 0;
+}
 .playlist-action {
   min-height: 28px;
-  padding: 4px 7px;
-  font-size: 12px;
+  padding: 3px 6px;
+  font-size: 11px;
   border: 1px solid rgba(40, 37, 30, 0.25);
   border-radius: 4px;
   color: #5f5b52;
   background: rgba(255, 255, 255, 0.35);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .playlist-action:hover:not(:disabled) { background: rgba(255, 255, 255, .75); color: #18191b; }
 .playlist-action.danger { color: #8b302b; }
 .playlist-action:disabled { opacity: .45; }
 
 #play-session {
-  padding-inline: 11px;
+  padding-inline: 8px;
+  font-size: 11.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+#settings.pl-tool-btn {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 4px 6px;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
 @media (min-width: 981px) {
-  .playlist-deck-header { align-items: flex-end; }
+  .playlist-deck-header { align-items: center; }
   .playlist-deck-tools { justify-content: flex-end; }
 }
 
@@ -4390,8 +4436,9 @@ dialog.aimp-dsp-dialog::backdrop {
   .playlist-deck-tabs { gap: 16px; }
   .playlist-deck-tools {
     display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
+    flex-wrap: nowrap;
+    gap: 5px;
+    overflow-x: auto;
   }
   .pl-search-box {
     flex: 1 1 100%;
@@ -4770,21 +4817,23 @@ html {
   }
 
   .playlist-deck-header {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 8px;
   }
 
   .playlist-deck-tabs {
-    flex: 1 1 240px;
+    flex: 0 0 auto;
   }
 
   .playlist-deck-tools {
-    flex: 1 1 100%;
+    flex: 1 1 auto;
     justify-content: flex-end;
+    flex-wrap: nowrap;
   }
 
   .pl-search-box {
-    flex: 1 1 220px;
-    width: auto;
+    flex: 0 1 auto;
+    width: clamp(80px, 10vw, 140px);
   }
 }
 
@@ -5175,6 +5224,7 @@ html {
 @media (max-width: 980px) {
   .playlist-deck-header {
     flex: 0 0 auto;
+    flex-wrap: nowrap;
   }
 
   .playlist-deck-tabs,
@@ -5183,7 +5233,9 @@ html {
   }
 
   .playlist-deck-tools {
-    width: 100%;
+    width: auto;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
   }
 }
 
