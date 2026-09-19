@@ -1,13 +1,27 @@
 export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
   <!-- Top Chassis Screws & Branding Rail -->
-  <header class="titlebar rack-titlebar">
-    <div class="brand rack-brand"><span class="brand-emblem">A</span><span>ATIGA</span><b>PRECISION HI-FI</b><span class="version">STUDIO RACK SYSTEM</span></div>
-    <div class="title-motto">AMP STEREO CASSETTE DECK &amp; DC SERVO AMPLIFIER</div>
+  <header class="titlebar rack-titlebar" data-tauri-drag-region>
+    <div class="brand rack-brand" data-tauri-drag-region><span class="brand-emblem" data-tauri-drag-region>A</span><span data-tauri-drag-region>ATIGA</span><b data-tauri-drag-region>PRECISION HI-FI</b><span class="version" data-tauri-drag-region title="Atiga Amp v0.1.21">v0.1.21</span></div>
+    <div class="title-motto" data-tauri-drag-region>AMP STEREO CASSETTE DECK &amp; DC SERVO AMPLIFIER</div>
     <div class="title-actions">
       <span class="local-indicator"><i></i> HIGH FIDELITY</span>
       <div class="mode-switch" role="group" aria-label="Pilih mode tampilan">
         <button type="button" class="mode-switch-button active" id="mode-rack" aria-pressed="true">Rack</button>
         <button type="button" class="mode-switch-button" id="mode-collection" aria-pressed="false">Koleksi</button>
+      </div>
+      <div class="faceplate-switch" role="group" aria-label="Pilih pelat sasis hardware">
+        <button type="button" class="faceplate-button active" id="faceplate-champagne" data-faceplate="champagne" title="Champagne Gold (TEAC / Accuphase)" aria-pressed="true">
+          <span class="faceplate-swatch swatch-champagne"></span>
+          <span class="faceplate-label">Champagne</span>
+        </button>
+        <button type="button" class="faceplate-button" id="faceplate-black" data-faceplate="black" title="Studio Black (Pioneer Pro / Sansui)" aria-pressed="false">
+          <span class="faceplate-swatch swatch-black"></span>
+          <span class="faceplate-label">Black</span>
+        </button>
+        <button type="button" class="faceplate-button" id="faceplate-silver" data-faceplate="silver" title="Brushed Silver (Technics Silver Series)" aria-pressed="false">
+          <span class="faceplate-swatch swatch-silver"></span>
+          <span class="faceplate-label">Silver</span>
+        </button>
       </div>
       <button class="icon-button" id="toggle-drawer-top" title="Buka / Tutup Arsip Kaset" aria-label="Buka arsip kaset" data-icon="library"></button>
       <button class="icon-button" id="compact" title="Ganti mode Rack / Koleksi" aria-label="Ganti mode Rack / Koleksi" data-icon="minimize"></button>
@@ -35,7 +49,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           <span class="teac-model-text">AMP - 4FM</span>
           <span class="teac-sub-text">Stereo Cassette Deck</span>
         </div>
-        <span class="maker-credit">MADE WITH <span class="maker-heart" aria-label="love">♥</span> BY AAN TRIONO</span>
+        <span class="deck-header-spec">STUDIO MASTER CASSETTE DECK SYSTEM</span>
       </div>
 
       <!-- Deck Main Body Layout -->
@@ -115,10 +129,15 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
                 <!-- Cassette Label Section -->
                 <div class="cassette-brand-strip">
                   <div class="side-num-left">1</div>
-                  <div class="basf-logo-group">
-                    <span class="basf-box"><i class="basf-dot"></i>BASF</span>
-                    <span class="basf-model">CR-E II 90</span>
-                    <span class="iec-badge">[IEC II]</span>
+                  <div class="tape-label-center">
+                    <div class="basf-logo-group">
+                      <span class="basf-box"><i class="basf-dot"></i>BASF</span>
+                      <span class="basf-model">CR-E II 90</span>
+                      <span class="iec-badge">[IEC II]</span>
+                    </div>
+                    <div class="tape-maker-signature" title="Special Edition · Crafted with love by Aan Triono">
+                      <span>MADE WITH <span class="maker-heart" aria-label="love">♥</span> BY AAN TRIONO</span>
+                    </div>
                   </div>
                   <div class="side-num-right">1</div>
                 </div>
@@ -847,6 +866,14 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
             <span class="pl-select-arrow" data-icon="chevron"></span>
           </div>
 
+          <div class="pl-layout-toggle" role="group" aria-label="Pilih tampilan koleksi">
+            <button type="button" class="icon-button pl-tool-btn pl-view-btn active" id="btn-view-table" title="Tampilan Tabel" aria-label="Tampilan Tabel" aria-pressed="true">
+              <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm1 2v2h14V4H1zm0 3v2h14V7H1zm0 3v2h14v-2H1zm0 3v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1H1zm14-11H1a1 1 0 0 0-1 1v1h16V3a1 1 0 0 0-1-1z"/></svg>
+            </button>
+            <button type="button" class="icon-button pl-tool-btn pl-view-btn" id="btn-view-grid" title="Tampilan Kotak Kaset (Jewel Case Grid)" aria-label="Tampilan Kotak Kaset" aria-pressed="false">
+              <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/></svg>
+            </button>
+          </div>
           <button type="button" class="icon-button pl-tool-btn" id="sort" aria-label="Urutkan lagu berdasarkan judul" title="Urutkan berdasarkan judul" data-icon="sort"></button>
           <button type="button" class="icon-button pl-tool-btn" id="play-session" aria-label="Tambah musik" title="Tambah musik" data-icon="plus"></button>
           <button type="button" class="icon-button pl-tool-btn" id="import-folder" aria-label="Tambah folder musik" title="Tambah folder musik" data-icon="folder-plus"></button>
@@ -858,8 +885,8 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
       </div>
 
       <!-- Main Horizontal Track Table -->
-      <div class="track-table-wrap">
-        <table class="track-table">
+      <div class="track-table-wrap" id="track-table-wrap">
+        <table class="track-table" id="track-table">
           <thead>
             <tr>
               <th id="head-number" scope="col" class="number-col">#</th>
@@ -872,6 +899,10 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
           </thead>
           <tbody id="tracks"></tbody>
         </table>
+
+        <!-- Jewel Case Cassette Grid -->
+        <div class="cassette-grid" id="cassette-grid" hidden aria-label="Galeri Kaset Musik"></div>
+
         <div class="empty-state" id="empty" hidden>
           <span data-icon="music"></span>
           <h3>Daftar lagu kosong.</h3>
@@ -1023,7 +1054,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 
 <dialog id="help-dialog">
   <form method="dialog" class="dialog-heading">
-    <h2>ATIGA AMP &amp; DC SERVO AMPLIFIER<span>.</span></h2>
+    <h2>ATIGA AMP &amp; DC SERVO AMPLIFIER <span class="help-version-tag">v0.1.21</span></h2>
     <button class="icon-button" aria-label="Tutup panduan" data-icon="close"></button>
   </form>
   <p>Sistem pemutar musik vintage Hi-Fi dengan cassette deck mekanis dan amplifier terintegrasi. Gunakan tombol tuts piano untuk kontrol playback, knob putar untuk mengatur volume, bass, treble, dan balance.</p>

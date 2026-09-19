@@ -50,6 +50,35 @@ function applyTheme() {
     button.setAttribute('aria-checked', String(active));
   });
 }
+function applyFaceplate(target) {
+  if (target && ['champagne', 'black', 'silver'].includes(target)) {
+    state.faceplate = target;
+  }
+  const current = state.faceplate || 'champagne';
+  const app = $('#app');
+  if (app) app.dataset.faceplate = current;
+  document.documentElement.dataset.faceplate = current;
+  $$('.faceplate-button').forEach(button => {
+    const active = button.dataset.faceplate === current;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+}
+function applyCollectionLayout(target) {
+  if (target && ['table', 'grid'].includes(target)) {
+    state.collectionLayout = target;
+  }
+  const isGrid = state.collectionLayout === 'grid';
+  $('#btn-view-table')?.classList.toggle('active', !isGrid);
+  $('#btn-view-table')?.setAttribute('aria-pressed', String(!isGrid));
+  $('#btn-view-grid')?.classList.toggle('active', isGrid);
+  $('#btn-view-grid')?.setAttribute('aria-pressed', String(isGrid));
+  const table = $('#track-table');
+  if (table) table.hidden = isGrid;
+  const grid = $('#cassette-grid');
+  if (grid) grid.hidden = !isGrid;
+  $('#track-table-wrap')?.classList.toggle('is-grid-layout', isGrid);
+}
 function applyPanelOrder() {
   const app = $('#app');
   if (!app) return;
@@ -319,7 +348,7 @@ function addAdvancedUI() {
       exportedAt: new Date().toISOString(),
       tracks: state.tracks.filter(track => !track.demo).map(({ id, fingerprint, title, artist, album, genre, format, duration }) => ({ id, fingerprint, title, artist, album, genre, format, duration })),
       favorites: [...state.favorites], playlists: state.playlists, recent: state.recent, queue: state.queue, positions: state.positions,
-      settings: { theme: state.theme, glow: state.glow, gapless: state.gapless, compact: state.compact, viewMode: state.viewMode, resumePlayback: state.resumePlayback, shuffle: state.shuffle, repeat: state.repeat, volume: state.volume, muted: state.muted, eq: state.eq, eqEnabled: state.eqEnabled, dspEnabled: state.dspEnabled, dsp: state.dsp, preset: state.preset, crossfade: state.crossfade, preamp: state.preamp, balance: state.balance, replayGain: state.replayGain, notifications: state.notifications, outputDevice: state.outputDevice }
+      settings: { theme: state.theme, faceplate: state.faceplate, collectionLayout: state.collectionLayout, glow: state.glow, gapless: state.gapless, compact: state.compact, viewMode: state.viewMode, resumePlayback: state.resumePlayback, shuffle: state.shuffle, repeat: state.repeat, volume: state.volume, muted: state.muted, eq: state.eq, eqEnabled: state.eqEnabled, dspEnabled: state.dspEnabled, dsp: state.dsp, preset: state.preset, crossfade: state.crossfade, preamp: state.preamp, balance: state.balance, replayGain: state.replayGain, notifications: state.notifications, outputDevice: state.outputDevice }
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const link = document.createElement('a'); const url = URL.createObjectURL(blob); link.href = url; link.download = `atiga-amp-backup-${new Date().toISOString().slice(0, 10)}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 0);
@@ -341,6 +370,8 @@ function addAdvancedUI() {
       state.positions = Object.fromEntries(Object.entries(backup.positions || {}).map(([id, value]) => { const resolved = resolveId(id); return resolved ? [resolved, Number(value) || 0] : null; }).filter(Boolean));
       const settings = backup.settings || {};
       if (typeof settings.theme === 'string') state.theme = settings.theme;
+      if (['champagne', 'black', 'silver'].includes(settings.faceplate)) state.faceplate = settings.faceplate;
+      if (['table', 'grid'].includes(settings.collectionLayout)) state.collectionLayout = settings.collectionLayout;
       ['glow', 'gapless', 'compact', 'resumePlayback', 'shuffle', 'replayGain', 'notifications', 'eqEnabled', 'dspEnabled', 'muted'].forEach(key => { if (typeof settings[key] === 'boolean') state[key] = settings[key]; });
       if (settings.viewMode === 'rack' || settings.viewMode === 'collection') state.viewMode = settings.viewMode;
       ['volume', 'crossfade', 'preamp', 'balance'].forEach(key => { if (Number.isFinite(settings[key])) state[key] = settings[key]; });
@@ -447,6 +478,8 @@ const state = {
   eq: normalizeEq(saved.eq),
   preset: saved.preset || 'Flat',
   theme: saved.theme || 'ember', glow: saved.glow !== false, gapless: saved.gapless !== false,
+  faceplate: ['champagne', 'black', 'silver'].includes(saved.faceplate) ? saved.faceplate : 'champagne',
+  collectionLayout: ['table', 'grid'].includes(saved.collectionLayout) ? saved.collectionLayout : 'table',
   compact: saved.compact ?? (window.matchMedia?.('(max-width: 640px)').matches ?? false),
   viewMode: saved.viewMode === 'collection' || saved.compact === true ? 'collection' : 'rack',
   resumePlayback: saved.resumePlayback === true,
@@ -1014,14 +1047,71 @@ function row(track, index) {
   const playing = track.id === state.currentId;
   return `<tr class="track-row${playing ? ' current' : ''}" data-id="${esc(track.id)}" data-index="${index}" draggable="true" tabindex="0" aria-label="Putar ${esc(track.title)}"><td headers="head-number">${playing ? '<span class="equal-bars"><i></i><i></i><i></i></span>' : String(index+1).padStart(2,'0')}</td><td headers="head-title"><div class="track-cell"><div class="mini-art" data-track-id="${esc(track.id)}" data-art="${track.art}" data-cover="${track.cover ? 'true' : 'false'}"><span>AA</span></div><div class="track-info"><span class="track-name">${esc(track.title)}</span><span class="track-artist">${esc(track.artist)}${track.genre ? ` · ${esc(track.genre)}` : ''}${track.demo ? ' · Demo' : ''}</span></div></div></td><td headers="head-album" class="track-album">${esc(track.album)}</td><td headers="head-format" class="track-format"><span class="format-tag">${esc(track.format)}</span></td><td headers="head-duration" class="track-duration">${formatTime(track.duration)}</td><td headers="head-actions"><div class="row-actions"><button class="icon-button favorite${state.favorites.has(track.id) ? ' active' : ''}" data-action="favorite" aria-label="${state.favorites.has(track.id) ? 'Hapus favorit' : 'Favoritkan'} ${esc(track.title)}" aria-pressed="${state.favorites.has(track.id)}">${icon('heart')}</button><button class="icon-button" data-action="more" aria-label="Opsi ${esc(track.title)}">${icon('more')}</button></div></td></tr>`;
 }
+function cassetteCard(track, index) {
+  const playing = track.id === state.currentId;
+  const fav = state.favorites.has(track.id);
+  return `<div class="cassette-card${playing ? ' current is-playing' : ''}" data-id="${esc(track.id)}" data-index="${index}" draggable="true" tabindex="0" role="article" aria-label="Kaset ${esc(track.title)} oleh ${esc(track.artist)}">
+    <div class="jewel-case-outer">
+      <div class="jewel-case-glare" aria-hidden="true"></div>
+      <div class="jewel-hinge" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="jewel-insert">
+        <div class="jewel-art-box mini-art" data-track-id="${esc(track.id)}" data-art="${track.art}" data-cover="${track.cover ? 'true' : 'false'}">
+          <span class="jewel-art-fallback">ATIGA</span>
+        </div>
+        <div class="cassette-tape-body">
+          <div class="tape-label">
+            <div class="tape-label-top">
+              <span class="tape-side">SIDE A</span>
+              <span class="tape-format-badge">${esc(track.format || 'AUDIO')}</span>
+            </div>
+            <div class="tape-title-block">
+              <span class="tape-title" title="${esc(track.title)}">${esc(track.title)}</span>
+              <span class="tape-artist" title="${esc(track.artist)}">${esc(track.artist)}</span>
+            </div>
+            <div class="tape-window">
+              <div class="tape-spool tape-spool-left"></div>
+              <div class="tape-ribbon-bar">
+                <span class="tape-ribbon"></span>
+              </div>
+              <div class="tape-spool tape-spool-right"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="jewel-overlay-actions">
+        <button type="button" class="jewel-play-btn" data-action="play" aria-label="Putar ${esc(track.title)}">
+          ${icon(playing ? 'pause' : 'play')}
+        </button>
+        <button type="button" class="jewel-fav-btn icon-button favorite${fav ? ' active' : ''}" data-action="favorite" aria-label="${fav ? 'Hapus favorit' : 'Favoritkan'} ${esc(track.title)}" aria-pressed="${fav}">
+          ${icon('heart')}
+        </button>
+        <button type="button" class="jewel-more-btn icon-button" data-action="more" aria-label="Opsi ${esc(track.title)}">
+          ${icon('more')}
+        </button>
+      </div>
+      ${playing ? '<div class="jewel-status-pip"><span class="pip-led"></span>PLAYING</div>' : ''}
+    </div>
+    <div class="cassette-footer-meta">
+      <span class="cassette-track-num">${String(index + 1).padStart(2, '0')}</span>
+      <div class="cassette-track-text">
+        <strong class="cassette-meta-title" title="${esc(track.title)}">${esc(track.title)}</strong>
+        <span class="cassette-meta-sub">${esc(track.artist)}${track.album ? ` · ${esc(track.album)}` : ''}</span>
+      </div>
+      <span class="cassette-duration">${formatTime(track.duration)}</span>
+    </div>
+  </div>`;
+}
 function renderTracks() {
   const tracks = visibleTracks(state);
-  $('#tracks').innerHTML = tracks.map(row).join(''); $('#empty').hidden = tracks.length > 0;
+  $('#tracks').innerHTML = tracks.map(row).join('');
+  const cassetteGrid = $('#cassette-grid');
+  if (cassetteGrid) cassetteGrid.innerHTML = tracks.map(cassetteCard).join('');
+  $('#empty').hidden = tracks.length > 0;
   $('#track-count').textContent = baseTracks(state).length; $('#queue-count').textContent = state.queue.length;
   $('#track-tab').classList.toggle('active', !state.queueView); $('#queue-tab').classList.toggle('active', state.queueView);
   $('#library-total').textContent = `${tracks.length} lagu · ${Math.ceil(tracks.reduce((total,t) => total + (t.duration || 0),0)/60)} menit${tracks.length && tracks.every(t => t.demo) ? ' · Audio demo' : ''}`;
   const tracksById = new Map(tracks.map(track => [track.id, track]));
-  $$('#tracks .mini-art[data-track-id]').forEach(element => {
+  $$('#tracks .mini-art[data-track-id], #cassette-grid .mini-art[data-track-id]').forEach(element => {
     const track = tracksById.get(element.dataset.trackId);
     if (track) applyArt(element, track);
   });
@@ -2000,6 +2090,23 @@ const trackTab = $('#track-tab');
 if (trackTab) trackTab.onclick = () => { state.queueView = false; renderTracks(); };
 $('#tracks')?.addEventListener('click', event => { const tr = event.target.closest('[data-id]'); if (!tr) return; const action = event.target.closest('[data-action]')?.dataset.action; if (action === 'favorite') favorite(tr.dataset.id); else if (action === 'more') showTrackOptions(tr.dataset.id, Number(tr.dataset.index)); else selectTrack(tr.dataset.id); });
 $('#tracks')?.addEventListener('keydown', event => { if (event.target.matches('tr') && event.key === 'Enter') { event.preventDefault(); selectTrack(event.target.dataset.id); } });
+$('#cassette-grid')?.addEventListener('click', event => {
+  const card = event.target.closest('[data-id]');
+  if (!card) return;
+  const action = event.target.closest('[data-action]')?.dataset.action;
+  if (action === 'favorite') favorite(card.dataset.id);
+  else if (action === 'more') showTrackOptions(card.dataset.id, Number(card.dataset.index));
+  else if (action === 'play') {
+    if (card.dataset.id === state.currentId) togglePlay();
+    else selectTrack(card.dataset.id);
+  } else selectTrack(card.dataset.id);
+});
+$('#cassette-grid')?.addEventListener('keydown', event => {
+  if (event.target.matches('.cassette-card') && event.key === 'Enter') {
+    event.preventDefault();
+    selectTrack(event.target.dataset.id);
+  }
+});
 function showTrackOptions(id, index) {
   const track = findTrack(id);
   const trackTitle = $('#track-dialog-title');
@@ -2148,17 +2255,22 @@ async function clearAllTracks() {
   toast(`Seluruh ${count} lagu berhasil dihapus dari koleksi.`);
 }
 let draggedId, draggedIndex;
-$('#tracks')?.addEventListener('dragstart', event => { const tr = event.target.closest('[data-id]'); if (!tr) return; draggedId = tr.dataset.id; draggedIndex = Number(tr.dataset.index); event.dataTransfer.setData('text/plain', draggedId); event.dataTransfer.effectAllowed = 'move'; tr.classList.add('dragging'); });
-$('#tracks')?.addEventListener('dragend', () => { $$('.dragging').forEach(el => el.classList.remove('dragging')); draggedId = null; });
-$('#tracks')?.addEventListener('dragover', event => { if (draggedId) event.preventDefault(); });
-$('#tracks')?.addEventListener('drop', event => {
-  const target = event.target.closest('[data-id]'); if (!draggedId || !target) return; event.preventDefault();
-  if (state.search || state.sortAsc) { toast('Kosongkan pencarian dan matikan urutan judul untuk memindahkan lagu.'); return; }
-  const playlist = state.playlists.find(p => p.id === state.view);
-  const ids = state.queueView ? state.queue : playlist?.ids;
-  if (!ids) { toast('Urutan manual tersedia di playlist dan antrean.'); return; }
-  const targetIndex = Number(target.dataset.index); const [id] = ids.splice(draggedIndex,1); ids.splice(targetIndex,0,id); render(); persist();
-});
+function bindListDnD(container) {
+  if (!container) return;
+  container.addEventListener('dragstart', event => { const el = event.target.closest('[data-id]'); if (!el) return; draggedId = el.dataset.id; draggedIndex = Number(el.dataset.index); event.dataTransfer.setData('text/plain', draggedId); event.dataTransfer.effectAllowed = 'move'; el.classList.add('dragging'); });
+  container.addEventListener('dragend', () => { $$('.dragging').forEach(el => el.classList.remove('dragging')); draggedId = null; });
+  container.addEventListener('dragover', event => { if (draggedId) event.preventDefault(); });
+  container.addEventListener('drop', event => {
+    const target = event.target.closest('[data-id]'); if (!draggedId || !target) return; event.preventDefault();
+    if (state.search || state.sortAsc) { toast('Kosongkan pencarian dan matikan urutan judul untuk memindahkan lagu.'); return; }
+    const playlist = state.playlists.find(p => p.id === state.view);
+    const ids = state.queueView ? state.queue : playlist?.ids;
+    if (!ids) { toast('Urutan manual tersedia di playlist dan antrean.'); return; }
+    const targetIndex = Number(target.dataset.index); const [id] = ids.splice(draggedIndex,1); ids.splice(targetIndex,0,id); render(); persist();
+  });
+}
+bindListDnD($('#tracks'));
+bindListDnD($('#cassette-grid'));
 const newPlaylistBtn = $('#new-playlist-visible') || $('#new-playlist');
 if (newPlaylistBtn) {
   newPlaylistBtn.onclick = () => { $('#playlist-dialog')?.showModal(); $('#playlist-name')?.focus(); };
@@ -2282,7 +2394,20 @@ if (compactBtn) {
 }
 $('#mode-rack')?.addEventListener('click', () => { state.viewMode = 'rack'; applyViewMode(); persist(); });
 $('#mode-collection')?.addEventListener('click', () => { state.viewMode = 'collection'; applyViewMode(); persist(); });
+$('#btn-view-table')?.addEventListener('click', () => { state.collectionLayout = 'table'; applyCollectionLayout(); persist(); });
+$('#btn-view-grid')?.addEventListener('click', () => { state.collectionLayout = 'grid'; applyCollectionLayout(); persist(); });
+$$('.faceplate-button').forEach(button => {
+  button.addEventListener('click', () => {
+    const fp = button.dataset.faceplate;
+    if (fp) {
+      applyFaceplate(fp);
+      persist();
+    }
+  });
+});
 applyViewMode();
+applyFaceplate();
+applyCollectionLayout();
 
 const compactPrevious = $('#compact-previous');
 if (compactPrevious) compactPrevious.onclick = () => advance(-1);
@@ -3463,7 +3588,7 @@ async function init() {
     }
   }
   removeDemoTracks();
-  addAdvancedUI(); applyTheme(); applyPanelOrder(); applyViewMode();
+  addAdvancedUI(); applyTheme(); applyFaceplate(); applyCollectionLayout(); applyPanelOrder(); applyViewMode();
   setupRackControls();
   applyRuntimeCapabilities();
   render();
