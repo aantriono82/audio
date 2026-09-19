@@ -1,7 +1,7 @@
 export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
   <!-- Top Chassis Screws & Branding Rail -->
   <header class="titlebar rack-titlebar" data-tauri-drag-region>
-    <div class="brand rack-brand" data-tauri-drag-region><span class="brand-emblem" data-tauri-drag-region>A</span><span data-tauri-drag-region>ATIGA</span><b data-tauri-drag-region>PRECISION HI-FI</b><span class="version" data-tauri-drag-region title="Atiga Amp v0.1.21">v0.1.21</span></div>
+    <div class="brand rack-brand" data-tauri-drag-region><span class="brand-emblem" data-tauri-drag-region>A</span><span data-tauri-drag-region>ATIGA</span><b data-tauri-drag-region>PRECISION HI-FI</b><span class="version" data-tauri-drag-region title="Atiga Amp v0.1.22">v0.1.22</span></div>
     <div class="title-motto" data-tauri-drag-region>AMP STEREO CASSETTE DECK &amp; DC SERVO AMPLIFIER</div>
     <div class="title-actions">
       <span class="local-indicator"><i></i> HIGH FIDELITY</span>
@@ -1016,10 +1016,10 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
   <form method="dialog" class="welcome-card">
     <div class="eyebrow">ATIGA AMP / SELAMAT DATANG</div>
     <h2 id="welcome-title">Musikmu<span>.</span></h2>
-    <p>Putar audio demo sekarang atau tambahkan koleksi musik dari perangkatmu. Semua file tetap berada di perangkat ini.</p>
+    <p>Tambahkan koleksi musik dari perangkatmu untuk mulai mendengarkan. Semua file tetap berada di perangkat ini secara lokal.</p>
     <div class="welcome-actions">
       <button type="button" class="primary-button" id="welcome-import">Tambah musik</button>
-      <button type="button" class="text-button" id="welcome-demo">Jelajahi audio demo</button>
+      <button type="button" class="text-button" id="welcome-demo" hidden>Jelajahi audio demo</button>
     </div>
     <fieldset class="welcome-choice">
       <legend>Pilih tampilan awal</legend>
@@ -1054,7 +1054,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 
 <dialog id="help-dialog">
   <form method="dialog" class="dialog-heading">
-    <h2>ATIGA AMP &amp; DC SERVO AMPLIFIER <span class="help-version-tag">v0.1.21</span></h2>
+    <h2>ATIGA AMP &amp; DC SERVO AMPLIFIER <span class="help-version-tag">v0.1.22</span></h2>
     <button class="icon-button" aria-label="Tutup panduan" data-icon="close"></button>
   </form>
   <p>Sistem pemutar musik vintage Hi-Fi dengan cassette deck mekanis dan amplifier terintegrasi. Gunakan tombol tuts piano untuk kontrol playback, knob putar untuk mengatur volume, bass, treble, dan balance.</p>
