@@ -1028,7 +1028,7 @@ Error generating stack: `+e.message+`
     <p>Tambahkan koleksi musik dari perangkatmu untuk mulai mendengarkan. Semua file tetap berada di perangkat ini secara lokal.</p>
     <div class="welcome-actions">
       <button type="button" class="primary-button" id="welcome-import">Tambah musik</button>
-      <button type="button" class="text-button" id="welcome-demo" hidden>Jelajahi audio demo</button>
+      <button type="button" class="text-button" id="welcome-demo">Jelajahi audio demo</button>
     </div>
     <fieldset class="welcome-choice">
       <legend>Pilih tampilan awal</legend>
