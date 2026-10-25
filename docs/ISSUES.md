@@ -1,14 +1,14 @@
 # Backlog PRD Atiga Amp
 
-Status: siap dibuat sebagai GitHub Issues; source scope 0.1.8 sudah diimplementasikan, release gate native masih terbuka  
-Sumber kebutuhan: [PRD.md](PRD.md)  
-Terakhir diperbarui: 14 September 2026
+Status: backlog historis dan rencana 0.2.0; scope stabilisasi 0.1.x sudah diimplementasikan
+Sumber kebutuhan: [PRD.md](PRD.md)
+Terakhir diperbarui: 25 Oktober 2026
 
 ## Status implementasi saat ini
 
-- `AMP-18-01` sampai `AMP-18-07`: implementasi source selesai; validasi otomatis lulus.
+- `AMP-18-01` sampai `AMP-18-07`: scope implementasi source selesai dan menjadi dasar rilis 0.1.x sampai `0.1.22`; validasi per rilis tetap mengikuti [QA.md](../QA.md).
 - `AMP-18-08`: batas capability diekstrak sebagai tahap refaktor awal; ekstraksi modul berikutnya dapat dilanjutkan bertahap.
-- `AMP-18-09`: dokumentasi dan QA diperbarui; native smoke, build paket Linux, dan uji penerimaan manual masih menjadi release gate.
+- `AMP-18-09`: release gate dan dokumentasi menjadi checklist berulang untuk setiap tag; catatan historis v0.1.9 dipisahkan dari status source `0.1.22` di [QA.md](../QA.md).
 - `AMP-20-01` sampai `AMP-20-03`: belum dimulai karena merupakan perubahan model data rilis 0.2.0.
 
 ## Aturan backlog
@@ -16,22 +16,22 @@ Terakhir diperbarui: 14 September 2026
 - `P0` adalah release blocker.
 - `P1` harus masuk rilis kecuali ada risiko langsung terhadap stabilitas playback atau data.
 - `P2` dapat ditunda tanpa menahan rilis.
-- Issue implementasi belum boleh dimulai sebelum ada perintah coding.
-- Setiap issue menjaga kompatibilitas data pengguna 0.1.7 kecuali issue migrasi 0.2.0 menyatakan lain.
+- Issue 0.1.x dipertahankan sebagai rekam keputusan dan kriteria regresi; pekerjaan baru diprioritaskan melalui target 0.2.0 atau issue rilis yang baru.
+- Setiap issue menjaga kompatibilitas data pengguna 0.1.x kecuali issue migrasi 0.2.0 menyatakan lain.
 
 ## Urutan delivery
 
 | Urutan | ID | Milestone | Prioritas | Ringkasan | Dependensi |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | AMP-18-01 | 0.1.8 | P0 | Kontrak dan regresi stabilitas playback Linux | — |
-| 2 | AMP-18-02 | 0.1.8 | P0 | Preferensi melanjutkan posisi tanpa autoplay | AMP-18-01 |
-| 3 | AMP-18-03 | 0.1.8 | P0 | Mode Rack dan Koleksi sebagai mode kelas utama | AMP-18-01 |
-| 4 | AMP-18-04 | 0.1.8 | P0 | Selaraskan interaksi dengan kemampuan nyata | AMP-18-03 |
-| 5 | AMP-18-05 | 0.1.8 | P1 | Jadikan demo hanya bagian onboarding | AMP-18-03 |
-| 6 | AMP-18-06 | 0.1.8 | P1 | Lengkapi workflow pengelolaan koleksi 0.1.x | AMP-18-05 |
-| 7 | AMP-18-07 | 0.1.8 | P1 | Perbaiki aksesibilitas dan viewport desktop | AMP-18-03, AMP-18-04, AMP-18-06 |
-| 8 | AMP-18-08 | 0.1.8 | P2 | Modularisasi engine secara bertahap | AMP-18-01 |
-| 9 | AMP-18-09 | 0.1.8 | P0 | Verifikasi dan dokumentasikan rilis 0.1.8 | AMP-18-01 sampai AMP-18-07 |
+| 1 | AMP-18-01 | 0.1.x | P0 | Kontrak dan regresi stabilitas playback Linux | — |
+| 2 | AMP-18-02 | 0.1.x | P0 | Preferensi melanjutkan posisi tanpa autoplay | AMP-18-01 |
+| 3 | AMP-18-03 | 0.1.x | P0 | Mode Rack dan Koleksi sebagai mode kelas utama | AMP-18-01 |
+| 4 | AMP-18-04 | 0.1.x | P0 | Selaraskan interaksi dengan kemampuan nyata | AMP-18-03 |
+| 5 | AMP-18-05 | 0.1.x | P1 | Jadikan demo hanya bagian onboarding | AMP-18-03 |
+| 6 | AMP-18-06 | 0.1.x | P1 | Lengkapi workflow pengelolaan koleksi 0.1.x | AMP-18-05 |
+| 7 | AMP-18-07 | 0.1.x | P1 | Perbaiki aksesibilitas dan viewport desktop | AMP-18-03, AMP-18-04, AMP-18-06 |
+| 8 | AMP-18-08 | 0.1.x | P2 | Modularisasi engine secara bertahap | AMP-18-01 |
+| 9 | AMP-18-09 | 0.1.x | P0 | Verifikasi dan dokumentasikan setiap rilis stabilisasi | AMP-18-01 sampai AMP-18-07 |
 | 10 | AMP-20-01 | 0.2.0 | P0 | Migrasi ke referensi file asli | AMP-18-09 |
 | 11 | AMP-20-02 | 0.2.0 | P0 | Sinkronisasi folder penuh | AMP-20-01 |
 | 12 | AMP-20-03 | 0.2.0 | P1 | Cadangan ringan dan penuh | AMP-20-01, AMP-20-02 |
@@ -41,7 +41,7 @@ Terakhir diperbarui: 14 September 2026
 
 ## AMP-18-01 — Tetapkan kontrak dan regresi stabilitas playback Linux
 
-**GitHub title:** `[0.1.8][P0] Tetapkan kontrak dan regresi stabilitas playback Linux`
+**GitHub title:** `[0.1.x][P0] Tetapkan kontrak dan regresi stabilitas playback Linux`
 
 ### Masalah
 
@@ -76,7 +76,7 @@ Satu kontrak perilaku yang dapat diuji untuk demo, file impor, startup, seek, pa
 
 ## AMP-18-02 — Tambahkan preferensi melanjutkan posisi tanpa autoplay
 
-**GitHub title:** `[0.1.8][P0] Tambahkan preferensi melanjutkan posisi tanpa autoplay`
+**GitHub title:** `[0.1.x][P0] Tambahkan preferensi melanjutkan posisi tanpa autoplay`
 
 ### Masalah
 
@@ -106,7 +106,7 @@ Preferensi **Lanjutkan posisi terakhir** dengan nilai bawaan mati.
 
 ## AMP-18-03 — Jadikan mode Rack dan Koleksi sebagai mode kelas utama
 
-**GitHub title:** `[0.1.8][P0] Jadikan mode Rack dan Koleksi sebagai mode kelas utama`
+**GitHub title:** `[0.1.x][P0] Jadikan mode Rack dan Koleksi sebagai mode kelas utama`
 
 ### Masalah
 
@@ -138,7 +138,7 @@ Pengguna dapat memilih, menemukan, dan berpindah antara mode **Rack** dan **Kole
 
 ## AMP-18-04 — Selaraskan semua interaksi dengan kemampuan nyata
 
-**GitHub title:** `[0.1.8][P0] Selaraskan kontrol rack dengan kemampuan audio nyata`
+**GitHub title:** `[0.1.x][P0] Selaraskan kontrol rack dengan kemampuan audio nyata`
 
 ### Masalah
 
@@ -173,7 +173,7 @@ Pengguna dapat percaya bahwa setiap kontrol interaktif menghasilkan efek nyata d
 
 ## AMP-18-05 — Jadikan audio demo hanya bagian onboarding
 
-**GitHub title:** `[0.1.8][P1] Jadikan audio demo preview onboarding saja`
+**GitHub title:** `[0.1.x][P1] Jadikan audio demo preview onboarding saja`
 
 ### Masalah
 
@@ -202,11 +202,11 @@ Demo membantu evaluasi awal tetapi tidak menjadi isi permanen koleksi.
 
 ## AMP-18-06 — Lengkapi workflow pengelolaan koleksi 0.1.x
 
-**GitHub title:** `[0.1.8][P1] Lengkapi workflow pengelolaan koleksi tanpa migrasi storage`
+**GitHub title:** `[0.1.x][P1] Lengkapi workflow pengelolaan koleksi tanpa migrasi storage`
 
 ### Masalah
 
-Pengelolaan koleksi masih kehilangan tindakan dasar dan beberapa hasil impor hanya disampaikan melalui toast singkat. 0.1.8 harus memperbaiki usability tanpa mengganti format penyimpanan.
+Pengelolaan koleksi masih kehilangan tindakan dasar dan beberapa hasil impor hanya disampaikan melalui toast singkat. Scope 0.1.x memperbaiki usability tanpa mengganti format penyimpanan.
 
 ### Cakupan
 
@@ -222,13 +222,13 @@ Pengelolaan koleksi masih kehilangan tindakan dasar dan beberapa hasil impor han
 - Ringkasan impor tidak hilang hanya karena timeout toast.
 - Menghapus playlist tidak menghapus audio.
 - Menghapus lagu tidak pernah menyentuh file asal.
-- Data 0.1.7 dapat dibaca tanpa migrasi manual.
+- Data 0.1.x dapat dibaca tanpa migrasi manual.
 
 ---
 
 ## AMP-18-07 — Perbaiki aksesibilitas dan viewport desktop
 
-**GitHub title:** `[0.1.8][P1] Perbaiki aksesibilitas dan usability viewport desktop`
+**GitHub title:** `[0.1.x][P1] Perbaiki aksesibilitas dan usability viewport desktop`
 
 ### Masalah
 
@@ -255,7 +255,7 @@ Audit saat ini menemukan tombol tanpa nama, tidak ada landmark utama, sel tabel 
 
 ## AMP-18-08 — Modularisasi engine secara bertahap
 
-**GitHub title:** `[0.1.8][P2] Modularisasi engine tanpa mengubah perilaku pengguna`
+**GitHub title:** `[0.1.x][P2] Modularisasi engine tanpa mengubah perilaku pengguna`
 
 ### Masalah
 
@@ -279,17 +279,17 @@ Engine playback, state, persistence, impor, DSP, dan binding DOM berada dalam sa
 
 - Setiap tahap dapat direview dan di-revert sendiri.
 - Seluruh test dan native smoke tetap lulus setelah setiap tahap.
-- Refaktor dapat ditunda tanpa menahan rilis 0.1.8.
+- Refaktor dapat ditunda tanpa menahan rilis stabilisasi 0.1.x.
 
 ---
 
-## AMP-18-09 — Verifikasi dan dokumentasikan rilis 0.1.8
+## AMP-18-09 — Verifikasi dan dokumentasikan rilis stabilisasi 0.1.x
 
-**GitHub title:** `[0.1.8][P0] Selesaikan release gate dan dokumentasi 0.1.8`
+**GitHub title:** `[0.1.x][P0] Selesaikan release gate dan dokumentasi rilis`
 
 ### Masalah
 
-Source sudah bernomor 0.1.8, sedangkan catatan QA masih berhenti pada 0.1.7. Klaim fitur browser dan Linux juga belum dibedakan secara tegas.
+Scope stabilisasi 0.1.x sudah diterapkan dan source saat ini bernomor `0.1.22`. Catatan QA per rilis harus tetap membedakan bukti yang benar-benar dijalankan dari cakupan yang hanya direncanakan.
 
 ### Cakupan
 
@@ -305,7 +305,7 @@ Source sudah bernomor 0.1.8, sedangkan catatan QA masih berhenti pada 0.1.7. Kla
 - AMP-18-01 sampai AMP-18-07 selesai; AMP-18-08 boleh ditunda.
 - Semua release gate PRD lulus.
 - QA tidak mengklaim pengujian yang belum dijalankan.
-- Tag `v0.1.8` baru dibuat setelah commit yang diverifikasi tersedia.
+- Tag rilis baru dibuat setelah commit dan artefak pada versi yang sama diverifikasi.
 
 ---
 
@@ -334,7 +334,7 @@ Impor baru mengindeks file asli tanpa menyalin audio serta tetap menjaga privasi
 
 - Impor baru tidak membuat salinan audio di data aplikasi.
 - Aplikasi tidak pernah menulis atau menghapus file asli.
-- Upgrade dengan koleksi 0.1.7/0.1.8 mempertahankan seluruh data pengguna.
+- Upgrade dengan koleksi 0.1.x mempertahankan seluruh data pengguna.
 - Kegagalan migrasi dapat dilanjutkan atau dibatalkan tanpa kehilangan koleksi lama.
 
 ---
@@ -345,7 +345,7 @@ Impor baru mengindeks file asli tanpa menyalin audio serta tetap menjaga privasi
 
 ### Masalah
 
-Rescan saat ini hanya menambahkan file berdasarkan fingerprint nama, ukuran, dan waktu modifikasi. Perubahan atau rename dapat menciptakan entri baru, sedangkan file yang hilang tetap terlihat.
+Impor/rescan sekarang memakai hash SHA-256 isi file sehingga rename dan pemindahan file yang sama tidak membuat duplikat. Sinkronisasi penuh masih perlu melacak status file yang hilang, file berubah, dan beberapa folder terpantau.
 
 ### Cakupan
 

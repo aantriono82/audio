@@ -3,6 +3,7 @@ import { createSettingsQueue } from './settings-queue.js';
 
 export const desktop = isTauri();
 export const nativeSettings = createSettingsQueue(settings => invoke('save_player_settings', { settings }));
+export const flushNativeSettings = () => nativeSettings.flush();
 export const loadNativeSettings = () => invoke('load_player_settings');
 export const loadNativeLibrary = () => invoke('load_audio_library');
 export const selectNativeAudio = folder => invoke('select_audio', { folder });

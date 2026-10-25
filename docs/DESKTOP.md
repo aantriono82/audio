@@ -42,14 +42,14 @@ Untuk rilis, perbarui versi di `package.json`, `package-lock.json`, `src-tauri/C
 | --- | --- |
 | Linux | `${XDG_DATA_HOME:-$HOME/.local/share}/com.atiga.amp` |
 
-- `settings.json`: playlist, favorit, antrean, EQ, tema, volume, posisi terakhir, dan preferensi resume; penulisan berurutan dan penggantian file atomik.
+- `settings.json`: state skema berversi yang berisi playlist, favorit, antrean, EQ, tema, volume, posisi terakhir, dan preferensi resume; penulisan berurutan, penggantian file atomik, dan flush sebelum jendela desktop ditutup.
 - `library/<UUID>/`: salinan audio, `track.json`, dan cover jika tersedia. Penyalinan diselesaikan dalam direktori sementara sebelum lagu dimasukkan ke koleksi.
 - `music-folder.json`: folder terakhir yang dipilih pengguna, untuk pemindaian ulang.
 - `debug.log`: log lifecycle dan error aplikasi, dibatasi sekitar 4 MB.
 
 Pembacaan audio dibatasi ke file/folder pilihan pengguna dan salinan dalam data aplikasi. Pemindaian tidak mengikuti symlink agar tidak keluar dari folder atau berputar tanpa henti. Impor membaca satu file per giliran; pembatalan selesai setelah file aktif diproses. Pemindaian direktori berjalan sebelum tahap impor dan belum memiliki pembatalan tersendiri. Pada Linux desktop, elemen audio memutar salinan dari data aplikasi melalui Blob URL yang diambil secara asynchronous dari asset protocol; hanya track aktif yang dipertahankan dan metadata impor tetap dibaca sesuai kebutuhan. Cover tersimpan dilayani melalui asset protocol Tauri.
 
-Penutupan jendela tidak ditahan oleh WebView; pengaturan ditulis berurutan selama sesi dan disimpan berkala. Saat impor berlangsung, pembatalan dapat dilakukan dari UI. Jika pengaturan rusak, aplikasi mempertahankan file tersebut dan melaporkan kegagalan; jangan menganggap perubahan sesi tersimpan sampai file dipulihkan. Metadata koleksi yang rusak dilaporkan dan dilewati tanpa menghapus berkasnya.
+Penutupan jendela menunggu antrean pengaturan selesai sebelum proses desktop keluar. Saat impor berlangsung, pembatalan dapat dilakukan dari UI. Jika pengaturan browser rusak, salinan pemulihan diberi nama `atiga-state.corrupt-<timestamp>`; file native yang rusak dipertahankan dan dilaporkan. Metadata koleksi yang rusak dilaporkan dan dilewati tanpa menghapus berkasnya.
 
 Ekspor cadangan di UI berisi metadata dan pengaturan, tanpa audio. Untuk mencadangkan seluruh koleksi desktop, tutup aplikasi dan salin direktori data di atas. Data IndexedDB dari prototipe desktop tetap dibaca di WebView yang sama; untuk koleksi yang berasal dari browser lain, impor kembali file musik lalu pulihkan cadangan metadata.
 
@@ -60,7 +60,7 @@ Sebelum rilis publik, uji pada distro Linux sasaran:
 1. Instal pada akun bersih tanpa Node.js/Rust; buka dari Start Menu atau menu aplikasi.
 2. Putuskan jaringan, buka aplikasi, dan putar demo serta musik lokal.
 3. Pilih beberapa file dan folder bersarang dengan nama Unicode; batalkan dialog; drag file dan folder dari pengelola berkas.
-4. Pindai ulang: file baru ditambahkan dan file lama tidak terduplikasi. Uji file rusak, folder hilang, izin ditolak, serta pembatalan impor.
+4. Pindai ulang: file baru ditambahkan dan file lama tidak terduplikasi. Uji file rusak yang ditolak tanpa track palsu, folder hilang, izin ditolak, serta pembatalan impor.
 5. Putar MP3/WAV/OGG/FLAC, seek, jeda, dan pindah lagu. Playback awal Linux memakai mode kompatibilitas; tekan DSP/EQ atau ubah knob audio untuk mengaktifkan pemrosesan Web Audio dan uji efeknya.
 6. Simpan favorit, playlist, volume dan posisi; tutup lalu buka kembali tanpa autoplay. Uji preferensi melanjutkan posisi dalam keadaan mati dan hidup, lalu pastikan pemutaran tetap pause saat startup. Pindahkan file asli dan pastikan salinan impor tetap diputar.
 7. Hapus lagu dari koleksi dan pastikan file asli masih ada. Uji upgrade, uninstall, dan install ulang sesuai kebijakan data yang ingin dirilis.

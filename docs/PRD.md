@@ -1,8 +1,9 @@
 # PRD Atiga Amp
 
-Status: disetujui untuk diturunkan menjadi backlog  
-Terakhir diperbarui: 14 September 2026  
-Rilis terdekat: 0.1.8
+Status: referensi produk aktif; scope stabilisasi 0.1.x sudah diterapkan
+Terakhir diperbarui: 25 Oktober 2026
+Rilis source saat ini: 0.1.22
+Target perubahan berikutnya: 0.2.0
 
 ## Ringkasan produk
 
@@ -31,7 +32,7 @@ Kedua pengalaman harus mudah ditemukan, mudah dipindahkan, dan mengingat pilihan
 | Pemulihan cadangan | Pengguna memilih **Gabungkan** atau **Ganti koleksi**; bawaan adalah Gabungkan. |
 | Audio demo | Hanya tersedia dalam alur onboarding dan dihapus permanen dari koleksi setelah onboarding selesai. |
 | Arsitektur | Refaktor dilakukan bertahap dengan menjaga perilaku dan kompatibilitas data; tidak ada penulisan ulang sekaligus. |
-| Strategi rilis | 0.1.8 adalah rilis stabilisasi dan usability. Perubahan model data masuk 0.2.0. |
+| Strategi rilis | Rangkaian 0.1.x adalah stabilisasi dan usability. Perubahan model data masuk 0.2.0. |
 
 ## Prioritas
 
@@ -58,7 +59,9 @@ Pengguna utama menyimpan musik di komputer Linux dan ingin mendengarkannya secar
 - memahami dengan jelas fitur audio yang tersedia pada Linux;
 - membuat cadangan yang sesuai dengan kebutuhan pemulihannya.
 
-## Sasaran rilis 0.1.8
+## Scope stabilisasi 0.1.x
+
+Bagian ini mencatat keputusan dan sasaran stabilisasi yang menjadi dasar rilis 0.1.x sampai `0.1.22`. Ia dipertahankan sebagai konteks produk dan kontrak perilaku, bukan sebagai rilis mendatang.
 
 ### Stabilitas playback
 
@@ -100,10 +103,10 @@ Pengguna utama menyimpan musik di komputer Linux dan ingin mendengarkannya secar
 
 ### Pengelolaan koleksi pada model penyimpanan 0.1.x
 
-- 0.1.8 tetap membaca dan memutar salinan audio yang telah dikelola aplikasi 0.1.x.
+- Rilis 0.1.x tetap membaca dan memutar salinan audio yang telah dikelola aplikasi.
 - Impor banyak file dan folder memberi ringkasan yang membedakan berhasil, duplikat, format tidak didukung, gagal dibaca, dan gagal disimpan.
 - Playlist dapat dibuat, diubah namanya, dan dihapus tanpa menghapus lagunya.
-- Menghapus lagu dari koleksi memberi tahu dengan jelas bahwa pada 0.1.8 hanya salinan yang dikelola aplikasi yang dihapus; file asal tidak diubah.
+- Menghapus lagu dari koleksi memberi tahu dengan jelas bahwa pada 0.1.x hanya salinan yang dikelola aplikasi yang dihapus; file asal tidak diubah.
 - Daftar, antrean, pencarian, pengelompokan, pengurutan, serta empty state tetap dapat digunakan dengan keyboard.
 
 ### Kemudahan dan aksesibilitas
@@ -113,23 +116,23 @@ Pengguna utama menyimpan musik di komputer Linux dan ingin mendengarkannya secar
 - Target interaktif yang dipakai pada tampilan sempit memenuhi ukuran sentuh minimum yang wajar.
 - Gerakan dekoratif menghormati `prefers-reduced-motion`.
 - Tampilan 1280×800 tidak menyembunyikan aksi utama di luar viewport awal.
-- Mobile/PWA tidak menjadi release gate 0.1.8, tetapi perubahan 0.1.8 tidak boleh menambah regresi horizontal overflow atau membuat fungsi dasar tidak dapat digunakan.
+- Mobile/PWA bukan release gate 0.1.x, tetapi perubahan tidak boleh menambah regresi horizontal overflow atau membuat fungsi dasar tidak dapat digunakan.
 
 ### Refaktor bertahap
 
 - Engine playback, koleksi, persistence, impor, dan binding UI dipisahkan secara bertahap di belakang kontrak perilaku yang diuji.
 - React tidak boleh memiliki engine playback kedua.
 - Setiap ekstraksi menjaga format data 0.1.x dan lolos tes regresi sebelum ekstraksi berikutnya.
-- Refaktor yang membahayakan jadwal atau stabilitas boleh ditunda tanpa menahan 0.1.8.
+- Refaktor yang membahayakan stabilitas boleh ditunda tanpa menahan rilis stabilisasi.
 
 ### Dokumentasi dan rilis
 
 - Dokumentasi menyebut Linux desktop sebagai produk utama dan menjelaskan bahwa browser adalah demo/pengembangan.
 - Daftar fitur membedakan fitur aktif di Linux dari fitur yang hanya tersedia pada browser.
-- QA dan nomor versi diperbarui untuk 0.1.8 sebelum tag dibuat.
+- QA dan nomor versi diperbarui untuk setiap tag rilis.
 - Rilis hanya dilakukan setelah pemeriksaan otomatis, smoke test AppImage, dan matriks penerimaan manual lulus.
 
-## Bukan sasaran 0.1.8
+## Belum masuk scope 0.1.x
 
 - Mengganti koleksi dari salinan terkelola menjadi referensi file asli.
 - Sinkronisasi folder penuh.
@@ -173,15 +176,15 @@ Pengguna utama menyimpan musik di komputer Linux dan ingin mendengarkannya secar
 
 ## Kriteria rilis
 
-0.1.8 dapat dirilis bila:
+Kriteria yang digunakan untuk menilai rilis stabilisasi 0.1.x adalah:
 
 - semua pemeriksaan lint, unit/regresi, TypeScript, Vite, Rust format, Clippy, dan test Rust lulus;
 - smoke test native mencakup startup, impor, restart, seek, pause, next/previous, queue, repeat, shuffle, dan kedua nilai preferensi posisi;
 - penerimaan manual lulus untuk `.deb` dan `.AppImage` pada setidaknya Ubuntu 22.04/24.04 atau Linux Mint yang didokumentasikan;
 - mode Rack dan Koleksi dapat dipakai pada jendela 1280×800;
 - tidak ada kontrol palsu yang masih dapat dioperasikan;
-- data pengguna 0.1.7 tetap dapat dibaca;
-- `QA.md`, README, versi paket, dan tag rilis konsisten.
+- data pengguna 0.1.x tetap dapat dibaca;
+- `QA.md`, README, versi paket, dan tag rilis konsisten pada setiap rilis.
 
 Karena aplikasi bersifat lokal dan tidak menggunakan telemetri, keberhasilan dinilai melalui pengujian deterministik, penerimaan manual, laporan bug rilis, dan ketiadaan kehilangan data yang diketahui.
 

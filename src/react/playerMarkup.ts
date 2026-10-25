@@ -1,7 +1,9 @@
+import { APP_VERSION } from '../version';
+
 export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
   <!-- Top Chassis Screws & Branding Rail -->
   <header class="titlebar rack-titlebar" data-tauri-drag-region>
-    <div class="brand rack-brand" data-tauri-drag-region><span class="brand-emblem" data-tauri-drag-region>A</span><span data-tauri-drag-region>ATIGA</span><b data-tauri-drag-region>PRECISION HI-FI</b><span class="version" data-tauri-drag-region title="Atiga Amp v0.1.22">v0.1.22</span></div>
+    <div class="brand rack-brand" data-tauri-drag-region><span class="brand-emblem" data-tauri-drag-region>A</span><span data-tauri-drag-region>ATIGA</span><b data-tauri-drag-region>PRECISION HI-FI</b><span class="version" data-tauri-drag-region title="Atiga Amp v${APP_VERSION}">v${APP_VERSION}</span></div>
     <div class="title-motto" data-tauri-drag-region>AMP STEREO CASSETTE DECK &amp; DC SERVO AMPLIFIER</div>
     <div class="title-actions">
       <span class="local-indicator"><i></i> HIGH FIDELITY</span>
@@ -1054,7 +1056,7 @@ export const playerMarkup = String.raw`<div class="app teac-rack-app" id="app">
 
 <dialog id="help-dialog">
   <form method="dialog" class="dialog-heading">
-    <h2>ATIGA AMP &amp; DC SERVO AMPLIFIER <span class="help-version-tag">v0.1.22</span></h2>
+    <h2>ATIGA AMP &amp; DC SERVO AMPLIFIER <span class="help-version-tag">v${APP_VERSION}</span></h2>
     <button class="icon-button" aria-label="Tutup panduan" data-icon="close"></button>
   </form>
   <p>Sistem pemutar musik vintage Hi-Fi dengan cassette deck mekanis dan amplifier terintegrasi. Gunakan tombol tuts piano untuk kontrol playback, knob putar untuk mengatur volume, bass, treble, dan balance.</p>

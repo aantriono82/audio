@@ -2,6 +2,8 @@
 
 Pemutar musik lokal untuk Linux dengan antarmuka charcoal–amber, terinspirasi pemutar musik desktop klasik. Installer desktop membundel antarmuka dan font; pengguna tidak memerlukan Node.js, Rust, terminal, atau server pengembangan. Node.js 22.13+ dan Rust hanya diperlukan oleh pengembang.
 
+Versi source dan paket saat ini adalah `0.1.22`. Linux desktop tetap menjadi target produk utama; mode browser digunakan untuk demo, pengembangan, dan PWA dasar.
+
 Target distribusi adalah Linux x64 (`.deb`/`.AppImage`). AppImage merupakan paket portabel, sedangkan `.deb` dipasang melalui pengelola paket. Lihat [panduan desktop](docs/DESKTOP.md) untuk build, lokasi data, dan batas pengujian.
 
 ## Menjalankan
@@ -31,7 +33,7 @@ Pada desktop Tauri Linux, event ditulis otomatis ke `${XDG_DATA_HOME:-$HOME/.loc
 - Pencarian, favorit, riwayat, playlist khusus, dan antrean eksplisit.
 - Demo audio hanya tersedia sebagai preview onboarding dan dibersihkan setelah onboarding selesai.
 - Menu tiga titik pada lagu untuk menambah ke playlist atau antrean; drag untuk mengurutkan playlist dan antrean ketika pencarian dan pengurutan judul dimatikan.
-- Equalizer sepuluh band, preset, serta spectrum dari audio yang sedang diputar.
+- Equalizer dua puluh band, preset, serta spectrum dari audio yang sedang diputar.
 - Crossfade, preload gapless, ReplayGain dari tag, preamp, balance, output device, tema, CRT/glow, dan panel drag-and-drop.
 - Metadata ID3 dasar, embedded cover, pengelompokan artis/album/genre, smart playlist, waveform, notifikasi, dan pemindaian ulang folder.
 - Desktop: dialog sistem untuk file/folder, pemindaian ulang folder, serta drag-and-drop file/folder; audio disalin ke direktori data aplikasi dan pengaturan disimpan dalam JSON secara atomik. Browser: IndexedDB dan localStorage. Tidak otomatis memutar setelah dibuka kembali; pilihan melanjutkan posisi terakhir tersedia dan mati secara bawaan.
@@ -43,7 +45,7 @@ Pada desktop Tauri Linux, event ditulis otomatis ke `${XDG_DATA_HOME:-$HOME/.loc
 
 Aplikasi memiliki backend desktop, paket Linux, serta workflow GitHub Release berbasis tag. Status build dan pengujian aktual dicatat di [QA.md](QA.md). Dukungan codec mengikuti WebKitGTK/GStreamer di Linux. File yang gagal dibaca dilewati dengan pemberitahuan. Impor membaca tag ID3 dasar jika tersedia. File tanpa tag memakai pola nama `Artis - Judul.ext` dan nama folder sebagai album.
 
-Arah produk, ruang lingkup rilis 0.1.8/0.2.0, dan keputusan perilaku utama dicatat di [PRD](docs/PRD.md). Turunannya yang siap dijadikan GitHub Issues berada di [backlog PRD](docs/ISSUES.md). Implementasi yang disetujui untuk rilis 0.1.8 sudah diterapkan pada source; pekerjaan perubahan model data 0.2.0 tetap dipisahkan dari release stabilisasi ini.
+Arah produk, keputusan perilaku, serta ruang lingkup stabilisasi 0.1.x dan target 0.2.0 dicatat di [PRD](docs/PRD.md). Turunan backlog historis dan pekerjaan 0.2.0 berada di [backlog PRD](docs/ISSUES.md). Scope stabilisasi 0.1.x sudah diterapkan pada source; perubahan model data 0.2.0 tetap menjadi pekerjaan berikutnya.
 
 Audio desktop disalin ke data aplikasi, sehingga membutuhkan ruang tambahan sebesar file impor. Menghapus lagu dari koleksi menghapus salinan tersebut, tanpa menghapus file asal. Data browser tetap memiliki batas kuota; data desktop lama di IndexedDB tetap dibaca jika tersedia. Koleksi browser pada origin lain tidak otomatis berpindah ke desktop. Font disertakan di paket; file musik tidak diunggah. Gapless/crossfade, codec, pemilihan output, dan notifikasi masih mengikuti kemampuan WebView. Pemindaian ulang desktop dijalankan dari Pengaturan; bila folder asal dipindahkan, pilih folder baru.
 

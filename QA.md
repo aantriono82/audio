@@ -1,56 +1,55 @@
-# Pemeriksaan Atiga Amp 0.1.9
+# Status QA Atiga Amp v0.1.22
 
-Pemeriksaan baseline source, build `.deb`, dan native smoke test v0.1.9 dijalankan pada 14 September 2026 di workspace Linux x64. Workflow final v0.1.9 menjalankan smoke test AppImage dengan WAV; percobaan fixture MP3 sebelumnya berhenti karena runner tidak memiliki `gst-launch-1.0`, sehingga hasil tersebut tidak membuktikan playback MP3.
+Terakhir diperbarui: 25 Oktober 2026
+Target: Linux x64 (`.deb` dan `.AppImage`)
 
-## Hasil otomatis
+Dokumen ini mengikuti source dan konfigurasi paket yang saat ini berada pada versi `0.1.22`. Hasil pengujian pada versi lama tidak dianggap sebagai bukti untuk artefak `0.1.22`. Status di bawah diperbarui setelah implementasi stabilisasi dan pemeriksaan lokal pada 25 Oktober 2026.
 
-| Pemeriksaan | Hasil |
-| --- | --- |
-| ESLint dan unit/regresi JavaScript (`npm run lint`, `npm test`) | Lulus, 47 tes |
-| TypeScript dan Vite production (`npm run build`) | Lulus |
-| Konsistensi versi (`npm run version:check`) | Lulus; `0.1.9` |
-| Rust format dan Clippy dengan warning sebagai error (`npm run desktop:check`) | Lulus |
-| Unit test penyimpanan native (`npm run desktop:test`) | Lulus, 6 tes |
-| Native smoke test Linux v0.1.9 | Lulus untuk AppImage + WAV; cakupan MP3 dan paket `.deb` belum dijalankan pada artefak final |
+## Status pemeriksaan v0.1.22
 
-Regresi yang diuji oleh UI contract mencakup mode playback Linux tanpa Web Audio, reset sumber MP3 tanpa seek nol yang terlambat, pilihan resume yang mati secara bawaan tanpa autoplay, pemutaran native melalui Blob URL yang diambil dari asset protocol, mode Rack/Koleksi, onboarding demo, lifecycle playlist, ringkasan impor, tidak adanya intersepsi penutupan WebView, dan otorisasi path pada native drag-and-drop. UI contract bersifat pemeriksaan source; ia tidak memverifikasi sampel audio yang terdengar.
+| Pemeriksaan | Perintah | Status pada dokumen ini |
+| --- | --- | --- |
+| Konsistensi versi | `npm run version:check` | Lulus |
+| ESLint dan unit/regresi JavaScript | `npm run check` | Lulus, 59 test |
+| TypeScript dan Vite production build | `npm run build` | Lulus |
+| Rust format dan Clippy | `npm run desktop:check` | Lulus |
+| Unit test storage native | `npm run desktop:test` | Lulus, 7 test |
+| Build binary dan paket `.deb` | `npm run desktop:build -- --ci` | Lulus |
+| Bundling `.AppImage` | `npm run desktop:build -- --ci` | Belum selesai; tool AppImage macet saat bundling |
+| Smoke test `.deb` dengan MP3 | `npm run desktop:smoke:deb` | Terblokir: `Xvfb` tidak menyediakan virtual display |
+| Smoke test `.AppImage` dengan MP3 | `npm run desktop:smoke:appimage` | Belum dijalankan |
+| Checksum artefak | `npm run desktop:checksums` | Belum dijalankan |
 
-Build paket `.deb` Linux lulus. Smoke test native v0.1.9 hanya meliputi AppImage + WAV. Uji penerimaan visual manual pada 1280×800, MP3 pada kedua paket, dan instalasi akun bersih belum dijalankan.
+Workflow CI menjalankan pemeriksaan tersebut pada Ubuntu 22.04 sebagai runner publik dan mengulang build/runtime validation pada Ubuntu 24.04. Smoke test membutuhkan `Xvfb`, `WebKitWebDriver`, `dpkg-deb`, dan `gstreamer1.0-tools`.
 
-## Artefak Linux lokal
+## Cakupan penerimaan
 
-| Paket | Ukuran | SHA-256 |
-| --- | ---: | --- |
-| `Atiga Amp_0.1.9_amd64.deb` | 3.562.086 byte | `d6dca76e7c1a4e58d332a5951d3f274df4251d1d664e4ed99d1840da0c356352` |
-| `Atiga Amp_0.1.6_amd64.deb` | 3.555.018 byte | `5ec2252b7b565c16ad17384868b5a706962935836782c5ca2817bf72fda094f0` |
+Sebelum mempublikasikan artefak `v0.1.22`, catat hasil aktual untuk:
 
-Paket `.deb` membutuhkan `gstreamer1.0-plugins-base`, `gstreamer1.0-plugins-good`, `gstreamer1.0-plugins-bad`, `gstreamer1.0-plugins-ugly`, dan `gstreamer1.0-libav`, selain WebKitGTK dan GTK. `gstreamer1.0-tools` dibutuhkan oleh generator fixture smoke, bukan oleh pengguna akhir. Konfigurasi AppImage memakai `bundleMediaFramework`; artefak dan target distro tetap perlu smoke test.
+1. Instalasi `.deb` dan menjalankan `.AppImage` pada akun bersih tanpa Node.js atau Rust.
+2. Startup offline, onboarding, enam demo audio, dan tidak adanya autoplay.
+3. Impor file, folder bersarang, nama Unicode, drag-and-drop, file rusak, dan pembatalan impor.
+4. Playback MP3, WAV, OGG, dan FLAC; seek, pause, next/previous, antrean, repeat, shuffle, dan restart.
+5. Mode Rack dan Koleksi pada jendela 1280×800.
+6. EQ/DSP yang awalnya bypass pada Linux lalu aktif setelah tindakan pengguna.
+7. Playlist, favorit, volume, posisi playback, resume tanpa autoplay, upgrade, dan restart.
+8. Penghapusan lagu dari koleksi tanpa menghapus file asli.
 
-## Artefak v0.1.6 yang dipublikasikan
+Hasil manual perlu menyertakan distro, arsitektur, jenis paket, codec, status, dan checksum artefak yang diuji. Batas codec dan output audio tetap mengikuti WebKitGTK/GStreamer pada distro yang digunakan.
 
-Release [Atiga Amp v0.1.6](https://github.com/aantriono82/audio/releases/tag/v0.1.6) berhasil dibuat setelah smoke test CI lulus.
+## Data aplikasi yang perlu diperiksa
 
-| Paket | SHA-256 |
-| --- | --- |
-| `Atiga Amp_0.1.6_amd64.AppImage` | `b3bcf74427b60193f3900a699d25eeadf6a22270e5f599355710a88688c2c20c` |
-| `Atiga Amp_0.1.6_amd64.deb` | `43ad03019a3deaa87007b1d767f8557ad03dc674d1292d1d01decc434cbee0e2` |
+Pada Linux, data berada di `${XDG_DATA_HOME:-$HOME/.local/share}/com.atiga.amp`:
 
-## Artefak v0.1.7 yang dipublikasikan
+- `settings.json`: pengaturan, playlist, favorit, antrean, EQ, volume, posisi, dan preferensi resume.
+- `library/<UUID>/`: salinan audio terkelola, `track.json`, dan cover jika tersedia.
+- `music-folder.json`: folder terakhir untuk pemindaian ulang.
+- `debug.log`: lifecycle dan error aplikasi, dengan batas sekitar 4 MB.
 
-Release [Atiga Amp v0.1.7](https://github.com/aantriono82/audio/releases/tag/v0.1.7) berhasil dibuat setelah smoke test CI memverifikasi pemutaran demo dan lagu impor dimulai dekat detik 0.
+## Bukti historis
 
-| Paket | SHA-256 |
-| --- | --- |
-| `Atiga Amp_0.1.7_amd64.AppImage` | `acc470418560f47a4c064ee7e51088b83dd6720c997b285f9b78e9372f33ac3c` |
-| `Atiga Amp_0.1.7_amd64.deb` | `c7a42743f8bd0be7e8e327d67898111ca7733cb9b4909f6f1f8aa70f5b1d6e51` |
+Pemeriksaan v0.1.9 pada 14 September 2026 mencatat lint/unit test lulus, build `.deb` lulus, Rust check lulus, dan native smoke AppImage dengan WAV lulus. Bukti tersebut tetap berguna sebagai riwayat, tetapi tidak membuktikan source atau artefak v0.1.22.
 
-## Batas validasi
+Artefak v0.1.6 dan v0.1.7 yang pernah dipublikasikan juga merupakan catatan rilis historis. Hash dan hasilnya tidak boleh dipakai untuk memvalidasi rilis `v0.1.22`.
 
-Drag fisik dari file manager, pemasangan pada akun bersih, seluruh variasi codec, dan kualitas audio subjektif tetap perlu diuji pada distro Linux sasaran. Setelah perbaikan player, jalankan smoke test MP3 untuk kedua artefak dengan:
-
-```sh
-npm run desktop:smoke:deb
-npm run desktop:smoke:appimage
-```
-
-Langkah penerimaan lengkap ada di [docs/DESKTOP.md](docs/DESKTOP.md). Workflow `.github/workflows/desktop.yml` sekarang memasang `gstreamer1.0-tools`, menjalankan smoke MP3 pada `.deb` dan AppImage, serta mengulang validasi runtime pada Ubuntu 24.04. Artefak release tetap diambil dari Ubuntu 22.04.
+Langkah penerimaan lengkap ada di [docs/DESKTOP.md](docs/DESKTOP.md). Ruang lingkup produk dan kriteria rilis ada di [docs/PRD.md](docs/PRD.md).

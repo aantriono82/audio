@@ -1,6 +1,9 @@
 import { esc, formatTime, demoBlob, demoTracks, baseTracks, visibleTracks, queueIndexAtVisibleIndex } from './library.js';
 import { isAudioFile, metadataFromFilename, readEmbeddedMetadata } from './import.js';
-import { desktop, nativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, nativeAudioBlob, saveNativeTrack, removeNativeTrack, clearNativeLibrary, nativeURL } from './desktop.js';
+import { contentFingerprint, legacyFingerprint } from './import-helpers.js';
+import { resolveBackupCollections, restoreCollections } from './backup.js';
+import { normalizePersistedState, parsePersistedState, STATE_SCHEMA_VERSION } from './state-schema.js';
+import { desktop, nativeSettings, flushNativeSettings, loadNativeSettings, loadNativeLibrary, selectNativeAudio, scanNativePaths, rescanNativeFolder, readNativeAudio, nativeAudioBlob, saveNativeTrack, removeNativeTrack, clearNativeLibrary, nativeURL } from './desktop.js';
 import { playbackCapabilities } from './capabilities.js';
 import { captureError, isVerboseLoggingEnabled, log } from './debug-log.js';
 
@@ -299,6 +302,13 @@ function addAdvancedUI() {
     };
     makeSettingsButton('export-library', 'Ekspor cadangan');
     makeSettingsButton('import-library-button', 'Impor cadangan');
+    const restoreMode = document.createElement('select');
+    restoreMode.id = 'backup-restore-mode';
+    restoreMode.className = 'text-input';
+    restoreMode.title = 'Cara memulihkan cadangan';
+    restoreMode.setAttribute('aria-label', 'Cara memulihkan cadangan');
+    restoreMode.innerHTML = '<option value="merge">Gabungkan cadangan</option><option value="replace">Ganti data koleksi</option>';
+    settingsActions.append(restoreMode);
     const note = settingsActions.querySelector('.dialog-note');
     if (note) note.textContent = 'Cadangan berisi metadata, playlist, dan pengaturan. File audio tetap berada di perangkat.';
   }
@@ -344,7 +354,7 @@ function addAdvancedUI() {
   }
   async function exportLibrary() {
     const backup = {
-      version: 1,
+      version: 2,
       exportedAt: new Date().toISOString(),
       tracks: state.tracks.filter(track => !track.demo).map(({ id, fingerprint, title, artist, album, genre, format, duration }) => ({ id, fingerprint, title, artist, album, genre, format, duration })),
       favorites: [...state.favorites], playlists: state.playlists, recent: state.recent, queue: state.queue, positions: state.positions,
@@ -357,17 +367,16 @@ function addAdvancedUI() {
   async function importLibrary(file) {
     try {
       const backup = JSON.parse(await file.text());
-      if (backup?.version !== 1 || !Array.isArray(backup.tracks) || !Array.isArray(backup.playlists)) throw new Error('Format cadangan tidak dikenali.');
-      const byId = new Map(state.tracks.map(track => [track.id, track]));
-      const byFingerprint = new Map(state.tracks.filter(track => track.fingerprint).map(track => [track.fingerprint, track]));
-      const backupTracks = new Map(backup.tracks.map(track => [track.id, track]));
-      const resolveId = id => byId.get(id)?.id || (backupTracks.get(id)?.fingerprint && byFingerprint.get(backupTracks.get(id).fingerprint)?.id) || null;
-      const resolveIds = ids => ids.map(resolveId).filter(Boolean);
-      state.favorites = new Set(resolveIds(Array.isArray(backup.favorites) ? backup.favorites : []));
-      state.playlists = backup.playlists.filter(playlist => playlist && typeof playlist.name === 'string').map(playlist => ({ id: playlist.id || crypto.randomUUID(), name: playlist.name, ids: resolveIds(Array.isArray(playlist.ids) ? playlist.ids : []) }));
-      state.recent = resolveIds(Array.isArray(backup.recent) ? backup.recent : []);
-      state.queue = resolveIds(Array.isArray(backup.queue) ? backup.queue : []);
-      state.positions = Object.fromEntries(Object.entries(backup.positions || {}).map(([id, value]) => { const resolved = resolveId(id); return resolved ? [resolved, Number(value) || 0] : null; }).filter(Boolean));
+      if (![1, 2].includes(backup?.version) || !Array.isArray(backup.tracks) || !Array.isArray(backup.playlists)) throw new Error('Format cadangan tidak dikenali.');
+      const backupTracks = Array.isArray(backup.tracks) ? backup.tracks : [];
+      const resolver = resolveBackupCollections(state.tracks, backupTracks);
+      const restoreMode = $('#backup-restore-mode')?.value === 'replace' ? 'replace' : 'merge';
+      const restored = restoreCollections(state, backup, restoreMode, resolver);
+      state.favorites = restored.favorites;
+      state.playlists = restored.playlists;
+      state.recent = restored.recent;
+      state.queue = restored.queue;
+      state.positions = restored.positions;
       const settings = backup.settings || {};
       if (typeof settings.theme === 'string') state.theme = settings.theme;
       if (['champagne', 'black', 'silver'].includes(settings.faceplate)) state.faceplate = settings.faceplate;
@@ -393,7 +402,7 @@ function addAdvancedUI() {
         state.dspEnabled = false;
       }
       applyTheme(); applyViewMode(); render(); syncSettings(); await applyOutputDevice(); persist();
-      const available = backup.tracks.filter(track => byId.has(track.id) || byFingerprint.has(track.fingerprint)).length;
+      const available = backupTracks.filter(track => resolver.byId.has(track.id) || resolver.byFingerprint.has(track.fingerprint)).length;
       toast(`Cadangan dipulihkan. ${available} dari ${backup.tracks.length} lagu tersedia.`);
     } catch (error) { toast(`Cadangan gagal diimpor: ${error instanceof Error ? error.message : 'format tidak valid.'}`); }
   }
@@ -417,7 +426,11 @@ function syncSettings() {
 function groupOptions(type) { return [...new Set(state.tracks.map(track => String(track[type] || 'Tidak diketahui')))].sort(); }
 function renderGrouping() { const select = $('#group-by'); if (!select) return; const labels = { artist: 'Artis', album: 'Album', genre: 'Genre' }; const values = [['', 'Semua lagu'], ...['artist','album','genre'].flatMap(type => groupOptions(type).map(value => [`${type}:${value}`, `${labels[type]} · ${value}`]))]; select.innerHTML = values.map(([value, label]) => `<option value="${esc(value)}">${esc(label)}</option>`).join(''); select.value = state.view.includes(':') ? state.view : ''; }
 async function applyOutputDevice(deviceId = state.outputDevice, notify = false) {
-  if (typeof audio.setSinkId !== 'function') return false;
+  if (typeof audio.setSinkId !== 'function') {
+    state.outputDevice = 'default';
+    if (notify) toast('Peramban ini hanya mendukung keluaran bawaan.');
+    return false;
+  }
   try {
     await audio.setSinkId(deviceId || 'default');
     state.outputDevice = deviceId || 'default';
@@ -458,8 +471,10 @@ async function refreshOutputDevices() {
 }
 async function filesFromDirectory(handle) { const files = []; async function walk(directory) { for await (const entry of directory.values()) { if (entry.kind === 'file') files.push(await entry.getFile()); else if (entry.kind === 'directory') await walk(entry); } } await walk(handle); return files; }
 async function chooseFolder() { if (desktop) { log('info', 'library.choose_folder', { desktop: true }); await importNativeSelection('folder'); return; } if (!('showDirectoryPicker' in window)) { log('info', 'library.choose_folder_fallback'); $('#folder-input').click(); return; } try { const handle = await window.showDirectoryPicker({ mode: 'read' }); if (db) await directoryAction('readwrite', store => store.put({ id: 'music-root', handle })); const files = await filesFromDirectory(handle); log('info', 'library.folder_scanned', { count: files.length }); await importFiles(files); toast(`${files.length} file dipindai dari folder.`); } catch (error) { if (error.name !== 'AbortError') { captureError('library.folder_scan_failed', error); toast('Folder tidak dapat dipindai.'); } } }
-let saved = {};
-try { saved = JSON.parse(localStorage.getItem('atiga-state') || '{}') || {}; } catch (error) { captureError('state.load_failed', error); /* Start fresh if browser data is invalid. */ }
+let saved = parsePersistedState(localStorage.getItem('atiga-state'), (raw, error) => {
+  captureError('state.load_failed', error);
+  try { localStorage.setItem(`atiga-state.corrupt-${Date.now()}`, raw); } catch { /* storage may be unavailable */ }
+});
 let nativeSettingsWritable = true;
 const savedPositions = saved.positions && typeof saved.positions === 'object' ? saved.positions : {};
 const EQ_BAND_COUNT = 20;
@@ -701,7 +716,7 @@ function readMetadataOffThread(file) {
 const findTrack = id => state.tracks.find(t => t.id === id);
 const current = () => findTrack(state.currentId) || state.tracks[0];
 function applySavedState(nextSaved) {
-  if (!nextSaved || typeof nextSaved !== 'object') return;
+  nextSaved = normalizePersistedState(nextSaved, EQ_BAND_COUNT);
   state.favorites = new Set(Array.isArray(nextSaved.favorites) ? nextSaved.favorites : []);
   state.playlists = Array.isArray(nextSaved.playlists)
     ? nextSaved.playlists.filter(p => p && typeof p.name === 'string' && Array.isArray(p.ids) && !['after-hours', 'slow-living'].includes(p.id))
@@ -761,7 +776,7 @@ function persist() {
     const canPersistPosition = state.currentId && loadedId === state.currentId && readyTrackId === state.currentId && Number.isFinite(audio.currentTime);
     const position = canPersistPosition ? Math.max(0, audio.currentTime) : 0;
     if (canPersistPosition) state.positions[state.currentId] = position;
-    const snapshot = { ...state, tracks: undefined, favorites: [...state.favorites], position, currentId: state.currentId };
+    const snapshot = { ...state, schemaVersion: STATE_SCHEMA_VERSION, tracks: undefined, favorites: [...state.favorites], position, currentId: state.currentId };
     if (desktop) {
       if (nativeSettingsWritable) void nativeSettings.save(snapshot).catch(error => { captureError('state.native_save_failed', error); toast('Pengaturan belum tersimpan. Periksa ruang penyimpanan perangkat.'); });
     } else localStorage.setItem('atiga-state', JSON.stringify(snapshot));
@@ -2191,45 +2206,48 @@ async function clearAllTracks() {
     : 'File asal di perangkat tidak diubah.';
   if (!await askConfirm(`Hapus seluruh ${count} lagu dari koleksi? ${consequence}`)) return;
 
-  try {
-    if (desktop) {
-      try {
-        await clearNativeLibrary();
-      } catch (err) {
-        captureError('library.clear_native_failed', err);
-        const nativeRemovals = state.tracks
-          .filter(track => track.nativePath)
-          .map(track => removeNativeTrack(track.id));
-        if (nativeRemovals.length) await Promise.allSettled(nativeRemovals);
-      }
+  const failedIds = new Set();
+  const nativeTracks = state.tracks.filter(track => track.nativePath);
+  if (desktop && nativeTracks.length) {
+    try {
+      await clearNativeLibrary();
+    } catch (error) {
+      captureError('library.clear_native_failed', error);
+      const results = await Promise.allSettled(nativeTracks.map(track => removeNativeTrack(track.id)));
+      results.forEach((result, index) => { if (result.status === 'rejected') failedIds.add(nativeTracks[index].id); });
     }
-    if (db) {
-      try {
-        await dbAction('readwrite', store => store.clear());
-      } catch (error) {
-        captureError('library.clear_all_failed', error);
-      }
+  }
+  const browserTracks = state.tracks.filter(track => !track.nativePath && !track.demo);
+  if (db && browserTracks.length) {
+    try {
+      await dbAction('readwrite', store => store.clear());
+    } catch (error) {
+      captureError('library.clear_browser_failed', error);
+      browserTracks.forEach(track => failedIds.add(track.id));
     }
-  } catch (error) {
-    captureError('library.clear_all_failed', error);
+  }
+  const removedTracks = state.tracks.filter(track => !failedIds.has(track.id));
+  const removedIds = new Set(removedTracks.map(track => track.id));
+
+  const preserveCurrentPlayback = state.currentId && failedIds.has(state.currentId);
+  if (!preserveCurrentPlayback) {
+    pendingStartCleanup?.();
+    pendingStartCleanup = undefined;
+    playbackToken++;
+    if (nativePlaybackMode()) {
+      resetNativePlaybackElement();
+    } else {
+      audio.pause();
+      try { audio.currentTime = 0; } catch { /* source may already be gone */ }
+      audio.removeAttribute('src');
+      audio.load();
+    }
+    loadedId = null;
+    readyTrackId = null;
+    state.currentId = null;
   }
 
-  pendingStartCleanup?.();
-  pendingStartCleanup = undefined;
-  playbackToken++;
-  if (nativePlaybackMode()) {
-    resetNativePlaybackElement();
-  } else {
-    audio.pause();
-    try { audio.currentTime = 0; } catch { /* source may already be gone */ }
-    audio.removeAttribute('src');
-    audio.load();
-  }
-  loadedId = null;
-  readyTrackId = null;
-  state.currentId = null;
-
-  state.tracks.forEach(track => {
+  removedTracks.forEach(track => {
     releaseTrackURL(track.id);
     const artUrl = artUrls.get(track.id);
     if (artUrl) {
@@ -2238,13 +2256,13 @@ async function clearAllTracks() {
     }
   });
 
-  state.tracks = [];
-  state.playlists.forEach(playlist => { playlist.ids = []; });
-  state.queue = [];
-  state.favorites.clear();
-  state.recent = [];
-  state.playCounts = {};
-  state.positions = {};
+  state.tracks = state.tracks.filter(track => failedIds.has(track.id));
+  state.playlists.forEach(playlist => { playlist.ids = playlist.ids.filter(id => !removedIds.has(id)); });
+  state.queue = state.queue.filter(id => !removedIds.has(id));
+  state.favorites = new Set([...state.favorites].filter(id => !removedIds.has(id)));
+  state.recent = state.recent.filter(id => !removedIds.has(id));
+  state.playCounts = Object.fromEntries(Object.entries(state.playCounts).filter(([id]) => !removedIds.has(id)));
+  state.positions = Object.fromEntries(Object.entries(state.positions).filter(([id]) => !removedIds.has(id)));
 
   if ('mediaSession' in navigator && 'MediaMetadata' in window) {
     try { navigator.mediaSession.metadata = null; } catch { /* ignore */ }
@@ -2252,7 +2270,8 @@ async function clearAllTracks() {
 
   render();
   persist();
-  toast(`Seluruh ${count} lagu berhasil dihapus dari koleksi.`);
+  const failed = failedIds.size;
+  toast(failed ? `${count - failed} lagu dihapus. ${failed} lagu dipertahankan karena penyimpanannya gagal.` : `Seluruh ${count} lagu berhasil dihapus dari koleksi.`);
 }
 let draggedId, draggedIndex;
 function bindListDnD(container) {
@@ -2558,8 +2577,8 @@ async function importFiles(files) {
   try {
     for (const entry of accepted) {
       if (importCancelled) break;
-      const fingerprint = `${entry.name}:${entry.size}:${entry.lastModified}`;
-      if (state.tracks.some(t => t.fingerprint === fingerprint)) { log('debug', 'library.import_duplicate', { name: entry.name }); duplicates++; processed++; updateImportProgress(processed, accepted.length, `Melewati duplikat: ${entry.name}`); continue; }
+      const quickFingerprint = legacyFingerprint(entry);
+      if (state.tracks.some(t => t.fingerprint === quickFingerprint)) { log('debug', 'library.import_duplicate', { name: entry.name }); duplicates++; processed++; updateImportProgress(processed, accepted.length, `Melewati duplikat: ${entry.name}`); continue; }
       let file = entry;
       if (entry.path) {
         try {
@@ -2572,12 +2591,9 @@ async function importFiles(files) {
           continue;
         }
       }
-      let duration = await readDuration(file);
-      if (!duration && (entry.size || file?.size)) {
-        const size = entry.size || file?.size || 0;
-        duration = Math.max(1, Math.round(size / 24000));
-        log('info', 'library.import_duration_fallback', { name: entry.name, duration });
-      }
+      const fingerprint = await contentFingerprint(file, entry);
+      if (state.tracks.some(t => t.fingerprint === fingerprint)) { log('debug', 'library.import_duplicate_content', { name: entry.name }); duplicates++; processed++; updateImportProgress(processed, accepted.length, `Melewati duplikat: ${entry.name}`); continue; }
+      const duration = await readDuration(file);
       if (!duration) {
         log('warn', 'library.import_unsupported', { name: entry.name });
         unsupported++;
@@ -2585,14 +2601,30 @@ async function importFiles(files) {
         updateImportProgress(processed, accepted.length, `Format tidak didukung atau rusak: ${entry.name}`);
         continue;
       }
-      const fallback = metadataFromFilename(file), metadata = await readMetadataOffThread(file);
+      const fallback = metadataFromFilename(file);
+      let metadata = {};
+      try {
+        metadata = await readMetadataOffThread(file);
+      } catch (error) {
+        captureError('library.import_metadata_failed', error, { name: entry.name });
+      }
       const track = { id: crypto.randomUUID(), fingerprint, title: metadata.title || fallback.title, artist: metadata.artist || fallback.artist, album: metadata.album || fallback.album, genre: metadata.genre || 'Tidak diketahui', replayGain: metadata.replayGain || 0, cover: metadata.cover, art: added % 6, duration, format: file.name.split('.').pop().toUpperCase(), file };
+      let persisted = false;
       if (desktop && entry.path) {
         try {
           Object.assign(track, await saveNativeTrack(entry.path, track));
           delete track.file; delete track.cover;
+          persisted = true;
         } catch (error) { captureError('library.import_native_save_failed', error, { name: entry.name }); unsaved++; }
-      } else if (db) { try { await dbAction('readwrite', store => store.put(track)); } catch (error) { captureError('library.import_browser_save_failed', error, { name: entry.name }); unsaved++; } } else unsaved++;
+      } else if (db) {
+        try { await dbAction('readwrite', store => store.put(track)); persisted = true; }
+        catch (error) { captureError('library.import_browser_save_failed', error, { name: entry.name }); unsaved++; }
+      } else unsaved++;
+      if (!persisted) {
+        processed++;
+        updateImportProgress(processed, accepted.length, `Tidak tersimpan: ${entry.name}`);
+        continue;
+      }
       state.tracks.push(track); added++;
       const playlist = state.playlists.find(p => p.id === state.view); if (playlist) playlist.ids.push(track.id);
       processed++;
@@ -2815,17 +2847,7 @@ function paintSpectrum(timestamp) {
       rawL = rawR = (sum / span) / 255;
     }
 
-    // Fallback if audio graph has no data or directAudio mode
-    if (rawL < 0.02 && rawR < 0.02 && !audio.paused) {
-      const t = audio.currentTime;
-      // Balanced harmonic base — identical for both channels
-      const base = (Math.sin(t * Math.PI * 3.6) ** 2 * 0.6 + (Math.sin(t * 7.2) * 0.5 + 0.5) * 0.35 + 0.18);
-      // Subtle natural stereo spread (slow sine ≈ gentle panning sway, max ±10%)
-      const spread = Math.sin(t * 1.4) * 0.10;
-      const volScale = Math.pow(state.volume, 0.6);
-      rawL = Math.min(1, Math.max(0, (base + spread) * volScale));
-      rawR = Math.min(1, Math.max(0, (base - spread) * volScale));
-    } else {
+    if (analyser || (analyserL && analyserR)) {
       const volScale = Math.pow(state.volume, 0.5);
       rawL = Math.min(1, rawL * 1.45 * volScale);
       rawR = Math.min(1, rawR * 1.45 * volScale);
@@ -3571,9 +3593,34 @@ function setupDspDialog() {
   }
 }
 
-window.addEventListener('pagehide', persist);
+let closingAfterFlush = false;
+async function installNativeCloseFlush() {
+  if (!desktop) return;
+  try {
+    const { getCurrentWindow } = await import('@tauri-apps/api/window');
+    const appWindow = getCurrentWindow();
+    await appWindow.onCloseRequested(async event => {
+      if (closingAfterFlush) return;
+      event.preventDefault();
+      try {
+        persist();
+        await flushNativeSettings();
+        closingAfterFlush = true;
+        await appWindow.destroy();
+      } catch (error) {
+        captureError('state.native_flush_failed', error);
+        closingAfterFlush = false;
+        toast('Pengaturan belum tersimpan. Tutup aplikasi setelah penyimpanan tersedia.');
+      }
+    });
+  } catch (error) {
+    captureError('state.close_handler_unavailable', error);
+  }
+}
+window.addEventListener('pagehide', () => { persist(); if (desktop) void flushNativeSettings(); });
 async function init() {
   log('info', 'app.init_started', { desktop, savedState: Object.keys(saved).length });
+  void installNativeCloseFlush();
   if (desktop) {
     try {
       const nativeSaved = await loadNativeSettings();

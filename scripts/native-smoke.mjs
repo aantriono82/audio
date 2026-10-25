@@ -65,6 +65,7 @@ if (fixtureFormat === 'wav') {
   else await generateMp3(mp3Fixture);
 }
 await writeFile(path.join(music, 'ignore.txt'), 'Not audio');
+await writeFile(path.join(music, 'corrupt.mp3'), 'not an audio stream');
 // Simulate the folder remembered after the user chose it in the system dialog.
 await writeFile(path.join(appData, 'music-folder.json'), JSON.stringify(music));
 
@@ -166,9 +167,10 @@ try {
   const denied = await ipc('read_audio_file', { path: '/etc/passwd' });
   assert.ok(denied.error, 'arbitrary filesystem read must be rejected');
   const selection = await ipc('rescan_audio_folder');
-  assert.equal(selection.value.entries.length, 1);
+  assert.equal(selection.value.entries.length, 2);
   await evaluate('document.querySelector("#scan-folder").click(); return true;');
   await until(() => evaluate('return document.querySelector("#tracks").textContent.includes("Desktop smoke")'), 'native import');
+  await until(() => evaluate('return document.querySelector("#import-summary")?.textContent.includes("tidak didukung")'), 'corrupt file rejection');
   const library = (await ipc('load_audio_library')).value;
   assert.equal(library.tracks.length, 1);
   const track = library.tracks[0];

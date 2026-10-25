@@ -117,8 +117,10 @@ test('Play selects the first track on a fresh install', () => {
   assert.match(appSource, /return selectTrack\(track\?\.id, true, pendingStartupPosition\)/);
 });
 
-test('native window close is not intercepted by the WebView', () => {
-  assert.doesNotMatch(desktopSource, /onCloseRequested/);
+test('native window close flushes queued settings before exit', () => {
+  assert.match(appSource, /installNativeCloseFlush/);
+  assert.match(appSource, /await flushNativeSettings()/);
+  assert.match(desktopSource, /flushNativeSettings/);
 });
 
 test('native file drops authorize paths before scanning', () => {
@@ -151,7 +153,8 @@ test('audio fidelity contract avoids GStreamer time-stretching and aggressive co
 
 test('local audio import contract keeps IPC fallback and resilient duration probing', () => {
   assert.match(desktopSource, /invoke\('read_audio_file'/);
-  assert.match(appSource, /library\.import_duration_fallback/);
+  assert.match(appSource, /contentFingerprint/);
+  assert.doesNotMatch(appSource, /library\.import_duration_fallback/);
+  assert.match(appSource, /if \(!persisted\)/);
   assert.match(appSource, /askConfirm/);
 });
-

@@ -27,8 +27,11 @@ export function metadataFromFilename(file) {
 }
 
 export async function readEmbeddedMetadata(file) {
+  const MAX_COVER_BYTES = 8 * 1024 * 1024;
   const result = {};
-  const buffer = await file.arrayBuffer();
+  // ID3 metadata is at the beginning of an MP3. Limit the read so a large
+  // audio file cannot be duplicated in memory just to inspect its tags.
+  const buffer = await file.slice(0, 16 * 1024 * 1024).arrayBuffer();
   const bytes = new Uint8Array(buffer);
   if (bytes[0] !== 0x49 || bytes[1] !== 0x44 || bytes[2] !== 0x33) return result;
   const version = bytes[3];
@@ -64,7 +67,7 @@ export async function readEmbeddedMetadata(file) {
       cursor += 1; cursor += 1;
       while (cursor < body.length && body[cursor]) cursor++;
       cursor += encoding === 0 || encoding === 3 ? 1 : 2;
-      if (cursor < body.length) result.cover = new Blob([body.slice(cursor)], { type: mime || 'image/jpeg' });
+      if (cursor < body.length) result.cover = new Blob([body.slice(cursor, cursor + MAX_COVER_BYTES)], { type: mime || 'image/jpeg' });
     }
     offset += 10 + size;
   }

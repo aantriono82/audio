@@ -7,6 +7,7 @@ const packageJson = JSON.parse(await readFile(path.join(root, 'package.json'), '
 const packageLock = JSON.parse(await readFile(path.join(root, 'package-lock.json'), 'utf8'));
 const tauriConfig = JSON.parse(await readFile(path.join(root, 'src-tauri/tauri.conf.json'), 'utf8'));
 const cargoToml = await readFile(path.join(root, 'src-tauri/Cargo.toml'), 'utf8');
+const playerMarkup = await readFile(path.join(root, 'src/react/playerMarkup.ts'), 'utf8');
 
 const versions = new Map([
   ['package.json', packageJson.version],
@@ -23,6 +24,11 @@ if (missing.length) {
 const uniqueVersions = new Set(versions.values());
 if (uniqueVersions.size !== 1) {
   throw new Error(`Versi tidak konsisten: ${[...versions].map(([file, version]) => `${file}=${version}`).join(', ')}`);
+}
+
+const hardCodedVersion = playerMarkup.match(/title="Atiga Amp v([^"]+)"/m)?.[1];
+if (hardCodedVersion && hardCodedVersion !== '${APP_VERSION}') {
+  throw new Error(`Versi masih ditulis langsung di src/react/playerMarkup.ts: ${hardCodedVersion}`);
 }
 
 const version = packageJson.version;

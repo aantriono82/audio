@@ -1,5 +1,7 @@
 use serde::Serialize;
 use serde_json::Value;
+#[cfg(unix)]
+use std::fs::File;
 use std::{
     fs,
     io::Write,
@@ -82,6 +84,10 @@ pub fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
     temp.write_all(bytes).map_err(|e| e.to_string())?;
     temp.as_file().sync_all().map_err(|e| e.to_string())?;
     temp.persist(path).map_err(|e| e.to_string())?;
+    #[cfg(unix)]
+    if let Ok(directory) = File::open(parent) {
+        directory.sync_all().map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 
