@@ -229,8 +229,12 @@ try {
   assert.ok(restoredProgress.media > restoredProgress.elapsed - 1 && restoredProgress.media < restoredProgress.elapsed + 1, `restored ${fixtureLabel} clock jumped: ${JSON.stringify(restoredProgress)}`);
   await evaluate('document.querySelector("#audio").pause(); return true;');
   assert.equal(await evaluate(`return document.querySelector('#tracks [data-id="${track.id}"] [data-action="favorite"]').getAttribute('aria-pressed')`), 'true');
-  const screenshot = await request('GET', endpoint('/screenshot'));
-  await writeFile(path.join(directory, 'desktop.png'), Buffer.from(screenshot, 'base64'));
+  // The paused player is fully idle and produces no new frames; WebKitWebDriver on older WebKitGTK
+  // (Ubuntu 22.04) waits for one before capturing. Keep frames flowing briefly so the capture can finish.
+  // The screenshot is an artifact, not an assertion, so a capture failure only warns.
+  await evaluate('const end = performance.now() + 8000; const tick = () => { document.body.style.opacity = performance.now() < end && document.body.style.opacity !== "0.999" ? "0.999" : ""; if (performance.now() < end) requestAnimationFrame(tick); }; requestAnimationFrame(tick); return true;');
+  const screenshot = await request('GET', endpoint('/screenshot')).catch(error => { console.warn(`WARN: desktop screenshot skipped: ${error.message}`); return null; });
+  if (screenshot) await writeFile(path.join(directory, 'desktop.png'), Buffer.from(screenshot, 'base64'));
   const files = await readdir(path.join(appData, 'library'));
   assert.equal(files.length, 1);
   console.log('PASS: restart restores library and favorites without autoplay');
