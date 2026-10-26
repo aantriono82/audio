@@ -47,6 +47,7 @@ function notifyTrack(track) {
 function applyTheme() {
   document.documentElement.dataset.theme = state.theme;
   document.documentElement.classList.toggle('no-glow', !state.glow);
+  document.documentElement.classList.toggle('lite-mode', state.liteMode);
   $$('.theme-skin').forEach(button => {
     const active = button.dataset.theme === state.theme;
     button.classList.toggle('active', active);
@@ -81,6 +82,7 @@ function applyCollectionLayout(target) {
   const grid = $('#cassette-grid');
   if (grid) grid.hidden = !isGrid;
   $('#track-table-wrap')?.classList.toggle('is-grid-layout', isGrid);
+  if (staleLayout === state.collectionLayout) renderTracks();
 }
 function applyPanelOrder() {
   const app = $('#app');
@@ -229,6 +231,7 @@ function addAdvancedUI() {
           <label class="setting-check"><input id="gapless" type="checkbox"><span class="setting-check-copy"><strong>Siapkan lagu berikutnya</strong><small>Perpindahan antar lagu terasa lebih mulus</small></span></label>
           <label class="setting-check"><input id="replay-gain" type="checkbox"><span class="setting-check-copy"><strong>ReplayGain</strong><small>Gunakan level volume dari tag bila tersedia</small></span></label>
           <label class="setting-check"><input id="glow" type="checkbox"><span class="setting-check-copy"><strong>Efek CRT / cahaya</strong><small>Tambahkan karakter visual pada panel</small></span></label>
+          <label class="setting-check"><input id="lite-mode" type="checkbox"><span class="setting-check-copy"><strong>Mode ringan</strong><small>Matikan animasi, VU meter, dan efek blur untuk komputer lambat</small></span></label>
           <label class="setting-check"><input id="notifications" type="checkbox"><span class="setting-check-copy"><strong>Notifikasi lagu berikutnya</strong><small>Beri tahu saat antrean berpindah</small></span></label>
         </div>
       </section>
@@ -285,6 +288,8 @@ function addAdvancedUI() {
   if (replayGainInput) replayGainInput.onchange = event => { state.replayGain = event.target.checked; applyAudioSettings(); persist(); };
   const glowInput = dialog.querySelector('#glow');
   if (glowInput) glowInput.onchange = event => { state.glow = event.target.checked; applyTheme(); persist(); };
+  const liteInput = dialog.querySelector('#lite-mode');
+  if (liteInput) liteInput.onchange = event => { state.liteMode = event.target.checked; applyTheme(); scheduleSpectrum(); persist(); };
   const notifInput = dialog.querySelector('#notifications');
   if (notifInput) notifInput.onchange = event => { state.notifications = event.target.checked; persist(); };
   const reqNotif = dialog.querySelector('#request-notifications');
@@ -358,7 +363,7 @@ function addAdvancedUI() {
       exportedAt: new Date().toISOString(),
       tracks: state.tracks.filter(track => !track.demo).map(({ id, fingerprint, title, artist, album, genre, format, duration }) => ({ id, fingerprint, title, artist, album, genre, format, duration })),
       favorites: [...state.favorites], playlists: state.playlists, recent: state.recent, queue: state.queue, positions: state.positions,
-      settings: { theme: state.theme, faceplate: state.faceplate, collectionLayout: state.collectionLayout, glow: state.glow, gapless: state.gapless, compact: state.compact, viewMode: state.viewMode, resumePlayback: state.resumePlayback, shuffle: state.shuffle, repeat: state.repeat, volume: state.volume, muted: state.muted, eq: state.eq, eqEnabled: state.eqEnabled, dspEnabled: state.dspEnabled, dsp: state.dsp, preset: state.preset, crossfade: state.crossfade, preamp: state.preamp, balance: state.balance, replayGain: state.replayGain, notifications: state.notifications, outputDevice: state.outputDevice }
+      settings: { theme: state.theme, faceplate: state.faceplate, collectionLayout: state.collectionLayout, glow: state.glow, liteMode: state.liteMode, gapless: state.gapless, compact: state.compact, viewMode: state.viewMode, resumePlayback: state.resumePlayback, shuffle: state.shuffle, repeat: state.repeat, volume: state.volume, muted: state.muted, eq: state.eq, eqEnabled: state.eqEnabled, dspEnabled: state.dspEnabled, dsp: state.dsp, preset: state.preset, crossfade: state.crossfade, preamp: state.preamp, balance: state.balance, replayGain: state.replayGain, notifications: state.notifications, outputDevice: state.outputDevice }
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const link = document.createElement('a'); const url = URL.createObjectURL(blob); link.href = url; link.download = `atiga-amp-backup-${new Date().toISOString().slice(0, 10)}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 0);
@@ -381,7 +386,7 @@ function addAdvancedUI() {
       if (typeof settings.theme === 'string') state.theme = settings.theme;
       if (['champagne', 'black', 'silver'].includes(settings.faceplate)) state.faceplate = settings.faceplate;
       if (['table', 'grid'].includes(settings.collectionLayout)) state.collectionLayout = settings.collectionLayout;
-      ['glow', 'gapless', 'compact', 'resumePlayback', 'shuffle', 'replayGain', 'notifications', 'eqEnabled', 'dspEnabled', 'muted'].forEach(key => { if (typeof settings[key] === 'boolean') state[key] = settings[key]; });
+      ['glow', 'liteMode', 'gapless', 'compact', 'resumePlayback', 'shuffle', 'replayGain', 'notifications', 'eqEnabled', 'dspEnabled', 'muted'].forEach(key => { if (typeof settings[key] === 'boolean') state[key] = settings[key]; });
       if (settings.viewMode === 'rack' || settings.viewMode === 'collection') state.viewMode = settings.viewMode;
       ['volume', 'crossfade', 'preamp', 'balance'].forEach(key => { if (Number.isFinite(settings[key])) state[key] = settings[key]; });
       if ([0, 1, 2].includes(settings.repeat)) state.repeat = settings.repeat;
@@ -412,7 +417,7 @@ function addAdvancedUI() {
 }
 function syncSettings() {
   const set = (id, value) => { const el = $(`#${id}`); if (!el) return; if (el.type === 'checkbox') el.checked = value; else el.value = value; };
-  set('crossfade', state.crossfade); set('preamp', state.preamp); set('balance', state.balance); set('resume-playback', state.resumePlayback); set('gapless', state.gapless); set('replay-gain', state.replayGain); set('glow', state.glow); set('notifications', state.notifications); set('output-device', state.outputDevice); set('settings-output-device', state.outputDevice);
+  set('crossfade', state.crossfade); set('preamp', state.preamp); set('balance', state.balance); set('resume-playback', state.resumePlayback); set('gapless', state.gapless); set('replay-gain', state.replayGain); set('glow', state.glow); set('lite-mode', state.liteMode); set('notifications', state.notifications); set('output-device', state.outputDevice); set('settings-output-device', state.outputDevice);
   applyTheme();
   const crossfadeVal = $('#crossfade-value');
   if (crossfadeVal) crossfadeVal.textContent = `${state.crossfade}s`;
@@ -492,7 +497,7 @@ const state = {
   muted: Boolean(saved.muted),
   eq: normalizeEq(saved.eq),
   preset: saved.preset || 'Flat',
-  theme: saved.theme || 'ember', glow: saved.glow !== false, gapless: saved.gapless !== false,
+  theme: saved.theme || 'ember', glow: saved.glow !== false, liteMode: saved.liteMode === true, gapless: saved.gapless !== false,
   faceplate: ['champagne', 'black', 'silver'].includes(saved.faceplate) ? saved.faceplate : 'champagne',
   collectionLayout: ['table', 'grid'].includes(saved.collectionLayout) ? saved.collectionLayout : 'table',
   compact: saved.compact ?? (window.matchMedia?.('(max-width: 640px)').matches ?? false),
@@ -556,6 +561,15 @@ let crossfadeTimer, crossfadeStarted = false;
 let processingSwitchPromise;
 const urls = new Map();
 const artUrls = new Map();
+const thumbUrls = new Map();
+function releaseArtURLs(id) {
+  const artUrl = artUrls.get(id); if (artUrl) { URL.revokeObjectURL(artUrl); artUrls.delete(id); }
+  for (const size of THUMB_SIZES) {
+    const key = `${id}:${size}`;
+    thumbUrls.get(key)?.then(url => { if (url?.startsWith('blob:') && url !== artUrl) URL.revokeObjectURL(url); });
+    thumbUrls.delete(key);
+  }
+}
 function releaseTrackURL(id) {
   const url = urls.get(id);
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
@@ -732,6 +746,7 @@ function applySavedState(nextSaved) {
   state.preset = typeof nextSaved.preset === 'string' ? nextSaved.preset : 'Flat';
   state.theme = typeof nextSaved.theme === 'string' ? nextSaved.theme : 'ember';
   state.glow = nextSaved.glow !== false;
+  state.liteMode = nextSaved.liteMode === true;
   state.gapless = nextSaved.gapless !== false;
   state.compact = typeof nextSaved.compact === 'boolean' ? nextSaved.compact : state.compact;
   state.viewMode = nextSaved.viewMode === 'collection' || nextSaved.compact === true ? 'collection' : 'rack';
@@ -1058,6 +1073,48 @@ function applyArt(element, track) {
     Promise.resolve(url).then(value => { if (value) { element.style.backgroundImage = `url("${value}")`; element.classList.add('has-cover'); } });
   } else { element.style.backgroundImage = ''; element.classList.remove('has-cover'); }
 }
+// Embedded covers are often 1000-3000 px; decoding them for 34 px rows is expensive on slow CPUs.
+// Thumbnails are downscaled once per session, one at a time, and only for rows near the viewport.
+const THUMB_SIZES = [80, 400];
+let thumbQueue = Promise.resolve();
+async function makeThumb(track, size) {
+  const fullUrl = await artURL(track);
+  const source = track.cover || await (await fetch(fullUrl)).blob();
+  const bitmap = await createImageBitmap(source);
+  const scale = size / Math.max(bitmap.width, bitmap.height);
+  if (scale >= 1) { bitmap.close?.(); return fullUrl; }
+  const thumb = document.createElement('canvas');
+  thumb.width = Math.max(1, Math.round(bitmap.width * scale));
+  thumb.height = Math.max(1, Math.round(bitmap.height * scale));
+  thumb.getContext('2d').drawImage(bitmap, 0, 0, thumb.width, thumb.height);
+  bitmap.close?.();
+  const blob = await new Promise(resolve => thumb.toBlob(resolve, 'image/jpeg', 0.85));
+  return blob ? URL.createObjectURL(blob) : fullUrl;
+}
+function thumbURL(track, size) {
+  const key = `${track.id}:${size}`;
+  if (!thumbUrls.has(key)) {
+    const job = thumbQueue.then(() => makeThumb(track, size)).catch(() => artURL(track));
+    thumbQueue = job.catch(() => {});
+    thumbUrls.set(key, job);
+  }
+  return thumbUrls.get(key);
+}
+function applyThumb(element, track) {
+  if (!track.cover && !track.coverPath) { applyArt(element, track); return; }
+  element.dataset.art = track.art ?? 0;
+  const size = element.classList.contains('jewel-art-box') ? THUMB_SIZES[1] : THUMB_SIZES[0];
+  thumbURL(track, size).then(value => { if (value) { element.style.backgroundImage = `url("${value}")`; element.classList.add('has-cover'); } });
+}
+let artTracks = new Map();
+const artObserver = typeof IntersectionObserver === 'function' ? new IntersectionObserver(entries => {
+  for (const entry of entries) {
+    if (!entry.isIntersecting) continue;
+    artObserver.unobserve(entry.target);
+    const track = artTracks.get(entry.target.dataset.trackId);
+    if (track) applyThumb(entry.target, track);
+  }
+}, { rootMargin: '300px 0px' }) : null;
 function row(track, index) {
   const playing = track.id === state.currentId;
   return `<tr class="track-row${playing ? ' current' : ''}" data-id="${esc(track.id)}" data-index="${index}" draggable="true" tabindex="0" aria-label="Putar ${esc(track.title)}"><td headers="head-number">${playing ? '<span class="equal-bars"><i></i><i></i><i></i></span>' : String(index+1).padStart(2,'0')}</td><td headers="head-title"><div class="track-cell"><div class="mini-art" data-track-id="${esc(track.id)}" data-art="${track.art}" data-cover="${track.cover ? 'true' : 'false'}"><span>AA</span></div><div class="track-info"><span class="track-name">${esc(track.title)}</span><span class="track-artist">${esc(track.artist)}${track.genre ? ` · ${esc(track.genre)}` : ''}${track.demo ? ' · Demo' : ''}</span></div></div></td><td headers="head-album" class="track-album">${esc(track.album)}</td><td headers="head-format" class="track-format"><span class="format-tag">${esc(track.format)}</span></td><td headers="head-duration" class="track-duration">${formatTime(track.duration)}</td><td headers="head-actions"><div class="row-actions"><button class="icon-button favorite${state.favorites.has(track.id) ? ' active' : ''}" data-action="favorite" aria-label="${state.favorites.has(track.id) ? 'Hapus favorit' : 'Favoritkan'} ${esc(track.title)}" aria-pressed="${state.favorites.has(track.id)}">${icon('heart')}</button><button class="icon-button" data-action="more" aria-label="Opsi ${esc(track.title)}">${icon('more')}</button></div></td></tr>`;
@@ -1116,19 +1173,24 @@ function cassetteCard(track, index) {
     </div>
   </div>`;
 }
+// Only the visible collection layout is rendered; the other one is rebuilt when it is shown.
+let staleLayout = '';
 function renderTracks() {
   const tracks = visibleTracks(state);
-  $('#tracks').innerHTML = tracks.map(row).join('');
   const cassetteGrid = $('#cassette-grid');
-  if (cassetteGrid) cassetteGrid.innerHTML = tracks.map(cassetteCard).join('');
+  const isGrid = Boolean(cassetteGrid) && state.collectionLayout === 'grid';
+  artObserver?.disconnect();
+  if (isGrid) { cassetteGrid.innerHTML = tracks.map(cassetteCard).join(''); $('#tracks').innerHTML = ''; }
+  else { $('#tracks').innerHTML = tracks.map(row).join(''); if (cassetteGrid) cassetteGrid.innerHTML = ''; }
+  staleLayout = cassetteGrid ? (isGrid ? 'table' : 'grid') : '';
   $('#empty').hidden = tracks.length > 0;
   $('#track-count').textContent = baseTracks(state).length; $('#queue-count').textContent = state.queue.length;
   $('#track-tab').classList.toggle('active', !state.queueView); $('#queue-tab').classList.toggle('active', state.queueView);
   $('#library-total').textContent = `${tracks.length} lagu · ${Math.ceil(tracks.reduce((total,t) => total + (t.duration || 0),0)/60)} menit${tracks.length && tracks.every(t => t.demo) ? ' · Audio demo' : ''}`;
-  const tracksById = new Map(tracks.map(track => [track.id, track]));
+  artTracks = new Map(tracks.map(track => [track.id, track]));
   $$('#tracks .mini-art[data-track-id], #cassette-grid .mini-art[data-track-id]').forEach(element => {
-    const track = tracksById.get(element.dataset.trackId);
-    if (track) applyArt(element, track);
+    if (artObserver) artObserver.observe(element);
+    else { const track = artTracks.get(element.dataset.trackId); if (track) applyThumb(element, track); }
   });
 }
 function renderNav() {
@@ -1492,7 +1554,7 @@ function updateProgress() {
 function handleAudioTimeUpdate() {
   updateProgress(); maybeCrossfade();
   const second = Math.floor(audio.currentTime);
-  if (second % 5 === 0 && second !== lastSavedSecond) { lastSavedSecond = second; persist(); }
+  if (second % 15 === 0 && second !== lastSavedSecond) { lastSavedSecond = second; persist(); }
 }
 function handleAudioMetadata() {
   if (loadedId && Number.isFinite(audio.duration)) current().duration = audio.duration;
@@ -1726,6 +1788,9 @@ function toggleDrawer(forceState) {
 
   if (isOpen) {
     renderTracks();
+    // Paint the idle spectrum once now and once after the drawer transition settles.
+    scheduleSpectrum();
+    setTimeout(scheduleSpectrum, 400);
   }
 }
 
@@ -2077,7 +2142,8 @@ if (importPrompt) importPrompt.onclick = () => $('#file-input')?.click();
 
 const searchInput = $('#search');
 if (searchInput) {
-  searchInput.oninput = event => { state.search = event.target.value.toLowerCase().trim(); renderTracks(); };
+  let searchTimer;
+  searchInput.oninput = event => { state.search = event.target.value.toLowerCase().trim(); clearTimeout(searchTimer); searchTimer = setTimeout(renderTracks, 150); };
 }
 const sortBtn = $('#sort');
 if (sortBtn) {
@@ -2185,7 +2251,7 @@ async function removeTrack(id) {
     loadedId = null; readyTrackId = null; state.currentId = null;
   }
   releaseTrackURL(id);
-  const artUrl = artUrls.get(id); if (artUrl) { URL.revokeObjectURL(artUrl); artUrls.delete(id); }
+  releaseArtURLs(id);
   state.tracks = state.tracks.filter(item => item.id !== id);
   state.playlists.forEach(playlist => { playlist.ids = playlist.ids.filter(item => item !== id); });
   state.queue = state.queue.filter(item => item !== id);
@@ -2249,11 +2315,7 @@ async function clearAllTracks() {
 
   removedTracks.forEach(track => {
     releaseTrackURL(track.id);
-    const artUrl = artUrls.get(track.id);
-    if (artUrl) {
-      URL.revokeObjectURL(artUrl);
-      artUrls.delete(track.id);
-    }
+    releaseArtURLs(track.id);
   });
 
   state.tracks = state.tracks.filter(track => failedIds.has(track.id));
@@ -2408,10 +2470,11 @@ if (compactBtn) {
   compactBtn.onclick = () => {
     state.viewMode = state.viewMode === 'collection' ? 'rack' : 'collection';
     applyViewMode();
+    scheduleSpectrum();
     persist();
   };
 }
-$('#mode-rack')?.addEventListener('click', () => { state.viewMode = 'rack'; applyViewMode(); persist(); });
+$('#mode-rack')?.addEventListener('click', () => { state.viewMode = 'rack'; applyViewMode(); scheduleSpectrum(); persist(); });
 $('#mode-collection')?.addEventListener('click', () => { state.viewMode = 'collection'; applyViewMode(); persist(); });
 $('#btn-view-table')?.addEventListener('click', () => { state.collectionLayout = 'table'; applyCollectionLayout(); persist(); });
 $('#btn-view-grid')?.addEventListener('click', () => { state.collectionLayout = 'grid'; applyCollectionLayout(); persist(); });
@@ -2750,6 +2813,8 @@ let spectrumBins = new Uint8Array(1024);
 let waveformSamples = new Uint8Array(2048);
 let channelBinsL = new Uint8Array(0);
 let channelBinsR = new Uint8Array(0);
+const spectrumLevels = new Uint8Array(36);
+let lastNeedleTransformL = '', lastNeedleTransformR = '', lastWattKey = '';
 
 function scheduleSpectrum() {
   if (!spectrumFrame) spectrumFrame = requestAnimationFrame(paintSpectrum);
@@ -2757,15 +2822,19 @@ function scheduleSpectrum() {
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) scheduleSpectrum();
 });
+window.addEventListener('resize', scheduleSpectrum);
 
 function paintSpectrum(timestamp) {
   spectrumFrame = 0;
   if (document.hidden) return;
 
-  const isPlayingAudio = !audio.paused && !audio.muted && !state.muted && state.volume > 0;
-  const canvasVisible = Boolean(canvas?.clientWidth);
-  const needsMeters = isPlayingAudio || smoothedL > 0.004 || smoothedR > 0.004 || peakHoldL > 0.5 || peakHoldR > 0.5;
-  if (!needsMeters && !canvasVisible) return;
+  // Lite mode skips analyser reads; the meters then fall back to rest and the loop stops.
+  const isPlayingAudio = !state.liteMode && !audio.paused && !audio.muted && !state.muted && state.volume > 0;
+  const canvasVisible = !state.liteMode && Boolean(canvas?.clientWidth);
+  const metersVisible = state.viewMode !== 'collection';
+  const metersActive = isPlayingAudio || smoothedL > 0.004 || smoothedR > 0.004 || peakHoldL > 0.5 || peakHoldR > 0.5;
+  if (!metersVisible && !canvasVisible) return;
+  if (!metersActive && !canvasVisible) return;
   if (timestamp - lastMeterFrame < 33) { scheduleSpectrum(); return; }
   lastMeterFrame = timestamp;
   if (analyser && spectrumBins.length !== analyser.frequencyBinCount) spectrumBins = new Uint8Array(analyser.frequencyBinCount);
@@ -2785,15 +2854,27 @@ function paintSpectrum(timestamp) {
     painter.setTransform(dpr, 0, 0, dpr, 0, 0);
     painter.clearRect(0, 0, width, height);
     const count = 36, gap = 2, barWidth = (width - (count - 1) * gap) / count;
+    const rows = Math.floor(height / 4), hotStart = Math.floor(height / 6) + 1;
+    const sampleRate = context?.sampleRate || 44100, fftSize = analyser?.fftSize || 2048;
     for (let i = 0; i < count; i++) {
       const hz = 35 * Math.pow(16000 / 35, i / (count - 1));
-      const bin = Math.min(bins.length - 1, Math.floor(hz / (context?.sampleRate || 44100) * (analyser?.fftSize || 2048)));
-      const value = audio.paused ? 0 : bins[bin] / 255;
-      const segments = Math.max(1, Math.round(value * (height / 4)));
-      for (let segment = 0; segment < Math.floor(height / 4); segment++) {
-        painter.fillStyle = segment < segments ? (segment > height / 6 ? '#efc184' : '#bc945b') : '#a68c5810';
-        painter.fillRect(i * (barWidth + gap), height - (segment + 1) * 4, barWidth, 2);
+      const bin = Math.min(bins.length - 1, Math.floor(hz / sampleRate * fftSize));
+      const value = audio.paused || !isPlayingAudio ? 0 : bins[bin] / 255;
+      spectrumLevels[i] = Math.max(1, Math.round(value * (height / 4)));
+    }
+    // One path per colour instead of a fillStyle change and fillRect per segment.
+    const layers = [
+      ['#a68c5810', i => spectrumLevels[i], () => rows],
+      ['#bc945b', () => 0, i => Math.min(spectrumLevels[i], hotStart)],
+      ['#efc184', () => hotStart, i => spectrumLevels[i]]
+    ];
+    for (const [color, from, to] of layers) {
+      painter.fillStyle = color;
+      painter.beginPath();
+      for (let i = 0; i < count; i++) {
+        for (let segment = from(i), last = Math.min(rows, to(i)); segment < last; segment++) painter.rect(i * (barWidth + gap), height - (segment + 1) * 4, barWidth, 2);
       }
+      painter.fill();
     }
     if (!waveform) {
       waveform = $('#waveform');
@@ -2812,7 +2893,8 @@ function paintSpectrum(timestamp) {
       wavePainter.beginPath();
       if (analyser && waveformSamples.length !== analyser.fftSize) waveformSamples = new Uint8Array(analyser.fftSize);
       const samples = waveformSamples;
-      if (analyser && !audio.paused) analyser.getByteTimeDomainData(samples);
+      if (analyser && isPlayingAudio) analyser.getByteTimeDomainData(samples);
+      else samples.fill(128);
       for (let i = 0; i < waveWidth; i++) {
         const sample = samples[Math.floor(i / waveWidth * samples.length)] || 128;
         const y = sample / 255 * waveHeight;
@@ -2886,8 +2968,10 @@ function paintSpectrum(timestamp) {
   const needleAlpha = 1 - Math.exp(-meterDt / 0.22);
   needleAngleL += (targetAngleL - needleAngleL) * needleAlpha;
   needleAngleR += (targetAngleR - needleAngleR) * needleAlpha;
-  if (needleL) needleL.style.transform = `rotate(${needleAngleL.toFixed(2)}deg)`;
-  if (needleR) needleR.style.transform = `rotate(${needleAngleR.toFixed(2)}deg)`;
+  const needleTransformL = `rotate(${needleAngleL.toFixed(1)}deg)`;
+  if (needleL && needleTransformL !== lastNeedleTransformL) { needleL.style.transform = needleTransformL; lastNeedleTransformL = needleTransformL; }
+  const needleTransformR = `rotate(${needleAngleR.toFixed(1)}deg)`;
+  if (needleR && needleTransformR !== lastNeedleTransformR) { needleR.style.transform = needleTransformR; lastNeedleTransformR = needleTransformR; }
 
   // 2. Animate VFD horizontal Watts bargraphs (0 to 12 segments)
   const spkL = speakerL?.classList.contains('active') ?? true;
@@ -2907,17 +2991,25 @@ function paintSpectrum(timestamp) {
   const peakIdxL = showPeak ? Math.round(peakHoldL) - 1 : -1;
   const peakIdxR = showPeak ? Math.round(peakHoldR) - 1 : -1;
 
-  wattSegmentsL.forEach((seg, idx) => {
-    const active = idx < litL;
-    seg.classList.toggle('active', active);
-    seg.classList.toggle('peak', idx === peakIdxL && idx >= litL && peakHoldL > 1);
-  });
-  wattSegmentsR.forEach((seg, idx) => {
-    const active = idx < litR;
-    seg.classList.toggle('active', active);
-    seg.classList.toggle('peak', idx === peakIdxR && idx >= litR && peakHoldR > 1);
-  });
-  if (isPlayingAudio || smoothedL > 0.004 || smoothedR > 0.004 || peakHoldL > 0.5 || peakHoldR > 0.5 || canvasVisible) scheduleSpectrum();
+  // Only touch the segment classes when the lit/peak pattern actually changes.
+  const wattKey = `${litL}:${peakHoldL > 1 ? peakIdxL : -1}:${litR}:${peakHoldR > 1 ? peakIdxR : -1}`;
+  if (wattKey !== lastWattKey) {
+    lastWattKey = wattKey;
+    wattSegmentsL.forEach((seg, idx) => {
+      const active = idx < litL;
+      seg.classList.toggle('active', active);
+      seg.classList.toggle('peak', idx === peakIdxL && idx >= litL && peakHoldL > 1);
+    });
+    wattSegmentsR.forEach((seg, idx) => {
+      const active = idx < litR;
+      seg.classList.toggle('active', active);
+      seg.classList.toggle('peak', idx === peakIdxR && idx >= litR && peakHoldR > 1);
+    });
+  }
+  // Keep animating only while there is signal or the meters are still falling back.
+  // A paused player with an open drawer gets one final idle frame, then the loop sleeps.
+  const stillActive = isPlayingAudio || smoothedL > 0.004 || smoothedR > 0.004 || peakHoldL > 0.5 || peakHoldR > 0.5;
+  if (stillActive) scheduleSpectrum();
 }
 function makeDraggable(dialog, handle) {
   let isDragging = false;
