@@ -24,3 +24,9 @@ test('corrupt state falls back without throwing', () => {
   assert.equal(state.schemaVersion, STATE_SCHEMA_VERSION);
   assert.ok(captured instanceof Error);
 });
+
+test('lite mode defaults off and only accepts booleans', () => {
+  assert.equal(normalizePersistedState({}).liteMode, false);
+  assert.equal(normalizePersistedState({ liteMode: true }).liteMode, true);
+  assert.equal(normalizePersistedState({ liteMode: 'yes' }).liteMode, false);
+});

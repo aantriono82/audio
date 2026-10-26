@@ -56,6 +56,7 @@ export function normalizePersistedState(input, bandCount = 20) {
     preset: stringOr(source.preset, 'Flat').slice(0, 48),
     theme: ['ember', 'neon', 'ocean', 'violet', 'mono'].includes(source.theme) ? source.theme : 'ember',
     glow: booleanOr(source.glow, true),
+    liteMode: booleanOr(source.liteMode, false),
     gapless: booleanOr(source.gapless, true),
     faceplate: ['champagne', 'black', 'silver'].includes(source.faceplate) ? source.faceplate : 'champagne',
     collectionLayout: ['table', 'grid'].includes(source.collectionLayout) ? source.collectionLayout : 'table',
