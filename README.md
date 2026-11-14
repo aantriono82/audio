@@ -2,7 +2,7 @@
 
 Pemutar musik lokal untuk Linux dengan antarmuka charcoal–amber, terinspirasi pemutar musik desktop klasik. Installer desktop membundel antarmuka dan font; pengguna tidak memerlukan Node.js, Rust, terminal, atau server pengembangan. Node.js 22.13+ dan Rust hanya diperlukan oleh pengembang.
 
-Versi source dan paket saat ini adalah `0.1.22`. Linux desktop tetap menjadi target produk utama; mode browser digunakan untuk demo, pengembangan, dan PWA dasar.
+Versi source dan paket saat ini adalah `0.1.24`. Linux desktop tetap menjadi target produk utama; mode browser digunakan untuk demo, pengembangan, dan PWA dasar.
 
 Target distribusi adalah Linux x64 (`.deb`/`.AppImage`). AppImage merupakan paket portabel, sedangkan `.deb` dipasang melalui pengelola paket. Lihat [panduan desktop](docs/DESKTOP.md) untuk build, lokasi data, dan batas pengujian.
 

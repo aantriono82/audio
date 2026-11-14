@@ -2,7 +2,7 @@
 
 Status: referensi produk aktif; scope stabilisasi 0.1.x sudah diterapkan
 Terakhir diperbarui: 25 Oktober 2026
-Rilis source saat ini: 0.1.22
+Rilis source saat ini: 0.1.24
 Target perubahan berikutnya: 0.2.0
 
 ## Ringkasan produk
