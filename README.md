@@ -6,6 +6,16 @@ Versi source dan paket saat ini adalah `0.1.24`. Linux desktop tetap menjadi tar
 
 Target distribusi adalah Linux x64 (`.deb`/`.AppImage`) dan Windows 10/11 x64 (`.exe`). AppImage merupakan paket portabel, sedangkan `.deb` dipasang melalui pengelola paket. Installer Windows `Atiga.Amp_<versi>_x64-setup.exe` dipasang per pengguna tanpa hak administrator dan memasang WebView2 bila belum tersedia. Installer belum ditandatangani, sehingga SmartScreen dapat menampilkan peringatan; pilih **More info → Run anyway**. Semua paket tersedia di halaman [GitHub Releases](https://github.com/aantriono82/audio/releases). Lihat [panduan desktop](docs/DESKTOP.md) untuk build, lokasi data, dan batas pengujian.
 
+## Tampilan
+
+| Mode Rack vintage | Mode Koleksi |
+| --- | --- |
+| ![Mode Rack: cassette deck dan amplifier dengan faceplate Champagne saat memutar audio demo](docs/screenshots/rack.png) | ![Mode Koleksi: daftar lagu dengan transport yang selalu terlihat di bagian bawah](docs/screenshots/koleksi.png) |
+| **Equalizer 20 band** | **Onboarding** |
+| ![Pengaturan Audio: equalizer 20 band aktif dengan preset Warm](docs/screenshots/equalizer.png) | ![Dialog sambutan: tambah musik, jelajahi audio demo, dan pilih tampilan awal](docs/screenshots/onboarding.png) |
+
+Screenshot diambil dari mode browser pada 1280×800 dengan audio demo bawaan.
+
 ## Menjalankan
 
 ```sh
