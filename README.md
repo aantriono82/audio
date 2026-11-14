@@ -2,9 +2,9 @@
 
 Pemutar musik lokal untuk Linux dan Windows dengan antarmuka charcoal–amber, terinspirasi pemutar musik desktop klasik. Installer desktop membundel antarmuka dan font; pengguna tidak memerlukan Node.js, Rust, terminal, atau server pengembangan. Node.js 22.13+ dan Rust hanya diperlukan oleh pengembang.
 
-Versi source dan paket saat ini adalah `0.1.24`. Linux desktop tetap menjadi target produk utama; mode browser digunakan untuk demo, pengembangan, dan PWA dasar.
+Versi source dan paket saat ini adalah `0.1.24`. Linux desktop tetap menjadi target produk utama dan Windows didukung secara eksperimental sejak `0.1.24`; mode browser digunakan untuk demo, pengembangan, dan PWA dasar.
 
-Target distribusi adalah Linux x64 (`.deb`/`.AppImage`). AppImage merupakan paket portabel, sedangkan `.deb` dipasang melalui pengelola paket. Lihat [panduan desktop](docs/DESKTOP.md) untuk build, lokasi data, dan batas pengujian.
+Target distribusi adalah Linux x64 (`.deb`/`.AppImage`) dan Windows 10/11 x64 (`.exe`). AppImage merupakan paket portabel, sedangkan `.deb` dipasang melalui pengelola paket. Installer Windows `Atiga.Amp_<versi>_x64-setup.exe` dipasang per pengguna tanpa hak administrator dan memasang WebView2 bila belum tersedia. Installer belum ditandatangani, sehingga SmartScreen dapat menampilkan peringatan; pilih **More info → Run anyway**. Semua paket tersedia di halaman [GitHub Releases](https://github.com/aantriono82/audio/releases). Lihat [panduan desktop](docs/DESKTOP.md) untuk build, lokasi data, dan batas pengujian.
 
 ## Menjalankan
 
@@ -12,7 +12,7 @@ Target distribusi adalah Linux x64 (`.deb`/`.AppImage`). AppImage merupakan pake
 npm run dev
 ```
 
-Desktop menggunakan Vite, React, TypeScript, dan Tauri 2. `src/main.tsx` memasang shell React, sedangkan engine playback dan library dimuat dari `src/app.js`. Jalankan desktop dengan `npm run desktop:dev`; hasilkan paket Linux dengan `npm run desktop:build`. `npm run build` hanya menghasilkan antarmuka web.
+Desktop menggunakan Vite, React, TypeScript, dan Tauri 2. `src/main.tsx` memasang shell React, sedangkan engine playback dan library dimuat dari `src/app.js`. Jalankan desktop dengan `npm run desktop:dev`; hasilkan paket untuk sistem operasi yang sedang dipakai dengan `npm run desktop:build` (`.deb`/`.AppImage` di Linux, `.exe` di Windows). Paket Windows tidak dapat dibangun dari Linux; gunakan Windows dengan Visual Studio Build Tools atau job `windows` di GitHub Actions. `npm run build` hanya menghasilkan antarmuka web.
 
 Buka URL Vite yang tercetak di terminal (bawaan http://127.0.0.1:5174) untuk pengembangan browser. Untuk memilih port, gunakan `npm run dev -- --port 5185`. Mode desktop memakai port 5174 secara ketat agar alamat WebView sesuai dengan server. Server legacy dan pengaturan `PORT` hanya berlaku pada `npm run dev:legacy`.
 
@@ -22,7 +22,7 @@ Penyimpanan browser terpisah per origin, termasuk port. Gunakan kembali port seb
 
 Log dasar sudah aktif sejak aplikasi dibuka. Untuk diagnosis developer di browser, buka URL memakai `?debug=1` sebelum mereproduksi masalah atau set localStorage `atiga-debug-verbose` ke `1` lalu reload; event tersimpan pada localStorage dengan key `atiga-debug-log`. Pada desktop, baca atau salin `debug.log` dari direktori data aplikasi.
 
-Pada desktop Tauri Linux, event ditulis otomatis ke `${XDG_DATA_HOME:-$HOME/.local/share}/com.atiga.amp/debug.log`. Isi log dibatasi sekitar 4 MB. Log hanya berisi lifecycle, error, status playback, serta nama dan metadata dasar file; isi audio tidak dicatat dan tidak ada pengunggahan data.
+Pada desktop, event ditulis otomatis ke `debug.log` di direktori data aplikasi: `${XDG_DATA_HOME:-$HOME/.local/share}/com.atiga.amp/` di Linux dan `%APPDATA%\com.atiga.amp\` di Windows. Isi log dibatasi sekitar 4 MB. Log hanya berisi lifecycle, error, status playback, serta nama dan metadata dasar file; isi audio tidak dicatat dan tidak ada pengunggahan data.
 
 ## Fitur
 
@@ -37,13 +37,13 @@ Pada desktop Tauri Linux, event ditulis otomatis ke `${XDG_DATA_HOME:-$HOME/.loc
 - Crossfade, preload gapless, ReplayGain dari tag, preamp, balance, output device, tema, CRT/glow, dan panel drag-and-drop.
 - Metadata ID3 dasar, embedded cover, pengelompokan artis/album/genre, smart playlist, waveform, notifikasi, dan pemindaian ulang folder.
 - Desktop: dialog sistem untuk file/folder, pemindaian ulang folder, serta drag-and-drop file/folder; audio disalin ke direktori data aplikasi dan pengaturan disimpan dalam JSON secara atomik. Browser: IndexedDB dan localStorage. Tidak otomatis memutar setelah dibuka kembali; pilihan melanjutkan posisi terakhir tersedia dan mati secara bawaan.
-- Pada Linux desktop, playback pertama memakai elemen media native agar stabil di WebKitGTK/GStreamer. Menekan DSP/EQ atau mengubah knob audio mengaktifkan Web Audio secara eksplisit untuk sesi tersebut sehingga bass, treble, preamp, balance, true bass, enhancer, reverb, dan efek DSP dapat dipakai.
+- Pada Linux desktop, playback pertama memakai elemen media native agar stabil di WebKitGTK/GStreamer. Menekan DSP/EQ atau mengubah knob audio mengaktifkan Web Audio secara eksplisit untuk sesi tersebut sehingga bass, treble, preamp, balance, true bass, enhancer, reverb, dan efek DSP dapat dipakai. Pada Windows, playback langsung memakai Web Audio (WebView2) sehingga EQ/DSP aktif tanpa langkah tambahan.
 - Mode compact, layout responsif, kontrol keyboard, dan Media Session pada browser yang mendukung.
 - PWA shell cache agar antarmuka dapat dibuka kembali saat offline; audio impor tetap dibaca dari penyimpanan lokal perangkat.
 
 ## Batas versi ini
 
-Aplikasi memiliki backend desktop, paket Linux, serta workflow GitHub Release berbasis tag. Status build dan pengujian aktual dicatat di [QA.md](QA.md). Dukungan codec mengikuti WebKitGTK/GStreamer di Linux. File yang gagal dibaca dilewati dengan pemberitahuan. Impor membaca tag ID3 dasar jika tersedia. File tanpa tag memakai pola nama `Artis - Judul.ext` dan nama folder sebagai album.
+Aplikasi memiliki backend desktop, paket Linux dan Windows, serta workflow GitHub Release berbasis tag. Status build dan pengujian aktual dicatat di [QA.md](QA.md). Dukungan codec mengikuti WebKitGTK/GStreamer di Linux dan WebView2 di Windows. Dukungan Windows masih eksperimental: build dan test Rust berjalan di CI, tetapi smoke test otomatis seperti pada Linux belum tersedia. File yang gagal dibaca dilewati dengan pemberitahuan. Impor membaca tag ID3 dasar jika tersedia. File tanpa tag memakai pola nama `Artis - Judul.ext` dan nama folder sebagai album.
 
 Arah produk, keputusan perilaku, serta ruang lingkup stabilisasi 0.1.x dan target 0.2.0 dicatat di [PRD](docs/PRD.md). Turunan backlog historis dan pekerjaan 0.2.0 berada di [backlog PRD](docs/ISSUES.md). Scope stabilisasi 0.1.x sudah diterapkan pada source; perubahan model data 0.2.0 tetap menjadi pekerjaan berikutnya.
 
