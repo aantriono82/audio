@@ -1,6 +1,6 @@
 # Atiga Amp
 
-Pemutar musik lokal untuk Linux dengan antarmuka charcoal–amber, terinspirasi pemutar musik desktop klasik. Installer desktop membundel antarmuka dan font; pengguna tidak memerlukan Node.js, Rust, terminal, atau server pengembangan. Node.js 22.13+ dan Rust hanya diperlukan oleh pengembang.
+Pemutar musik lokal untuk Linux dan Windows dengan antarmuka charcoal–amber, terinspirasi pemutar musik desktop klasik. Installer desktop membundel antarmuka dan font; pengguna tidak memerlukan Node.js, Rust, terminal, atau server pengembangan. Node.js 22.13+ dan Rust hanya diperlukan oleh pengembang.
 
 Versi source dan paket saat ini adalah `0.1.24`. Linux desktop tetap menjadi target produk utama; mode browser digunakan untuk demo, pengembangan, dan PWA dasar.
 
