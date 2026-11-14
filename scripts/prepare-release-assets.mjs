@@ -5,7 +5,7 @@ import path from 'node:path';
 
 const sourceRoot = path.resolve(process.argv[2] || 'release-input');
 const outputRoot = path.resolve(process.argv[3] || 'release-assets');
-const installerPattern = /\.(deb|AppImage)$/;
+const installerPattern = /\.(deb|AppImage|exe)$/;
 
 await rm(outputRoot, { recursive: true, force: true });
 await mkdir(outputRoot, { recursive: true });

@@ -68,3 +68,11 @@ Sebelum rilis publik, uji pada distro Linux sasaran:
 Setelah uji manual selesai, catat hasilnya bersama versi distro, arsitektur, jenis paket, codec yang diuji, serta checksum aset pada release. Publikasikan rilis hanya jika build tag, smoke test Linux, dan uji penerimaan manual semuanya lulus.
 
 Tes integrasi Linux dapat dijalankan dengan `node scripts/native-smoke.mjs --deb` dan `node scripts/native-smoke.mjs --appimage` setelah tersedia `Xvfb`, `WebKitWebDriver`, `dpkg-deb`, dan `gstreamer1.0-tools`. Variabel `XVFB` dan `WEBKIT_DRIVER` dapat menunjuk executable alternatif. Kedua jalur memakai fixture MP3 yang sama, data sementara, menguji IPC sebenarnya, pemindaian folder tersimpan, pemutaran dari awal, pemilihan ulang lagu, penggantian elemen media, dan restart. Tes ini tidak mengotomatisasi dialog file OS, drag fisik, atau proses instalasi; bagian tersebut tetap memerlukan uji penerimaan. Hasil aktual ada di [QA.md](../QA.md).
+
+## Windows (eksperimental)
+
+Installer Windows berupa `.exe` NSIS (`Atiga Amp_<versi>_x64-setup.exe`) dan dibangun oleh job `windows` di `.github/workflows/desktop.yml` pada runner `windows-latest`. Job ini berjalan pada setiap pull request, tag `v*`, atau secara manual lewat **Actions → Desktop packages → Run workflow**. Hasilnya diunduh dari artefak `atiga-amp-windows-x64` dan, untuk tag, ikut dilampirkan ke GitHub Release.
+
+Build lokal hanya dapat dilakukan di Windows: pasang Node.js 22.13+, Rust (MSVC), dan Visual Studio Build Tools ("Desktop development with C++"), lalu jalankan `npm ci` dan `npm run desktop:build`. Hasilnya berada di `src-tauri\target\release\bundle\nsis\`.
+
+Installer dipasang per pengguna tanpa hak administrator dan memasang WebView2 bila belum tersedia (Windows 10/11 umumnya sudah memilikinya). Data aplikasi berada di `%APPDATA%\com.atiga.amp\`. Di Windows, playback langsung memakai Web Audio sehingga EQ/DSP aktif tanpa langkah tambahan. Installer belum ditandatangani, jadi SmartScreen dapat menampilkan peringatan "Windows protected your PC"; pilih **More info → Run anyway**. Smoke test otomatis belum tersedia untuk Windows, jadi uji penerimaan manual di atas tetap diperlukan.
